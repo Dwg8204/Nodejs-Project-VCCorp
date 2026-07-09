@@ -299,15 +299,18 @@
 
     document.getElementById('responses-count-title').textContent = `Responses (${allComments.length})`;
 
+    const rootComments = allComments.filter(c => !c.parent_id);
     let html = '';
-    allComments.forEach(c => {
+
+    function buildCommentHTML(c, isChild) {
       const user = users.find(u => u.id === c.user_id);
       const name = user ? (user.full_name || user.user_name) : 'Anonymous';
       const initial = name.charAt(0).toUpperCase();
       const dateStr = new Date(c.created_at).toLocaleDateString();
+      const margin = isChild ? 'margin-left: 44px; border-left: 2px solid var(--border); padding-left: 12px;' : '';
 
-      html += `
-        <div class="comment">
+      let res = `
+        <div class="comment" style="${margin}">
           <div class="author-avatar" style="color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">${initial}</div>
           <div class="comment-body">
             <div class="comment-header">
@@ -316,17 +319,44 @@
             </div>
             <div class="comment-text">${c.content}</div>
             <div class="comment-actions">
-              <span>&#128075; 0</span>
-              <span>Reply</span>
+              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id})">Reply</span>
+            </div>
+            <div id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
+              <input type="text" class="input-box" placeholder="Viết phản hồi..." style="width:100%; border:none; border-bottom:1px solid #E5E5E5; padding:8px 0; outline:none; background:transparent;" onkeypress="submitReply(event, ${c.id})">
             </div>
           </div>
         </div>
       `;
+      // render children
+      const children = allComments.filter(child => child.parent_id === c.id);
+      children.forEach(child => {
+        res += buildCommentHTML(child, true);
+      });
+      return res;
+    }
+
+    rootComments.forEach(c => {
+      html += buildCommentHTML(c, false);
     });
+
     document.getElementById('comments-container').innerHTML = html;
   }
 
   function handleComment(e) {
+    if (e.key === 'Enter') {
+      submitReply(e, null);
+    }
+  }
+
+  function toggleReplyForm(id) {
+    const form = document.getElementById('reply-form-' + id);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if(form.style.display === 'block') {
+      form.querySelector('input').focus();
+    }
+  }
+
+  function submitReply(e, parentId) {
     if (e.key === 'Enter') {
       const text = e.target.value.trim();
       if (!text) return;
@@ -344,7 +374,7 @@
         id: newId,
         post_id: currentPostId,
         user_id: user.id,
-        parent_id: null,
+        parent_id: parentId,
         content: text,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

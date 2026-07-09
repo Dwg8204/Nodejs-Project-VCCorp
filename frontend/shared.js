@@ -53,4 +53,24 @@ window.addEventListener('DOMContentLoaded', () => {
   applyTheme(savedTheme);
   const savedLang = localStorage.getItem('blog-lang') || 'vi';
   applyLanguage(savedLang);
+
+  // Global Logout logic
+  if (typeof db !== 'undefined') {
+    const user = db.getCurrentUser();
+    if (user) {
+      const topbarRight = document.querySelector('.topbar-right');
+      if (topbarRight) {
+        const logoutBtn = document.createElement('a');
+        logoutBtn.href = '#';
+        logoutBtn.textContent = 'Logout';
+        logoutBtn.style.cssText = 'margin-left: 15px; color: #d32f2f; text-decoration: none; font-size: 14px; font-weight: 600;';
+        logoutBtn.onclick = (e) => {
+          e.preventDefault();
+          db.logout();
+          window.location.href = window.location.pathname.includes('/admin/') ? '../login.html' : 'login.html';
+        };
+        topbarRight.appendChild(logoutBtn);
+      }
+    }
+  }
 });

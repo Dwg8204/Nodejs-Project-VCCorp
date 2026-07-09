@@ -199,85 +199,220 @@
 
   <!-- ===== Article content ===== -->
   <main style="grid-column: span 2;">
-    <div class="article-wrapper">
-      <div class="publication">UX Collective</div>
-
-      <div class="member-badge">&#10022; Member-only story</div>
-
-      <h1 class="title">What good writing looks like</h1>
-      <div class="subtitle">The essential (micro) copy rules I used at Google.</div>
-
-      <div class="byline">
-        <a href="profile.html"><div class="author-avatar"></div></a>
-        <div>
-          <a href="profile.html" class="author-name" style="color:inherit;">Rita Kind-Envy</a>
-        </div>
-        <button class="follow-btn">Follow</button>
-        <div class="meta">6 min read &nbsp;&middot;&nbsp; Jan 5, 2026</div>
-      </div>
-
-      <div class="toolbar">
-        <span>&#128075; 4.7K</span>
-        <span>&#128172; 290</span>
-        <span class="spacer"></span>
-        <span>&#128278;</span>
-        <span>&#9654;</span>
-        <span>&#8593;</span>
-        <span>&#8943;</span>
-      </div>
-
-      <div class="hero-image" style="background-image:url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=900');"></div>
-
-      <div class="body-text">
-        <p>Writing well isn't about big words or clever phrasing — it's about clarity. At Google, the best copy always did one thing: it got out of the user's way.</p>
-        <p>Here are the micro copy rules that made the biggest difference in day-to-day product writing, from button labels to error messages.</p>
-        <p>Rule one: say less. Every extra word is a small tax on the reader's attention. Rule two: be specific. "Something went wrong" tells the user nothing; "We couldn't save your changes — check your connection" tells them what to do next.</p>
-      </div>
+    <div class="article-wrapper" id="article-content-container">
+      <!-- rendered by js -->
     </div>
 
     <!-- ===== Responses ===== -->
     <div class="responses-section">
-      <div class="responses-title">Responses (290)</div>
+      <div class="responses-title" id="responses-count-title">Responses (0)</div>
 
-      <div class="comment-input">
-        <div class="author-avatar">N</div>
-        <div class="input-box">What are your thoughts?</div>
+      <div class="comment-input" id="comment-input-area" style="display:none;">
+        <div class="author-avatar" id="current-user-avatar">N</div>
+        <input type="text" id="newCommentText" class="input-box" placeholder="What are your thoughts?" style="background:transparent;outline:none;" onkeypress="handleComment(event)">
       </div>
 
-      <div class="comment">
-        <div class="author-avatar"></div>
-        <div class="comment-body">
-          <div class="comment-header">
-            <span class="name">John Henry Arthur</span>
-            <span class="date">Jan 14</span>
-          </div>
-          <div class="comment-text">This is my first comment. Definitely my worst</div>
-          <div class="comment-actions">
-            <span>&#128075; 283</span>
-            <span>&#128172; 7 replies</span>
-            <span>Reply</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="comment">
-        <div class="author-avatar"></div>
-        <div class="comment-body">
-          <div class="comment-header">
-            <span class="name">Makarenko Roman</span>
-            <span class="date">Jan 15</span>
-          </div>
-          <div class="comment-text">Really enjoyed this. The idea that the final draft of finding clarity looks effortless is so true for anything worth writing.</div>
-          <div class="comment-actions">
-            <span>&#128075;</span>
-            <span>&#128172; Reply</span>
-          </div>
-        </div>
+      <div id="comments-container">
+        <!-- Rendered by js -->
       </div>
     </div>
   </main>
 </div>
 
 <script src="shared.js"></script>
+<script src="js/mockData.js"></script>
+<script>
+  let currentPostId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Topbar Auth logic
+    const currentUser = db.getCurrentUser();
+    if (!currentUser) {
+      const topbarRight = document.querySelector('.topbar-right');
+      topbarRight.innerHTML = `
+        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
+        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
+      `;
+    } else {
+      document.getElementById('comment-input-area').style.display = 'flex';
+      document.getElementById('current-user-avatar').textContent = (currentUser.full_name || currentUser.user_name || 'U').charAt(0).toUpperCase();
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get('id');
+    const langId = localStorage.getItem('current_language_id') || '1';
+
+    if (!idParam) {
+      document.getElementById('article-content-container').innerHTML = '<p>Bài viết không tồn tại.</p>';
+      return;
+    }
+
+    currentPostId = parseInt(idParam);
+    const posts = db.getPostsWithDetails(langId);
+    const post = posts.find(p => p.id === currentPostId);
+
+    if (!post) {
+      console.warn('Post not found for ID:', currentPostId);
+      document.getElementById('article-content-container').innerHTML = '<p>Bài viết không tồn tại hoặc đã bị ẩn.</p>';
+      return;
+    }
+    
+    console.log('Successfully fetched post:', post);
+
+    document.title = post.title;
+
+    const imgUrl = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=900`;
+
+    document.getElementById('article-content-container').innerHTML = `
+      <div class="publication">${post.category_name}</div>
+      <h1 class="title">${post.title}</h1>
+      <div class="byline">
+        <a href="profile.html?id=${post.author_id}"><div class="author-avatar" style="background-image:url('https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_name}'); background-size:cover;"></div></a>
+        <div>
+          <a href="profile.html?id=${post.author_id}" class="author-name" style="color:inherit;">${post.author_name}</a>
+        </div>
+        <button class="follow-btn">Follow</button>
+        <div class="meta">${post.date_formatted}</div>
+      </div>
+
+      <div class="toolbar">
+        <span style="cursor:pointer" onclick="likePost()">&#128075; <span id="like-count">${post.likes}</span></span>
+        <span>&#128172; ${post.comments}</span>
+        <span class="spacer"></span>
+        <span style="cursor:pointer" onclick="alert('Đã bookmark!')">&#128278;</span>
+        <span>&#8943;</span>
+      </div>
+
+      <div class="hero-image" style="background-image:url('${imgUrl}');"></div>
+
+      <div class="body-text">
+        ${post.content || '<p>Không có nội dung</p>'}
+      </div>
+    `;
+
+    renderComments();
+  });
+
+  function renderComments() {
+    const allComments = db.get('comments').filter(c => c.post_id === currentPostId);
+    const users = db.get('users');
+
+    document.getElementById('responses-count-title').textContent = `Responses (${allComments.length})`;
+
+    const rootComments = allComments.filter(c => !c.parent_id);
+    let html = '';
+
+    function buildCommentHTML(c, isChild) {
+      const user = users.find(u => u.id === c.user_id);
+      const name = user ? (user.full_name || user.user_name) : 'Anonymous';
+      const initial = name.charAt(0).toUpperCase();
+      const dateStr = new Date(c.created_at).toLocaleDateString();
+      const margin = isChild ? 'margin-left: 44px; border-left: 2px solid var(--border); padding-left: 12px;' : '';
+
+      let res = `
+        <div class="comment" style="${margin}">
+          <div class="author-avatar" style="color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">${initial}</div>
+          <div class="comment-body">
+            <div class="comment-header">
+              <span class="name">${name}</span>
+              <span class="date">${dateStr}</span>
+            </div>
+            <div class="comment-text">${c.content}</div>
+            <div class="comment-actions">
+              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id})">Reply</span>
+            </div>
+            <div id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
+              <input type="text" class="input-box" placeholder="Viết phản hồi..." style="width:100%; border:none; border-bottom:1px solid #E5E5E5; padding:8px 0; outline:none; background:transparent;" onkeypress="submitReply(event, ${c.id})">
+            </div>
+          </div>
+        </div>
+      `;
+      // render children
+      const children = allComments.filter(child => child.parent_id === c.id);
+      children.forEach(child => {
+        res += buildCommentHTML(child, true);
+      });
+      return res;
+    }
+
+    rootComments.forEach(c => {
+      html += buildCommentHTML(c, false);
+    });
+
+    document.getElementById('comments-container').innerHTML = html;
+  }
+
+  function handleComment(e) {
+    if (e.key === 'Enter') {
+      submitReply(e, null);
+    }
+  }
+
+  function toggleReplyForm(id) {
+    const form = document.getElementById('reply-form-' + id);
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if(form.style.display === 'block') {
+      form.querySelector('input').focus();
+    }
+  }
+
+  function submitReply(e, parentId) {
+    if (e.key === 'Enter') {
+      const text = e.target.value.trim();
+      if (!text) return;
+
+      const user = db.getCurrentUser();
+      if (!user) {
+        alert('Bạn cần đăng nhập để bình luận!');
+        return;
+      }
+
+      const comments = db.get('comments');
+      const newId = comments.length ? Math.max(...comments.map(c => c.id)) + 1 : 1;
+      
+      comments.push({
+        id: newId,
+        post_id: currentPostId,
+        user_id: user.id,
+        parent_id: parentId,
+        content: text,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      db.set('comments', comments);
+      
+      e.target.value = '';
+      renderComments();
+    }
+  }
+
+  function likePost() {
+    const user = db.getCurrentUser();
+    if (!user) {
+      alert('Bạn cần đăng nhập để like!');
+      return;
+    }
+    
+    const likes = db.get('post_likes');
+    const existing = likes.find(l => l.post_id === currentPostId && l.user_id === user.id);
+    
+    if (existing) {
+      // Unlike
+      const filtered = likes.filter(l => l.id !== existing.id);
+      db.set('post_likes', filtered);
+    } else {
+      // Like
+      const newId = likes.length ? Math.max(...likes.map(l => l.id)) + 1 : 1;
+      likes.push({
+        id: newId, post_id: currentPostId, user_id: user.id, created_at: new Date().toISOString()
+      });
+      db.set('post_likes', likes);
+    }
+    
+    // update UI
+    const currentLikes = db.get('post_likes').filter(l => l.post_id === currentPostId).length;
+    document.getElementById('like-count').textContent = currentLikes;
+  }
+</script>
 </body>
 </html>

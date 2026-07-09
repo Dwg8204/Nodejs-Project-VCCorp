@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Admin Dashboard – Medium</title>
-<link rel="stylesheet" href="shared.css">
+<link rel="stylesheet" href="../shared.css">
 <style>
   .admin-main { padding: 24px 40px; }
   .admin-main h1 {
@@ -48,7 +48,7 @@
 <div class="topbar">
   <div class="topbar-left">
     <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
-    <a href="index.html" class="logo">Medium</a>
+    <a href="../index.html" class="logo">Medium</a>
     <div class="search-box">&#128269; <span>Search</span></div>
   </div>
   <div class="topbar-right">
@@ -67,22 +67,22 @@
 
 <div class="layout no-rail" id="layoutRoot">
   <aside class="sidebar">
-    <a href="admin-dashboard.html" class="active"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="admin-users.html"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="admin-categories.html"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="admin-languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+    <a href="index.html" class="active"><span class="icon">&#128202;</span> Dashboard</a>
+    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
+    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
+    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
     <hr>
-    <a href="index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
   </aside>
 
   <main class="admin-main">
     <h1>Tổng quan hệ thống</h1>
 
     <div class="stats-grid">
-      <div class="stat-card"><div class="num">1,284</div><div class="label">Người dùng</div></div>
-      <div class="stat-card"><div class="num">312</div><div class="label">Bài viết</div></div>
-      <div class="stat-card"><div class="num">8</div><div class="label">Danh mục</div></div>
-      <div class="stat-card"><div class="num">3</div><div class="label">Ngôn ngữ</div></div>
+      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">Người dùng</div></div>
+      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label">Bài viết</div></div>
+      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label">Danh mục</div></div>
+      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label">Ngôn ngữ</div></div>
     </div>
 
     <div class="quick-links">
@@ -105,6 +105,25 @@
   </main>
 </div>
 
-<script src="shared.js"></script>
+<script src="../shared.js"></script>
+<script src="../js/mockData.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Auth check
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+
+    // Fill stats
+    document.getElementById('stat-users').textContent = db.get('users').length;
+    document.getElementById('stat-posts').textContent = db.get('posts').length;
+    document.getElementById('stat-categories').textContent = db.get('categories').length;
+    document.getElementById('stat-languages').textContent = db.get('languages').length;
+  });
+</script>
 </body>
 </html>

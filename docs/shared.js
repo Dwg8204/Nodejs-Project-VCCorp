@@ -67,7 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
         logoutBtn.onclick = (e) => {
           e.preventDefault();
           db.logout();
-          window.location.href = 'login.html';
+          window.location.href = window.location.pathname.includes('/admin/') ? '../login.html' : 'login.html';
         };
         topbarRight.appendChild(logoutBtn);
       }

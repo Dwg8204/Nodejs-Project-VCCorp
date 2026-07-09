@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý người dùng – Medium</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .admin-main { padding: 24px 40px; }
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .admin-header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .filter-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .filter-row .form-control { max-width: 220px; }
+  .user-cell { display: flex; align-items: center; gap: 10px; }
+  .user-cell .mini-avatar { width: 30px; height: 30px; border-radius: 50%; background:#999; }
+  select.role-select {
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <a href="index.html" class="logo">Medium</a>
+    <div class="search-box">&#128269; <span>Search</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-dropdown">
+      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <div class="lang-menu">
+        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
+    <span class="icon-btn">&#128276;</span>
+    <div class="avatar" style="background:#5A3FBF;">A</div>
+  </div>
+</div>
+
+<div class="layout no-rail" id="layoutRoot">
+  <aside class="sidebar">
+    <a href="admin-dashboard.html"><span class="icon">&#128202;</span> Dashboard</a>
+    <a href="admin-users.html" class="active"><span class="icon">&#128101;</span> Manage users</a>
+    <a href="admin-categories.html"><span class="icon">&#128193;</span> Manage categories</a>
+    <a href="admin-languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+    <hr>
+    <a href="index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <h1>Quản lý người dùng</h1>
+      <button class="btn btn-primary" onclick="alert('Mở form mời người dùng mới')">+ Thêm người dùng</button>
+    </div>
+
+    <div class="filter-row">
+      <input type="text" class="form-control" placeholder="Tìm theo tên hoặc email..." style="max-width:280px;">
+      <select class="form-control">
+        <option>Tất cả vai trò</option>
+        <option>Super Admin</option>
+        <option>Blog Owner</option>
+        <option>Authenticated User</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Người dùng</th>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Ngày tham gia</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="user-cell"><span class="mini-avatar"></span> Tenney Balogun</td>
+            <td>tenney.b@example.com</td>
+            <td>
+              <select class="role-select">
+                <option selected>Blog Owner</option>
+                <option>Authenticated User</option>
+                <option>Super Admin</option>
+              </select>
+            </td>
+            <td><span class="badge badge-green">Hoạt động</span></td>
+            <td>12/03/2025</td>
+            <td>
+              <button class="btn btn-sm btn-danger" onclick="lockUser(this)">Khóa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="user-cell"><span class="mini-avatar"></span> Rita Kind-Envy</td>
+            <td>rita.ke@example.com</td>
+            <td>
+              <select class="role-select">
+                <option>Blog Owner</option>
+                <option selected>Authenticated User</option>
+                <option>Super Admin</option>
+              </select>
+            </td>
+            <td><span class="badge badge-green">Hoạt động</span></td>
+            <td>02/01/2026</td>
+            <td>
+              <button class="btn btn-sm btn-danger" onclick="lockUser(this)">Khóa</button>
+            </td>
+          </tr>
+          <tr>
+            <td class="user-cell"><span class="mini-avatar"></span> Nguyễn Quang</td>
+            <td>quang.nq@example.com</td>
+            <td>
+              <select class="role-select">
+                <option>Blog Owner</option>
+                <option>Authenticated User</option>
+                <option selected>Super Admin</option>
+              </select>
+            </td>
+            <td><span class="badge badge-red">Đã khóa</span></td>
+            <td>28/06/2024</td>
+            <td>
+              <button class="btn btn-sm btn-outline" onclick="unlockUser(this)">Mở khóa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  function lockUser(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('.badge').outerHTML = '<span class="badge badge-red">Đã khóa</span>';
+    btn.textContent = 'Mở khóa';
+    btn.classList.remove('btn-danger');
+    btn.classList.add('btn-outline');
+    btn.setAttribute('onclick', 'unlockUser(this)');
+  }
+  function unlockUser(btn) {
+    const row = btn.closest('tr');
+    row.querySelector('.badge').outerHTML = '<span class="badge badge-green">Hoạt động</span>';
+    btn.textContent = 'Khóa';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-danger');
+    btn.setAttribute('onclick', 'lockUser(this)');
+  }
+</script>
+</body>
+</html>

@@ -123,6 +123,14 @@
   <div class="topbar-right">
     <button class="btn-getapp">&#9638; Get app</button>
     <span class="write-link">&#9998; Write</span>
+    <div class="lang-dropdown">
+      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <div class="lang-menu">
+        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
     <span class="icon-btn">&#128276;</span>
     <div class="avatar">N</div>
   </div>
@@ -340,10 +348,6 @@
   });
 </script>
 
-<script>
-  function toggleSidebar() {
-    document.getElementById('layoutRoot').classList.toggle('sidebar-collapsed');
-  }
-</script>
+<script src="shared.js"></script>
 </body>
 </html>

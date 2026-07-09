@@ -79,10 +79,10 @@
     <h1>Tổng quan hệ thống</h1>
 
     <div class="stats-grid">
-      <div class="stat-card"><div class="num">1,284</div><div class="label">Người dùng</div></div>
-      <div class="stat-card"><div class="num">312</div><div class="label">Bài viết</div></div>
-      <div class="stat-card"><div class="num">8</div><div class="label">Danh mục</div></div>
-      <div class="stat-card"><div class="num">3</div><div class="label">Ngôn ngữ</div></div>
+      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">Người dùng</div></div>
+      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label">Bài viết</div></div>
+      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label">Danh mục</div></div>
+      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label">Ngôn ngữ</div></div>
     </div>
 
     <div class="quick-links">
@@ -106,5 +106,24 @@
 </div>
 
 <script src="shared.js"></script>
+<script src="js/mockData.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Auth check
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+
+    // Fill stats
+    document.getElementById('stat-users').textContent = db.get('users').length;
+    document.getElementById('stat-posts').textContent = db.get('posts').length;
+    document.getElementById('stat-categories').textContent = db.get('categories').length;
+    document.getElementById('stat-languages').textContent = db.get('languages').length;
+  });
+</script>
 </body>
 </html>

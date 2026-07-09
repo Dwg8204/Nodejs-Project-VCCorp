@@ -90,35 +90,11 @@
           <tr>
             <th>Ngôn ngữ</th>
             <th>Mã</th>
-            <th>Trạng thái</th>
             <th></th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="lang-name-cell">&#127482;&#127472; Tiếng Việt <span class="default-star" title="Ngôn ngữ mặc định">&#9733;</span></td>
-            <td>vi</td>
-            <td><span class="badge badge-green">Đang bật</span></td>
-            <td>
-              <button class="btn btn-sm btn-outline" disabled title="Không thể xóa ngôn ngữ mặc định">Xóa</button>
-            </td>
-          </tr>
-          <tr>
-            <td class="lang-name-cell">&#127482;&#127480; English</td>
-            <td>en</td>
-            <td><span class="badge badge-green">Đang bật</span></td>
-            <td>
-              <button class="btn btn-sm btn-danger" onclick="deleteLanguage(this)">Xóa</button>
-            </td>
-          </tr>
-          <tr>
-            <td class="lang-name-cell">&#127467;&#127479; Français</td>
-            <td>fr</td>
-            <td><span class="badge badge-gray">Đang tắt</span></td>
-            <td>
-              <button class="btn btn-sm btn-danger" onclick="deleteLanguage(this)">Xóa</button>
-            </td>
-          </tr>
+        <tbody id="lang-tbody">
+          <!-- Rendered by js -->
         </tbody>
       </table>
     </div>
@@ -126,28 +102,76 @@
 </div>
 
 <script src="shared.js"></script>
+<script src="js/mockData.js"></script>
 <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Super Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    renderLanguages();
+  });
+
+  function renderLanguages() {
+    const languages = db.get('languages');
+    let html = '';
+    languages.forEach(lang => {
+      const isDefault = lang.code === 'vi';
+      const nameHtml = isDefault 
+        ? `${lang.name} <span class="default-star" title="Ngôn ngữ mặc định">&#9733;</span>` 
+        : lang.name;
+        
+      const actionBtn = isDefault
+        ? `<button class="btn btn-sm btn-outline" disabled title="Không thể xóa ngôn ngữ mặc định">Xóa</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="deleteLanguage(${lang.id}, '${lang.name}')">Xóa</button>`;
+        
+      html += `
+        <tr>
+          <td class="lang-name-cell">${nameHtml}</td>
+          <td>${lang.code}</td>
+          <td>${actionBtn}</td>
+        </tr>
+      `;
+    });
+    document.getElementById('lang-tbody').innerHTML = html;
+  }
+
   function addLanguage() {
     const codeInput = document.getElementById('newLangCode');
     const nameInput = document.getElementById('newLangName');
-    const code = codeInput.value.trim();
+    const code = codeInput.value.trim().toLowerCase();
     const name = nameInput.value.trim();
+    
     if (!code || !name) { alert('Vui lòng nhập đủ mã và tên ngôn ngữ.'); return; }
-    const tbody = document.querySelector('#langTable tbody');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td class="lang-name-cell">${name}</td>
-      <td>${code}</td>
-      <td><span class="badge badge-green">Đang bật</span></td>
-      <td><button class="btn btn-sm btn-danger" onclick="deleteLanguage(this)">Xóa</button></td>`;
-    tbody.appendChild(row);
+    
+    const languages = db.get('languages');
+    if (languages.find(l => l.code === code)) {
+      alert('Mã ngôn ngữ này đã tồn tại!');
+      return;
+    }
+    
+    const newId = languages.length ? Math.max(...languages.map(l => l.id)) + 1 : 1;
+    languages.push({
+      id: newId,
+      code: code,
+      name: name,
+      created_at: new Date().toISOString()
+    });
+    
+    db.set('languages', languages);
     codeInput.value = '';
     nameInput.value = '';
+    renderLanguages();
   }
-  function deleteLanguage(btn) {
-    const row = btn.closest('tr');
-    if (confirm('Xóa ngôn ngữ "' + row.querySelector('.lang-name-cell').textContent.trim() + '"?')) {
-      row.remove();
+
+  function deleteLanguage(id, name) {
+    if (confirm('Xóa ngôn ngữ "' + name + '"?')) {
+      let languages = db.get('languages');
+      languages = languages.filter(l => l.id !== id);
+      db.set('languages', languages);
+      renderLanguages();
     }
   }
 </script>

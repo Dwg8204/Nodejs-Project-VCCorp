@@ -197,7 +197,7 @@
   <!-- ===== Profile main ===== -->
   <main class="profile-main">
     <div class="profile-header">
-      <h1>Tenney Balogun</h1>
+      <h1 id="profile-name">Tenney Balogun</h1>
       <span class="more-icon">&#8943;</span>
     </div>
 
@@ -207,50 +207,17 @@
       <a href="#">About</a>
     </div>
 
-    <div class="pinned-tag">&#128204; Pinned</div>
-    <div class="post-item">
-      <div class="post-author-row">
-        <span class="mini-avatar"></span> Tenney Balogun &nbsp;&middot;&nbsp; 15h ago
-      </div>
-      <div class="post-body">
-        <div class="post-text">
-          <a href="article.html"><div class="post-title">When Bukayo Saka Missed the Penalty, England Missed the Point</div></a>
-          <div class="post-desc">In the middle of watching Belgium Vs Senegal (A Senegal loss that deeply pissed me off by the way), I was speaking with my...</div>
-          <div class="post-meta">
-            <span>&#128075; 212</span>
-            <span>&#128172; 3</span>
-            <span>&#8644; 5</span>
-            <span class="spacer"></span>
-            <span>&#128278;</span>
-            <span>&#8943;</span>
-          </div>
-        </div>
-        <a href="article.html">
-          <div class="post-thumb" style="background-image:url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=400');"></div>
-        </a>
-      </div>
-    </div>
-
-    <div class="pinned-tag">&#128204; Pinned</div>
-    <div class="post-item">
-      <div class="post-author-row">
-        <span class="mini-avatar"></span> Tenney Balogun &nbsp;&middot;&nbsp; Oct 1, 2024
-      </div>
-      <div class="post-body">
-        <div class="post-text">
-          <a href="article.html"><div class="post-title">Tottenham Vs Dortmund</div></a>
-          <div class="post-desc">The Chronic Underachievers</div>
-        </div>
-      </div>
+    <div id="profile-posts-container">
+      <!-- Rendered by js -->
     </div>
   </main>
 
   <!-- ===== Right rail: profile card ===== -->
   <aside class="right-rail profile-card">
-    <div class="big-avatar"></div>
-    <h2>Tenney Balogun <span class="pronoun">she/her</span></h2>
+    <div class="big-avatar" id="profile-avatar"></div>
+    <h2><span id="profile-card-name">Tenney Balogun</span> <span class="pronoun">she/her</span></h2>
     <div class="followers">58 followers</div>
-    <div class="bio">Sports Writer | Poet | Lyricist | Copy Writer | Professional Writer</div>
+    <div class="bio" id="profile-bio">Sports Writer | Poet | Lyricist | Copy Writer | Professional Writer</div>
     <button class="follow-btn-big">Follow</button>
 
     <h3>Following</h3>
@@ -283,6 +250,87 @@
   </aside>
 </div>
 
+<script src="js/mockData.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Topbar Auth logic
+    const currentUser = db.getCurrentUser();
+    if (!currentUser) {
+      const topbarRight = document.querySelector('.topbar-right');
+      topbarRight.innerHTML = `
+        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
+        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
+      `;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    let targetUserId = params.get('id');
+    const users = db.get('users');
+    let targetUser = null;
+
+    if (targetUserId) {
+      targetUser = users.find(u => u.id === parseInt(targetUserId));
+    } else {
+      targetUser = currentUser || users[0];
+    }
+
+    if (!targetUser) {
+      document.querySelector('.profile-main').innerHTML = '<p>Người dùng không tồn tại.</p>';
+      return;
+    }
+
+    const name = targetUser.full_name || targetUser.user_name || 'Anonymous';
+    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-card-name').textContent = name;
+    document.getElementById('profile-bio').textContent = targetUser.bio || 'Chưa có thông tin giới thiệu.';
+    document.title = name + ' – Medium';
+    
+    document.getElementById('profile-avatar').style.backgroundImage = `url('https://api.dicebear.com/7.x/avataaars/svg?seed=${name}')`;
+
+    const langId = localStorage.getItem('current_language_id') || '1';
+    const allPosts = db.getPostsWithDetails(langId);
+    const userPosts = allPosts.filter(p => p.author_id === targetUser.id);
+
+    let html = '';
+    userPosts.forEach(post => {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = post.content;
+      const snippet = tempDiv.textContent || tempDiv.innerText || "";
+      const shortDesc = snippet.length > 100 ? snippet.substring(0, 100) + '...' : snippet;
+      const imgUrl = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
+
+      html += `
+        <div class="post-item">
+          <div class="post-author-row">
+            <span class="mini-avatar" style="background-image:url('https://api.dicebear.com/7.x/avataaars/svg?seed=${name}'); background-size:cover;"></span> ${name} &nbsp;&middot;&nbsp; ${post.date_formatted}
+          </div>
+          <div class="post-body">
+            <div class="post-text">
+              <a href="article.html?id=${post.id}"><div class="post-title">${post.title}</div></a>
+              <div class="post-desc">${shortDesc}</div>
+              <div class="post-meta">
+                <span>&#128075; ${post.likes}</span>
+                <span>&#128172; ${post.comments}</span>
+                <span class="spacer"></span>
+                <span style="cursor:pointer" onclick="alert('Đã bookmark!')">&#128278;</span>
+                <span>&#8943;</span>
+              </div>
+            </div>
+            <a href="article.html?id=${post.id}">
+              <div class="post-thumb" style="background-image:url('${imgUrl}');"></div>
+            </a>
+          </div>
+        </div>
+      `;
+    });
+
+    if (userPosts.length === 0) {
+      html = '<p style="color:#6B6B6B; margin-top:24px;">Chưa có bài viết nào.</p>';
+    }
+    
+    document.getElementById('profile-posts-container').innerHTML = html;
+  });
+</script>
 <script src="shared.js"></script>
 </body>
 </html>

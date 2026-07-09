@@ -77,57 +77,8 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="cat-name-cell">Programming</td>
-            <td>84</td>
-            <td>
-              <div class="action-icons" style="display:flex; gap:12px;">
-                <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-                <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="cat-name-cell">Design (UX/UI)</td>
-            <td>52</td>
-            <td>
-              <div class="action-icons" style="display:flex; gap:12px;">
-                <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-                <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="cat-name-cell">Sports</td>
-            <td>63</td>
-            <td>
-              <div class="action-icons" style="display:flex; gap:12px;">
-                <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-                <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="cat-name-cell">Lifestyle</td>
-            <td>41</td>
-            <td>
-              <div class="action-icons" style="display:flex; gap:12px;">
-                <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-                <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td class="cat-name-cell">Health</td>
-            <td>29</td>
-            <td>
-              <div class="action-icons" style="display:flex; gap:12px;">
-                <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-                <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-              </div>
-            </td>
-          </tr>
+        <tbody id="cat-tbody">
+          <!-- Rendered by js -->
         </tbody>
       </table>
     </div>
@@ -135,34 +86,101 @@
 </div>
 
 <script src="shared.js"></script>
+<script src="js/mockData.js"></script>
 <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Super Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    renderCategories();
+  });
+
+  function renderCategories() {
+    const categories = db.get('categories');
+    const translations = db.get('category_translation');
+    const posts = db.get('posts');
+    const langId = localStorage.getItem('current_language_id') || '1';
+
+    let html = '';
+    categories.forEach(cat => {
+      // Tìm bản dịch tiếng anh/việt
+      let trans = translations.find(t => t.category_id === cat.id && t.language_id == langId);
+      if (!trans) trans = translations.find(t => t.category_id === cat.id); // fallback
+      
+      const count = posts.filter(p => p.category_id === cat.id).length;
+      const catName = trans ? trans.name : 'Chưa có tên';
+
+      html += `
+        <tr>
+          <td class="cat-name-cell">${catName}</td>
+          <td>${count}</td>
+          <td>
+            <div class="action-icons" style="display:flex; gap:12px;">
+              <button onclick="renameCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
+              <button onclick="deleteCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    document.getElementById('cat-tbody').innerHTML = html;
+  }
+
   function addCategory() {
     const input = document.getElementById('newCatInput');
     const name = input.value.trim();
     if (!name) return;
-    const tbody = document.querySelector('#catTable tbody');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td class="cat-name-cell">${name}</td>
-      <td>0</td>
-      <td>
-        <div class="action-icons" style="display:flex; gap:12px;">
-          <button onclick="renameCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-          <button onclick="deleteCategory(this)" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
-        </div>
-      </td>`;
-    tbody.appendChild(row);
+    
+    const categories = db.get('categories');
+    const translations = db.get('category_translation');
+    const langId = localStorage.getItem('current_language_id') || '1';
+    
+    const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+    categories.push({ id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    
+    const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
+    translations.push({ id: newTransId, category_id: newId, language_id: parseInt(langId), name: name, des: '' });
+    
+    db.set('categories', categories);
+    db.set('category_translation', translations);
+    
     input.value = '';
+    renderCategories();
   }
-  function renameCategory(btn) {
-    const cell = btn.closest('tr').querySelector('.cat-name-cell');
-    const newName = prompt('Đổi tên danh mục:', cell.textContent);
-    if (newName && newName.trim()) cell.textContent = newName.trim();
+
+  function renameCategory(id, currentName) {
+    const newName = prompt('Đổi tên danh mục:', currentName);
+    if (newName && newName.trim()) {
+      const translations = db.get('category_translation');
+      const langId = localStorage.getItem('current_language_id') || '1';
+      
+      let trans = translations.find(t => t.category_id === id && t.language_id == langId);
+      if (trans) {
+        trans.name = newName.trim();
+      } else {
+        const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
+        translations.push({ id: newTransId, category_id: id, language_id: parseInt(langId), name: newName.trim(), des: '' });
+      }
+      
+      db.set('category_translation', translations);
+      renderCategories();
+    }
   }
-  function deleteCategory(btn) {
-    const row = btn.closest('tr');
-    if (confirm('Xóa danh mục "' + row.querySelector('.cat-name-cell').textContent + '"?')) {
-      row.remove();
+
+  function deleteCategory(id, name) {
+    if (confirm('Xóa danh mục "' + name + '"? Các bài viết trong danh mục này cũng có thể bị ảnh hưởng.')) {
+      let categories = db.get('categories');
+      let translations = db.get('category_translation');
+      
+      categories = categories.filter(c => c.id !== id);
+      translations = translations.filter(t => t.category_id !== id);
+      
+      db.set('categories', categories);
+      db.set('category_translation', translations);
+      renderCategories();
     }
   }
 </script>

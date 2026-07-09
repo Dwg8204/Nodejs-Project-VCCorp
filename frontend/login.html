@@ -114,9 +114,9 @@
 
   <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 8px;">
     <div style="font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 8px;">Đăng nhập nhanh (Bỏ qua mật khẩu)</div>
-    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('admin@vccorp.vn')">Admin (Super Admin)</button>
-    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('rita.kind@vccorp.vn')">Blogger (Chủ Blog)</button>
-    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('james.baker@gmail.com')">User (Khách Đăng Nhập)</button>
+    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('admin@gmail.com')">Admin (Super Admin)</button>
+    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('blog@gmail.com')">Blogger (Chủ Blog)</button>
+    <button type="button" class="btn btn-outline" style="width: 100%; border-radius: 8px;" onclick="quickLogin('jamess@gmail.com')">User (Khách Đăng Nhập)</button>
   </div>
 
   <div class="auth-footer-text">
@@ -135,7 +135,7 @@
   });
 
   function quickLogin(email) {
-    doLogin(email, 'hash_password_123');
+    doLogin(email, '123456');
   }
 
   function doLogin(email, password) {

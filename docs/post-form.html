@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Viết bài – Medium</title>
+<link rel="stylesheet" href="shared.css">
+<style>
+  .form-main { padding: 24px 40px 80px 40px; max-width: 760px; }
+  .form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .form-header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .form-actions { display: flex; gap: 10px; }
+
+  .lang-row {
+    display: flex;
+    gap: 16px;
+  }
+  .lang-row .form-group { flex: 1; }
+
+  .translate-section {
+    border-top: 1px solid var(--border);
+    margin-top: 32px;
+    padding-top: 24px;
+  }
+  .translate-section h2 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .translate-section .desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .translate-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .translation-panel {
+    display: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 16px;
+  }
+  .translation-panel.open { display: block; }
+  .translation-panel .panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .translation-panel .badge-auto {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    background: var(--bg-pill);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <a href="index.html" class="logo">Medium</a>
+    <div class="search-box">&#128269; <span>Search</span></div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-getapp">&#9638; Get app</button>
+    <div class="lang-dropdown">
+      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <div class="lang-menu">
+        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
+    <span class="icon-btn">&#128276;</span>
+    <div class="avatar">N</div>
+  </div>
+</div>
+
+<div class="layout no-rail" id="layoutRoot">
+  <aside class="sidebar">
+    <a href="index.html"><span class="icon">&#8962;</span> Home</a>
+    <a href="category.html"><span class="icon">&#128193;</span> Category</a>
+    <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
+    <a href="owner-posts.html" class="active"><span class="icon">&#128221;</span> Manage posts</a>
+    <a href="#"><span class="icon">&#128202;</span> Stats</a>
+  </aside>
+
+  <main class="form-main">
+    <div class="form-header">
+      <h1 id="formTitle">Viết bài mới</h1>
+      <div class="form-actions">
+        <a href="owner-posts.html" class="btn btn-outline">Hủy</a>
+        <button class="btn btn-outline" onclick="alert('Đã lưu bản nháp!')">Lưu nháp</button>
+        <button class="btn btn-primary" onclick="alert('Đã xuất bản bài viết!'); location.href='owner-posts.html';">Xuất bản</button>
+      </div>
+    </div>
+
+    <form onsubmit="return false;">
+      <div class="lang-row">
+        <div class="form-group">
+          <label>Ngôn ngữ của bài viết</label>
+          <select class="form-control" id="sourceLang" onchange="onSourceLangChange()">
+            <option value="vi">&#127482;&#127472; Tiếng Việt</option>
+            <option value="en">&#127482;&#127480; English</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Danh mục</label>
+          <select class="form-control">
+            <option>Programming</option>
+            <option>Design (UX/UI)</option>
+            <option>Sports</option>
+            <option>Lifestyle</option>
+            <option>Health</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tên bài viết</label>
+        <input type="text" class="form-control" placeholder="Nhập tiêu đề bài viết...">
+      </div>
+
+      <div class="form-group">
+        <label>Nội dung bài viết</label>
+        <textarea class="form-control" placeholder="Viết nội dung ở đây..."></textarea>
+      </div>
+
+      <div class="translate-section">
+        <h2>Dịch bài viết sang ngôn ngữ khác</h2>
+        <div class="desc">Chọn các ngôn ngữ bạn muốn dịch bài viết này sang. Với mỗi ngôn ngữ được chọn, hãy nhập tiêu đề và nội dung tương ứng bên dưới.</div>
+
+        <div class="translate-pills" id="translatePills">
+          <label class="checkbox-pill" data-lang="vi">
+            <input type="checkbox" value="vi" onchange="onTranslateToggle(this)"> &#127482;&#127472; Tiếng Việt
+          </label>
+          <label class="checkbox-pill" data-lang="en">
+            <input type="checkbox" value="en" onchange="onTranslateToggle(this)"> &#127482;&#127480; English
+          </label>
+          <label class="checkbox-pill" data-lang="ja">
+            <input type="checkbox" value="ja" onchange="onTranslateToggle(this)"> &#127471;&#127477; 日本語
+          </label>
+          <label class="checkbox-pill" data-lang="ko">
+            <input type="checkbox" value="ko" onchange="onTranslateToggle(this)"> &#127472;&#127479; 한국어
+          </label>
+          <label class="checkbox-pill" data-lang="fr">
+            <input type="checkbox" value="fr" onchange="onTranslateToggle(this)"> &#127467;&#127479; Français
+          </label>
+        </div>
+
+        <div id="translationPanels"></div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  const LANG_NAMES = { vi: 'Tiếng Việt', en: 'English', ja: '日本語', ko: '한국어', fr: 'Français' };
+
+  // Ẩn ngôn ngữ gốc khỏi danh sách lựa chọn dịch (không thể "dịch" sang chính ngôn ngữ gốc)
+  function onSourceLangChange() {
+    const source = document.getElementById('sourceLang').value;
+    document.querySelectorAll('#translatePills .checkbox-pill').forEach(pill => {
+      const isSource = pill.dataset.lang === source;
+      pill.style.display = isSource ? 'none' : 'inline-flex';
+      if (isSource) {
+        const cb = pill.querySelector('input');
+        if (cb.checked) { cb.checked = false; onTranslateToggle(cb); }
+      }
+    });
+  }
+
+  function onTranslateToggle(checkbox) {
+    const lang = checkbox.value;
+    const pill = checkbox.closest('.checkbox-pill');
+    pill.classList.toggle('active', checkbox.checked);
+
+    const panelsContainer = document.getElementById('translationPanels');
+    let panel = document.getElementById('panel-' + lang);
+
+    if (checkbox.checked) {
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'translation-panel open';
+        panel.id = 'panel-' + lang;
+        panel.innerHTML = `
+          <div class="panel-title">${LANG_NAMES[lang]} <span class="badge-auto">Bản dịch</span></div>
+          <div class="form-group">
+            <label>Tiêu đề (${LANG_NAMES[lang]})</label>
+            <input type="text" class="form-control" placeholder="Tiêu đề đã dịch...">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Nội dung (${LANG_NAMES[lang]})</label>
+            <textarea class="form-control" placeholder="Nội dung đã dịch..."></textarea>
+          </div>
+        `;
+        panelsContainer.appendChild(panel);
+      } else {
+        panel.classList.add('open');
+      }
+    } else if (panel) {
+      panel.classList.remove('open');
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    onSourceLangChange();
+    // Nếu có ?id= trên URL nghĩa là đang sửa bài viết có sẵn
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id')) {
+      document.getElementById('formTitle').textContent = 'Chỉnh sửa bài viết';
+    }
+  });
+</script>
+</body>
+</html>

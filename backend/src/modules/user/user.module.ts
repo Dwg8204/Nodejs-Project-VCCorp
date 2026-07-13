@@ -26,6 +26,6 @@ import { AuthGuard, RolesGuard } from 'modules/user/middlewares/authMiddleware';
   ],
   controllers: [UserController],
   providers: [UserService, AuthGuard, RolesGuard],
-  exports: [UserService, AuthGuard, RolesGuard],
+  exports: [UserService, AuthGuard, RolesGuard, TypeOrmModule],
 })
 export class UserModule {}

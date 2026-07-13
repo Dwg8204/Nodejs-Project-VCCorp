@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Admin Dashboard – Medium</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+  .admin-main { padding: 24px 40px; }
+  .admin-main h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 32px;
+    font-weight: 400;
+    margin-bottom: 24px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .stat-card .num { font-size: 28px; font-weight: 700; }
+  .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+  .quick-links {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .quick-link-card {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .quick-link-card:hover { border-color: var(--text); }
+  .quick-link-card .icon { font-size: 28px; margin-bottom: 12px; }
+  .quick-link-card h3 { font-size: 16px; margin-bottom: 6px; }
+  .quick-link-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <a href="../index.html" class="logo">Medium</a>
+    <div class="search-box">&#128269; <span>Search</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-dropdown">
+      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <div class="lang-menu">
+        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
+    <span class="icon-btn">&#128276;</span>
+    <div class="avatar" style="background:#5A3FBF;">A</div>
+  </div>
+</div>
+
+<div class="layout no-rail" id="layoutRoot">
+  <aside class="sidebar">
+    <a href="index.html" class="active"><span class="icon">&#128202;</span> Dashboard</a>
+    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
+    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
+    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+    <hr>
+    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+  </aside>
+
+  <main class="admin-main">
+    <h1>Tổng quan hệ thống</h1>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">Người dùng</div></div>
+      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label">Bài viết</div></div>
+      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label">Danh mục</div></div>
+      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label">Ngôn ngữ</div></div>
+    </div>
+
+    <div class="quick-links">
+      <div class="quick-link-card" onclick="location.href='admin-users.html'">
+        <div class="icon">&#128101;</div>
+        <h3>Quản lý người dùng</h3>
+        <p>Xem, phân quyền, khóa/mở tài khoản người dùng trong hệ thống.</p>
+      </div>
+      <div class="quick-link-card" onclick="location.href='admin-categories.html'">
+        <div class="icon">&#128193;</div>
+        <h3>Quản lý danh mục</h3>
+        <p>Thêm, sửa, xóa các danh mục bài đăng hiển thị trên blog.</p>
+      </div>
+      <div class="quick-link-card" onclick="location.href='admin-languages.html'">
+        <div class="icon">&#127760;</div>
+        <h3>Quản lý ngôn ngữ</h3>
+        <p>Cấu hình danh sách ngôn ngữ hỗ trợ đa ngôn ngữ trên toàn hệ thống.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../shared.js"></script>
+<script src="../js/mockData.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Auth check
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+
+    // Fill stats
+    document.getElementById('stat-users').textContent = db.get('users').length;
+    document.getElementById('stat-posts').textContent = db.get('posts').length;
+    document.getElementById('stat-categories').textContent = db.get('categories').length;
+    document.getElementById('stat-languages').textContent = db.get('languages').length;
+  });
+</script>
+</body>
+</html>

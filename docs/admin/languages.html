@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Quản lý ngôn ngữ – Medium</title>
+<link rel="stylesheet" href="../shared.css">
+<style>
+  .admin-main { padding: 24px 40px; }
+  .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .admin-header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .add-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .add-row .form-control { max-width: 220px; }
+  .lang-name-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .default-star { color: #FFC017; }
+  .note-box {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <a href="../index.html" class="logo">Medium</a>
+    <div class="search-box">&#128269; <span>Search</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-dropdown">
+      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <div class="lang-menu">
+        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
+    <span class="icon-btn">&#128276;</span>
+    <div class="avatar" style="background:#5A3FBF;">A</div>
+  </div>
+</div>
+
+<div class="layout no-rail" id="layoutRoot">
+  <aside class="sidebar">
+    <a href="index.html"><span class="icon">&#128202;</span> Dashboard</a>
+    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
+    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
+    <a href="languages.html" class="active"><span class="icon">&#127760;</span> Manage languages</a>
+    <hr>
+    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-header">
+      <h1>Quản lý ngôn ngữ</h1>
+    </div>
+
+    <div class="note-box">
+      &#8505; Danh sách ngôn ngữ tại đây quyết định các lựa chọn ngôn ngữ mà chủ blog có thể dịch bài viết sang (ở trang "Viết bài"), cũng như lựa chọn hiển thị ngôn ngữ blog cho người đọc. Khi thêm/xóa ngôn ngữ ở đây, toàn bộ nội dung tĩnh (menu, About...) cũng cần có bản dịch tương ứng.
+    </div>
+
+    <div class="add-row">
+      <input type="text" class="form-control" id="newLangCode" placeholder="Mã (VD: ja)">
+      <input type="text" class="form-control" id="newLangName" placeholder="Tên ngôn ngữ (VD: 日本語)">
+      <button class="btn btn-primary" onclick="addLanguage()">+ Thêm ngôn ngữ</button>
+    </div>
+
+    <div class="card">
+      <table class="data-table" id="langTable">
+        <thead>
+          <tr>
+            <th>Ngôn ngữ</th>
+            <th>Mã</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="lang-tbody">
+          <!-- Rendered by js -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="../shared.js"></script>
+<script src="../js/mockData.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = db.getCurrentUser();
+    if (!user || user.role_id !== 1) {
+      alert('Vui lòng đăng nhập với tài khoản Super Admin!');
+      window.location.href = 'login.html';
+      return;
+    }
+    renderLanguages();
+  });
+
+  function renderLanguages() {
+    const languages = db.get('languages');
+    let html = '';
+    languages.forEach(lang => {
+      const isDefault = lang.code === 'vi';
+      const nameHtml = isDefault 
+        ? `${lang.name} <span class="default-star" title="Ngôn ngữ mặc định">&#9733;</span>` 
+        : lang.name;
+        
+      const actionBtn = isDefault
+        ? `<button class="btn btn-sm btn-outline" disabled title="Không thể xóa ngôn ngữ mặc định">Xóa</button>`
+        : `<button class="btn btn-sm btn-danger" onclick="deleteLanguage(${lang.id}, '${lang.name}')">Xóa</button>`;
+        
+      html += `
+        <tr>
+          <td class="lang-name-cell">${nameHtml}</td>
+          <td>${lang.code}</td>
+          <td>${actionBtn}</td>
+        </tr>
+      `;
+    });
+    document.getElementById('lang-tbody').innerHTML = html;
+  }
+
+  function addLanguage() {
+    const codeInput = document.getElementById('newLangCode');
+    const nameInput = document.getElementById('newLangName');
+    const code = codeInput.value.trim().toLowerCase();
+    const name = nameInput.value.trim();
+    
+    if (!code || !name) { alert('Vui lòng nhập đủ mã và tên ngôn ngữ.'); return; }
+    
+    const languages = db.get('languages');
+    if (languages.find(l => l.code === code)) {
+      alert('Mã ngôn ngữ này đã tồn tại!');
+      return;
+    }
+    
+    const newId = languages.length ? Math.max(...languages.map(l => l.id)) + 1 : 1;
+    languages.push({
+      id: newId,
+      code: code,
+      name: name,
+      created_at: new Date().toISOString()
+    });
+    
+    db.set('languages', languages);
+    codeInput.value = '';
+    nameInput.value = '';
+    renderLanguages();
+  }
+
+  function deleteLanguage(id, name) {
+    if (confirm('Xóa ngôn ngữ "' + name + '"?')) {
+      let languages = db.get('languages');
+      languages = languages.filter(l => l.id !== id);
+      db.set('languages', languages);
+      renderLanguages();
+    }
+  }
+</script>
+</body>
+</html>

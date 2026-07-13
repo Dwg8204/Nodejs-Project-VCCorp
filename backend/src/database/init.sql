@@ -174,3 +174,16 @@ INSERT INTO `users` (
 ('blogger3', 'blogger3@gmail.com', 'Lê Hoàng Blogger Ba',    '0933333333', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
 ('blogger4', 'blogger4@gmail.com', 'Phạm Minh Blogger Bốn',  '0944444444', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
 ('blogger5', 'blogger5@gmail.com', 'Hoàng Anh Blogger Năm',  '0955555555', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2);
+
+
+-- 1. Bổ sung trường xóa mềm cho bảng Danh mục (categories)
+ALTER TABLE `categories` 
+ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, NULL nghĩa là danh mục vẫn tồn tại';
+
+-- 2. Bổ sung trường xóa mềm cho bảng Ngôn ngữ (languages)
+ALTER TABLE `languages` 
+ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, NULL nghĩa là ngôn ngữ vẫn đang kích hoạt';
+
+-- 3. Bổ sung trường xóa mềm cho bảng Bình luận (comments)
+ALTER TABLE `comments` 
+ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, khi hiển thị nếu không NULL sẽ hiện chữ: Bình luận này đã bị xóa';

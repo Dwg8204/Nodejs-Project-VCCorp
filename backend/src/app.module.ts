@@ -12,6 +12,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
+import { LanguageModule } from 'modules/language/language.module';
+import { CategoryModule } from 'modules/category/category.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -40,12 +42,12 @@ import { AppController } from './app.controller';
     }),
 
     // =============================================================
-    // Import các module nghiệp vụ tại đây
-    // Ví dụ: CategoryModule, ProductModule, OrderModule, ...
-    // =============================================================
+    // Import các module nghiệp vụ
     // =============================================================
     UserModule,
     AuthModule,
+    LanguageModule,
+    CategoryModule,
   ],
   controllers: [AppController],
 })

@@ -15,10 +15,10 @@ const MOCK_DATA = {
     {
       id: 1,
       user_name: 'admin',
-      email: 'admin@gmail.com',
+      email: 'admin@vccorp.vn',
       full_name: 'Super Admin',
       is_active: true,
-      password_hash: '123456',
+      password_hash: 'hash_password_123',
       email_verified: true,
       role_id: 1,
       otp_code: null,
@@ -30,10 +30,10 @@ const MOCK_DATA = {
     {
       id: 2,
       user_name: 'ritakind',
-      email: 'blog@gmail.com',
+      email: 'rita.kind@vccorp.vn',
       full_name: 'Rita Kind-Envy',
       is_active: true,
-      password_hash: '123456',
+      password_hash: 'hash_password_123',
       email_verified: true,
       role_id: 2,
       otp_code: null,
@@ -45,10 +45,10 @@ const MOCK_DATA = {
     {
       id: 3,
       user_name: 'tenneyb',
-      email: 'user@gmail.com',
+      email: 'tenney.balogun@vccorp.vn',
       full_name: 'Tenney Balogun',
       is_active: true,
-      password_hash: '123456',
+      password_hash: 'hash_password_123',
       email_verified: true,
       role_id: 2,
       otp_code: null,
@@ -60,10 +60,10 @@ const MOCK_DATA = {
     {
       id: 4,
       user_name: 'jamess',
-      email: 'jamess@gmail.com',
+      email: 'james.baker@gmail.com',
       full_name: 'James S. Baker',
       is_active: true,
-      password_hash: '123456',
+      password_hash: 'hash_password_123',
       email_verified: true,
       role_id: 3,
       otp_code: null,
@@ -163,21 +163,6 @@ function initMockData() {
 
 // Chạy khởi tạo
 initMockData();
-
-// Hotfix: vá lỗi dữ liệu bài viết bị thiếu source_language_id (do lỗi cũ)
-(function fixLegacyPosts() {
-  const posts = JSON.parse(localStorage.getItem('db_posts') || '[]');
-  let changed = false;
-  posts.forEach(p => {
-    if (!p.source_language_id) {
-      p.source_language_id = 1; // Default to English
-      changed = true;
-    }
-  });
-  if (changed) {
-    localStorage.setItem('db_posts', JSON.stringify(posts));
-  }
-})();
 
 // Utility helpers để truy xuất dữ liệu dễ dàng hơn
 const db = {

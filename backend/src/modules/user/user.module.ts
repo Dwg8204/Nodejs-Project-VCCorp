@@ -9,35 +9,23 @@
 
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from 'modules/auth/auth.module';
 import { User } from 'modules/user/models/user';
+import { Role } from 'modules/user/models/role';
 import { UserController } from 'modules/user/controllers/userController';
 import { UserService } from 'modules/user/services/userService';
 import { AuthGuard, RolesGuard } from 'modules/user/middlewares/authMiddleware';
 
 @Module({
   imports: [
-    // Đăng ký Entity User với TypeORM
-    TypeOrmModule.forFeature([User]),
+    // Đăng ký Entity User và Role với TypeORM
+    TypeOrmModule.forFeature([User, Role]),
 
-    // Đăng ký JwtModule
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const expiresIn = configService.get<string>('JWT_EXPIRES_IN', '7d');
-        return {
-          secret: configService.get<string>('JWT_SECRET', 'default_secret'),
-          signOptions: {
-            expiresIn: expiresIn as any,
-          },
-        };
-      },
-    }),
+    // Đăng ký AuthModule
+    AuthModule,
   ],
   controllers: [UserController],
   providers: [UserService, AuthGuard, RolesGuard],
-  exports: [UserService, AuthGuard, RolesGuard, JwtModule],
+  exports: [UserService, AuthGuard, RolesGuard],
 })
 export class UserModule {}

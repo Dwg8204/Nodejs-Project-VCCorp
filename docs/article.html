@@ -13,7 +13,7 @@
     padding: 24px 20px 80px 20px;
   }
   .publication {
-    font-family: Georgia, serif;
+    font-family: inherit;
     font-weight: 700;
     font-size: 18px;
     padding: 16px 0;
@@ -38,7 +38,7 @@
     background: rgba(255, 192, 23, 0.12);
   }
   h1.title {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: inherit;
     font-size: 42px;
     line-height: 1.2;
     margin-bottom: 16px;
@@ -107,7 +107,7 @@
     padding: 24px 20px 80px 20px;
   }
   .responses-title {
-    font-family: Georgia, serif;
+    font-family: inherit;
     font-size: 26px;
     margin-bottom: 24px;
   }
@@ -170,7 +170,7 @@
   <div class="topbar-left">
     <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="index.html" class="logo">Medium</a>
-    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
+    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon> <span>Search</span></div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
@@ -187,11 +187,9 @@
 
 <div class="layout" id="layoutRoot">
   <!-- ===== Sidebar (kế thừa giống trang chủ) ===== -->
-        <aside class="sidebar" id="mainSidebar">
-    <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="home">Home</span></a>
-    <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-i18n="profile">Profile</span></a>
-    <a href="owner-posts.html" data-role-link="2" style="display:none;"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-i18n="manage_posts">Manage posts</span></a>
-    <a href="admin/index.html" data-role-link="1" style="display:none;"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-i18n="admin_dashboard">Admin dashboard</span></a>
+    <aside class="sidebar" id="mainSidebar">
+    <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> Home</a>
+    <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> Profile</a>
   </aside>
 
   <!-- ===== Article content ===== -->
@@ -232,11 +230,10 @@
     if (!currentUser) {
       const topbarRight = document.querySelector('.topbar-right');
       topbarRight.innerHTML = `
-        <a href="login.html" style="margin-right:15px; color:var(--text-muted); text-decoration:none;" data-i18n="sign_in">Sign In</a>
-        <a href="register.html" style="background:var(--text); color:var(--bg); padding:8px 16px; border-radius:20px; text-decoration:none;" data-i18n="get_started">Get Started</a>
+        <a href="login.html" style="margin-right:15px; color:var(--text-muted); text-decoration:none;">Sign In</a>
+        <a href="register.html" style="background:var(--text); color:var(--bg); padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
       `;
       document.getElementById('guest-comment-notice').style.display = 'flex';
-      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
     } else {
       document.getElementById('comment-input-area').style.display = 'flex';
       document.getElementById('current-user-avatar').textContent = (currentUser.full_name || currentUser.user_name || 'U').charAt(0).toUpperCase();
@@ -275,7 +272,7 @@
         <div>
           <a href="profile.html?id=${post.author_id}" class="author-name" style="color:inherit;">${post.author_name}</a>
         </div>
-        <button class="follow-btn" data-i18n="follow">Follow</button>
+        <button class="follow-btn">Follow</button>
         <div class="meta">${post.date_formatted}</div>
       </div>
 
@@ -333,7 +330,7 @@
             </div>
             <div class="comment-text" style="white-space:pre-wrap; word-break:break-word;">${renderMentionContent(c.content)}</div>
             <div class="comment-actions">
-              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id}, '${safeName}')" data-i18n="reply">Reply</span>
+              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id}, '${safeName}')">Reply</span>
             </div>
             <div id="reply-form-${c.id}" data-reply-to="${name}" style="display:none; margin-top: 10px;">
               <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">Đang trả lời <b style="color:var(--text);">${name}</b> <span style="cursor:pointer; margin-left:6px;" onclick="toggleReplyForm(${c.id}, '${safeName}')">&times;</span></div>

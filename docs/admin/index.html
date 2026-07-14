@@ -3,44 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-
 <title>Admin Dashboard – Medium</title>
 <link rel="stylesheet" href="../shared.css">
 <style>
   .admin-main { padding: 24px 40px; }
-  .admin-main h1 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 32px;
-    font-weight: 400;
-    margin-bottom: 24px;
-  }
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
-  }
-  .stat-card {
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
+  .admin-main h1 { font-family: inherit; font-size: 32px; font-weight: 400; margin-bottom: 24px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card { padding: 20px; border: 1px solid var(--border); border-radius: 10px; }
   .stat-card .num { font-size: 28px; font-weight: 700; }
   .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
-
-  .quick-links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-  .quick-link-card {
-    padding: 24px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    cursor: pointer;
-  }
+  .quick-links { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .quick-link-card { padding: 24px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color 0.15s; }
   .quick-link-card:hover { border-color: var(--text); }
-  .quick-link-card .icon { font-size: 28px; margin-bottom: 12px; }
+  .quick-link-card .icon { font-size: 28px; margin-bottom: 12px; color: var(--accent); }
   .quick-link-card h3 { font-size: 16px; margin-bottom: 6px; }
   .quick-link-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
 </style>
@@ -51,11 +26,15 @@
   <div class="topbar-left">
     <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
+    <div class="search-box-wrap">
+      <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+      <input class="search-input" type="text" placeholder="Search...">
+      <div class="search-results-dropdown"></div>
+    </div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">English</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
@@ -67,40 +46,38 @@
 </div>
 
 <div class="layout no-rail" id="layoutRoot">
-  <aside class="sidebar">
-    <a href="index.html" class="active"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-i18n="dashboard">Dashboard</span></a>
+  <aside class="sidebar" id="mainSidebar">
+    <a href="index.html" class="active"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> Dashboard</a>
     <a href="users.html"><span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span> Manage users</a>
     <a href="categories.html"><span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span> Manage categories</a>
     <a href="languages.html"><span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span> Manage languages</a>
     <hr>
-    <a href="../index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> Về trang blog</a>
+    <a href="../index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-vi="Về trang blog" data-en="Back to Blog">Back to Blog</span></a>
   </aside>
 
   <main class="admin-main">
-    <h1>Tổng quan hệ thống</h1>
-
+    <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
     <div class="stats-grid">
-      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">Người dùng</div></div>
-      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label">Bài viết</div></div>
-      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label">Danh mục</div></div>
-      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label">Ngôn ngữ</div></div>
+      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label" data-vi="Người dùng" data-en="Users">Users</div></div>
+      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label" data-vi="Bài viết" data-en="Posts">Posts</div></div>
+      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label" data-vi="Danh mục" data-en="Categories">Categories</div></div>
+      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label" data-vi="Ngôn ngữ" data-en="Languages">Languages</div></div>
     </div>
-
     <div class="quick-links">
       <div class="quick-link-card" onclick="location.href='users.html'">
         <div class="icon"><iconify-icon icon="solar:users-group-rounded-bold-duotone"></iconify-icon></div>
-        <h3>Quản lý người dùng</h3>
-        <p>Xem, phân quyền, khóa/mở tài khoản người dùng trong hệ thống.</p>
+        <h3 data-vi="Quản lý người dùng" data-en="Manage Users">Manage Users</h3>
+        <p data-vi="Xem, phân quyền, khóa/mở tài khoản người dùng." data-en="View, assign roles, lock/unlock accounts.">View, assign roles, lock/unlock accounts.</p>
       </div>
       <div class="quick-link-card" onclick="location.href='categories.html'">
         <div class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></div>
-        <h3>Quản lý danh mục</h3>
-        <p>Thêm, sửa, xóa các danh mục bài đăng hiển thị trên blog.</p>
+        <h3 data-vi="Quản lý danh mục" data-en="Manage Categories">Manage Categories</h3>
+        <p data-vi="Thêm, sửa, xóa các danh mục bài đăng." data-en="Add, edit, delete post categories.">Add, edit, delete post categories.</p>
       </div>
       <div class="quick-link-card" onclick="location.href='languages.html'">
         <div class="icon"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon></div>
-        <h3>Quản lý ngôn ngữ</h3>
-        <p>Cấu hình danh sách ngôn ngữ hỗ trợ đa ngôn ngữ trên toàn hệ thống.</p>
+        <h3 data-vi="Quản lý ngôn ngữ" data-en="Manage Languages">Manage Languages</h3>
+        <p data-vi="Cấu hình ngôn ngữ hỗ trợ đa ngôn ngữ." data-en="Configure supported languages.">Configure supported languages.</p>
       </div>
     </div>
   </main>
@@ -110,20 +87,18 @@
 <script src="../js/mockData.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    // Auth check
     const user = db.getCurrentUser();
     if (!user || user.role_id !== 1) {
-      alert('Vui lòng đăng nhập với tài khoản Admin!');
-      window.location.href = '../login.html';
+      showToast('Vui lòng đăng nhập với tài khoản Admin!', 'error');
+      setTimeout(() => window.location.href = '../login.html', 1500);
       return;
     }
     document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
-
-    // Fill stats
     document.getElementById('stat-users').textContent = db.get('users').length;
     document.getElementById('stat-posts').textContent = db.get('posts').length;
     document.getElementById('stat-categories').textContent = db.get('categories').length;
     document.getElementById('stat-languages').textContent = db.get('languages').length;
+    applyLanguage(localStorage.getItem('blog-lang') || 'vi');
   });
 </script>
 </body>

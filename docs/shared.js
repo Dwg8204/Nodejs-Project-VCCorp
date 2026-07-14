@@ -1,6 +1,4 @@
-/* ============================================================
-   SIDEBAR TOGGLE (desktop collapse + mobile drawer)
-   ============================================================ */
+// ============ Sidebar toggle (desktop collapse + mobile drawer) ============
 function ensureOverlay() {
   let overlay = document.querySelector('.sidebar-overlay');
   if (!overlay) {
@@ -30,13 +28,16 @@ function toggleSidebar(forceClose) {
   }
 }
 
-/* ============================================================
-   THEME (sáng / tối)
-   ============================================================ */
+// ============ Theme (sáng / tối) ============
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   document.querySelectorAll('.theme-toggle .knob iconify-icon').forEach(el => {
     el.setAttribute('icon', theme === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold');
+  });
+  document.querySelectorAll('.theme-toggle .knob').forEach(el => {
+    if (!el.querySelector('iconify-icon')) {
+      el.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}';
+    }
   });
   localStorage.setItem('blog-theme', theme);
 }
@@ -46,81 +47,59 @@ function toggleTheme() {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
-/* ============================================================
-   NGÔN NGỮ GIAO DIỆN (i18n) — dịch toàn bộ chrome tĩnh
-   ============================================================ */
-const I18N = {
-  vi: {
-    home: 'Home', profile: 'Profile', manage_posts: 'Quản lý bài viết', admin_dashboard: 'Bảng điều khiển Admin',
-    dashboard: 'Tổng quan', manage_users: 'Quản lý người dùng', manage_categories: 'Quản lý danh mục',
-    manage_languages: 'Quản lý ngôn ngữ', back_to_blog: 'Về trang blog',
-    search_placeholder: 'Tìm kiếm bài viết...', sign_in: 'Đăng nhập', get_started: 'Bắt đầu',
-    follow: 'Theo dõi', reply: 'Trả lời', logout: 'Đăng xuất',
-    all_categories: 'Tất cả danh mục', search_category: 'Tìm danh mục...',
-    write_new_post: '+ Viết bài mới', save_draft: 'Lưu nháp', publish: 'Xuất bản', cancel: 'Hủy', preview: 'Xem trước',
-    edit: 'Sửa', delete: 'Xóa', add_user: '+ Thêm người dùng', add_category: '+ Thêm danh mục', add_language: '+ Thêm ngôn ngữ',
-    search_user: 'Tìm theo tên hoặc email...', all_roles: 'Tất cả vai trò', all_status: 'Tất cả trạng thái',
-    active: 'Hoạt động', locked: 'Đã khóa', lock: 'Khóa', unlock: 'Mở khóa',
-  },
-  en: {
-    home: 'Home', profile: 'Profile', manage_posts: 'Manage posts', admin_dashboard: 'Admin Dashboard',
-    dashboard: 'Dashboard', manage_users: 'Manage users', manage_categories: 'Manage categories',
-    manage_languages: 'Manage languages', back_to_blog: 'Back to blog',
-    search_placeholder: 'Search stories...', sign_in: 'Sign In', get_started: 'Get Started',
-    follow: 'Follow', reply: 'Reply', logout: 'Logout',
-    all_categories: 'All categories', search_category: 'Search category...',
-    write_new_post: '+ New post', save_draft: 'Save draft', publish: 'Publish', cancel: 'Cancel', preview: 'Preview',
-    edit: 'Edit', delete: 'Delete', add_user: '+ Add user', add_category: '+ Add category', add_language: '+ Add language',
-    search_user: 'Search by name or email...', all_roles: 'All roles', all_status: 'All status',
-    active: 'Active', locked: 'Locked', lock: 'Lock', unlock: 'Unlock',
-  }
-};
+// ============ Ngôn ngữ hiển thị của blog (Dynamic) ============
+let LANG_LABELS = {};
+let LANG_TO_ID = {};
+let ID_TO_LANG = {};
 
-function t(key, lang) {
-  lang = lang || localStorage.getItem('blog-lang') || 'vi';
-  return (I18N[lang] && I18N[lang][key]) || (I18N.vi[key]) || key;
+function initDynamicLanguages() {
+  if (typeof db === 'undefined') return;
+  const dLanguages = db.get('languages') || [];
+  if (!dLanguages.length) return;
+  
+  dLanguages.forEach(l => {
+    LANG_LABELS[l.code] = `${l.flag || ''} ${l.name}`;
+    LANG_TO_ID[l.code] = l.id.toString();
+    ID_TO_LANG[l.id.toString()] = l.code;
+  });
+
+  // Re-render dropdowns dynamically
+  document.querySelectorAll('.lang-menu').forEach(menu => {
+    menu.innerHTML = dLanguages.map(l => 
+      `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${l.flag || ''} ${l.name}</a>`
+    ).join('');
+  });
 }
 
 function applyLanguage(lang) {
+  if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
+  
   localStorage.setItem('blog-lang', lang);
-  document.querySelectorAll('.lang-current-label').forEach(el => el.textContent = lang === 'en' ? 'English' : 'Tiếng Việt');
-  document.querySelectorAll('.lang-menu a').forEach(a => a.classList.toggle('active', a.dataset.lang === lang));
-
-  // Dịch mọi phần tử có data-i18n theo khóa trong từ điển I18N
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.dataset.i18n, lang);
+  document.querySelectorAll('.lang-current-label').forEach(el => {
+    el.textContent = LANG_LABELS[lang] || lang;
   });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder, lang));
+  document.querySelectorAll('.lang-menu a').forEach(a => {
+    a.classList.toggle('active', a.dataset.lang === lang);
   });
-
-  // Legacy: một số phần tử dùng data-vi/data-en trực tiếp
-  document.querySelectorAll('[data-vi][data-en]').forEach(el => {
-    el.textContent = el.dataset[lang] || el.dataset.vi;
+  // Apply data-vi / data-en translations across the whole page
+  document.querySelectorAll('[data-vi],[data-en]').forEach(el => {
+    const val = el.dataset[lang];
+    if (val !== undefined) el.textContent = val;
   });
-}
-
-// Trả về language_id tương ứng với 1 mã ngôn ngữ, tra cứu trực tiếp từ bảng languages
-// (không hardcode số để tránh lệch với dữ liệu thật, gây hiện tượng "chuyển ngôn ngữ bị ngược")
-function resolveLanguageId(langCode) {
-  if (typeof db !== 'undefined') {
-    const lang = db.get('languages').find(l => l.code === langCode);
-    if (lang) return String(lang.id);
-  }
-  return langCode === 'en' ? '2' : '1';
 }
 
 function selectLanguage(lang) {
   const prevLang = localStorage.getItem('blog-lang');
+  const newLangId = LANG_TO_ID[lang];
   const prevLangId = localStorage.getItem('current_language_id');
-  const newLangId = resolveLanguageId(lang);
+  const changed = prevLang !== lang || prevLangId !== newLangId;
 
   applyLanguage(lang);
   closeLangMenu();
-  localStorage.setItem('current_language_id', newLangId);
+  if (newLangId) localStorage.setItem('current_language_id', newLangId);
 
-  // Reload để mọi lệnh gọi db.getPostsWithDetails(langId) chạy lại đúng ngôn ngữ mới
-  if (prevLang !== lang || prevLangId !== newLangId) {
+  // Reload to re-filter posts by correct language
+  if (changed) {
     location.reload();
   }
 }
@@ -136,26 +115,149 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.category-dropdown')) {
     document.querySelectorAll('.category-dropdown-panel').forEach(p => p.classList.remove('open'));
   }
+  if (!e.target.closest('.search-box-wrap')) {
+    document.querySelectorAll('.search-results-dropdown').forEach(d => d.classList.remove('open'));
+  }
 });
 
-/* ============================================================
-   SIDEBAR: hiện/ẩn link theo vai trò — VỊ TRÍ CỐ ĐỊNH TRONG HTML,
-   không chèn động (tránh lỗi "chạy lung tung" do append trùng lặp)
-   ============================================================ */
-function applyRoleSidebarVisibility() {
-  if (typeof db === 'undefined') return;
-  const user = db.getCurrentUser();
-  const roleId = user ? user.role_id : null;
+// ============ ConfirmDialog — reusable modal thay confirm() native ============
+function showConfirm({ title = 'Xác nhận', message = '', confirmText = 'Xác nhận', cancelText = 'Hủy', danger = false, onConfirm, onCancel }) {
+  // Remove existing if any
+  const existing = document.getElementById('confirmDialogOverlay');
+  if (existing) existing.remove();
 
-  document.querySelectorAll('[data-role-link]').forEach(el => {
-    const requiredRole = parseInt(el.dataset.roleLink, 10);
-    el.style.display = (roleId === requiredRole) ? 'flex' : 'none';
+  const overlay = document.createElement('div');
+  overlay.id = 'confirmDialogOverlay';
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-modal" role="dialog" aria-modal="true">
+      <div class="confirm-icon ${danger ? 'danger' : 'info'}">
+        <iconify-icon icon="${danger ? 'solar:trash-bin-trash-bold-duotone' : 'solar:question-circle-bold-duotone'}"></iconify-icon>
+      </div>
+      <h3 class="confirm-title">${title}</h3>
+      <p class="confirm-message">${message}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline confirm-cancel-btn">${cancelText}</button>
+        <button class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} confirm-ok-btn">${confirmText}</button>
+      </div>
+    </div>
+  `;
+
+  overlay.querySelector('.confirm-cancel-btn').onclick = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 200);
+    if (onCancel) onCancel();
+  };
+  overlay.querySelector('.confirm-ok-btn').onclick = () => {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.remove(), 200);
+    if (onConfirm) onConfirm();
+  };
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('open');
+      setTimeout(() => overlay.remove(), 200);
+      if (onCancel) onCancel();
+    }
+  });
+
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('open'));
+}
+
+// ============ Toast Notification ============
+let _toastTimer = null;
+function showToast(message, type = 'success', duration = 3000) {
+  let toast = document.getElementById('globalToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'globalToast';
+    toast.className = 'global-toast';
+    document.body.appendChild(toast);
+  }
+  const icons = { success: 'solar:check-circle-bold-duotone', error: 'solar:close-circle-bold-duotone', info: 'solar:info-circle-bold-duotone' };
+  toast.innerHTML = `<iconify-icon icon="${icons[type] || icons.info}"></iconify-icon> ${message}`;
+  toast.className = `global-toast ${type} show`;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
+}
+
+// ============ Modal form helper ============
+function openModal(modalId) {
+  const m = document.getElementById(modalId);
+  if (m) { m.classList.add('open'); }
+}
+function closeModal(modalId) {
+  const m = document.getElementById(modalId);
+  if (m) { m.classList.remove('open'); }
+}
+
+// ============ Search (topbar) ============
+function initSearch(getPostsFn) {
+  const boxes = document.querySelectorAll('.search-box-wrap');
+  boxes.forEach(box => {
+    const input = box.querySelector('.search-input');
+    const dropdown = box.querySelector('.search-results-dropdown');
+    if (!input || !dropdown) return;
+
+    input.addEventListener('input', () => {
+      const kw = input.value.trim().toLowerCase();
+      if (!kw) { dropdown.classList.remove('open'); return; }
+      const posts = getPostsFn ? getPostsFn() : [];
+      const results = posts.filter(p =>
+        (p.title || '').toLowerCase().includes(kw) ||
+        (p.author_name || '').toLowerCase().includes(kw) ||
+        (p.category_name || '').toLowerCase().includes(kw)
+      ).slice(0, 6);
+
+      if (!results.length) {
+        dropdown.innerHTML = `<div class="search-empty">Không tìm thấy kết quả</div>`;
+      } else {
+        dropdown.innerHTML = results.map(p => `
+          <a href="article.html?id=${p.id}" class="search-result-item">
+            <div class="search-result-title">${p.title}</div>
+            <div class="search-result-meta">${p.author_name || ''} · ${p.category_name || ''}</div>
+          </a>`).join('');
+      }
+      dropdown.classList.add('open');
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); }
+      if (e.key === 'Enter') {
+        const kw = input.value.trim();
+        if (kw) { dropdown.classList.remove('open'); window.location.href = (window.location.pathname.includes('/admin/') ? '../' : '') + 'index.html?q=' + encodeURIComponent(kw); }
+      }
+    });
   });
 }
 
-/* ============================================================
-   ẢNH MẶC ĐỊNH KHI LỖI
-   ============================================================ */
+// ============ Sidebar: bổ sung link theo vai trò đang đăng nhập ============
+function injectRoleSidebarLinks() {
+  const sidebar = document.getElementById('mainSidebar');
+  if (!sidebar || typeof db === 'undefined') return;
+  const user = db.getCurrentUser();
+  if (!user) return;
+
+  const inAdminFolder = window.location.pathname.includes('/admin/');
+  const prefix = inAdminFolder ? '../' : '';
+
+  // Tránh inject duplicate
+  const hasOwnerLink = !!sidebar.querySelector('a[href$="owner-posts.html"]');
+  const hasAdminLink = !!sidebar.querySelector('a[href*="admin/index.html"], a[href="index.html"][data-admin]');
+
+  let extraHtml = '';
+  if (user.role_id === 2 && !hasOwnerLink) {
+    extraHtml += `<a href="${prefix}owner-posts.html"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>`;
+  }
+  if (user.role_id === 1 && !hasAdminLink) {
+    extraHtml += `<a href="${prefix}admin/index.html" data-admin><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-vi="Bảng điều khiển Admin" data-en="Admin Dashboard">Admin dashboard</span></a>`;
+  }
+  if (extraHtml) {
+    sidebar.insertAdjacentHTML('beforeend', `<hr>${extraHtml}`);
+  }
+}
+
 const FALLBACK_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="280" viewBox="0 0 400 280">
   <rect width="400" height="280" fill="#EDEBE7"/>
@@ -190,9 +292,7 @@ function applyBgFallback() {
   });
 }
 
-/* ============================================================
-   TEXTAREA TỰ GIÃN DÒNG (bình luận)
-   ============================================================ */
+// ============ Textarea tự giãn dòng (bình luận) ============
 function autoResizeTextarea(el) {
   el.style.height = 'auto';
   el.style.height = (el.scrollHeight) + 'px';
@@ -203,23 +303,23 @@ document.addEventListener('input', (e) => {
   }
 });
 
-/* ============================================================
-   TƯƠNG TÁC: LIKE / BOOKMARK
-   ============================================================ */
+// ============ Tương tác: Like / Bookmark ============
 function isPostLiked(postId) {
   if (typeof db === 'undefined') return false;
   const user = db.getCurrentUser();
   if (!user) return false;
   return db.get('post_likes').some(l => l.post_id === postId && l.user_id === user.id);
 }
+
 function getLikeCount(postId) {
   if (typeof db === 'undefined') return 0;
   return db.get('post_likes').filter(l => l.post_id === postId).length;
 }
+
 function toggleLike(postId, el) {
   if (typeof db === 'undefined') return;
   const user = db.getCurrentUser();
-  if (!user) { alert('Bạn cần đăng nhập để thực hiện chức năng này!'); return; }
+  if (!user) { showToast('Bạn cần đăng nhập để thực hiện chức năng này!', 'info'); return; }
 
   let likes = db.get('post_likes');
   const existing = likes.find(l => l.post_id === postId && l.user_id === user.id);
@@ -239,13 +339,15 @@ function toggleLike(postId, el) {
   const countEl = wrapper.querySelector('.like-count');
   if (countEl) countEl.textContent = getLikeCount(postId);
 }
+
 function isPostBookmarked(postId) {
   const list = JSON.parse(localStorage.getItem('bookmarked_posts') || '[]');
   return list.includes(postId);
 }
+
 function toggleBookmark(postId, el) {
   if (typeof db !== 'undefined' && !db.getCurrentUser()) {
-    alert('Bạn cần đăng nhập để thực hiện chức năng này!');
+    showToast('Bạn cần đăng nhập để thực hiện chức năng này!', 'info');
     return;
   }
   let list = JSON.parse(localStorage.getItem('bookmarked_posts') || '[]');
@@ -258,6 +360,7 @@ function toggleBookmark(postId, el) {
   const wrapper = el.closest('.bookmark-btn') || el;
   wrapper.classList.toggle('active', active);
 }
+
 function focusCommentBox() {
   const box = document.getElementById('newCommentText');
   const notice = document.getElementById('guest-comment-notice');
@@ -265,148 +368,64 @@ function focusCommentBox() {
   else if (notice) { notice.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
 
-/* ============================================================
-   COMPONENT DÙNG CHUNG: MODAL XÁC NHẬN (thay confirm()/alert())
-   ============================================================ */
-function ensureConfirmModalRoot() {
-  let root = document.getElementById('confirmModalRoot');
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'confirmModalRoot';
-    root.className = 'app-modal-overlay';
-    root.innerHTML = `
-      <div class="app-modal app-modal-sm">
-        <div class="app-modal-icon" id="confirmModalIcon"><iconify-icon icon="solar:danger-triangle-bold-duotone"></iconify-icon></div>
-        <div class="app-modal-title" id="confirmModalTitle">Xác nhận</div>
-        <div class="app-modal-text" id="confirmModalText"></div>
-        <div class="app-modal-actions">
-          <button class="btn btn-outline" id="confirmModalCancel">Hủy</button>
-          <button class="btn btn-danger-solid" id="confirmModalOk">Xác nhận</button>
-        </div>
-      </div>`;
-    document.body.appendChild(root);
-    root.addEventListener('click', (e) => { if (e.target === root) closeConfirmModal(); });
-  }
-  return root;
-}
-let _confirmModalCallback = null;
-function openConfirmModal(message, onConfirm, opts) {
-  opts = opts || {};
-  const root = ensureConfirmModalRoot();
-  document.getElementById('confirmModalTitle').textContent = opts.title || 'Xác nhận thao tác';
-  document.getElementById('confirmModalText').textContent = message;
-  const okBtn = document.getElementById('confirmModalOk');
-  okBtn.textContent = opts.okLabel || 'Xóa';
-  _confirmModalCallback = onConfirm;
-  okBtn.onclick = () => { closeConfirmModal(); if (_confirmModalCallback) _confirmModalCallback(); };
-  document.getElementById('confirmModalCancel').onclick = closeConfirmModal;
-  root.classList.add('open');
-}
-function closeConfirmModal() {
-  const root = document.getElementById('confirmModalRoot');
-  if (root) root.classList.remove('open');
-}
-
-/* ============================================================
-   COMPONENT DÙNG CHUNG: MODAL FORM (thêm / chỉnh sửa)
-   fields: [{name, label, type: 'text'|'select'|'checkbox', value, options:[{value,label}], placeholder}]
-   ============================================================ */
-function ensureFormModalRoot() {
-  let root = document.getElementById('formModalRoot');
-  if (!root) {
-    root = document.createElement('div');
-    root.id = 'formModalRoot';
-    root.className = 'app-modal-overlay';
-    root.innerHTML = `
-      <div class="app-modal">
-        <iconify-icon icon="solar:close-circle-bold-duotone" class="app-modal-close" onclick="closeFormModal()"></iconify-icon>
-        <div class="app-modal-title" id="formModalTitle">Thêm mới</div>
-        <div id="formModalBody"></div>
-        <div class="app-modal-actions">
-          <button class="btn btn-outline" onclick="closeFormModal()">Hủy</button>
-          <button class="btn btn-primary" id="formModalSubmit">Lưu</button>
-        </div>
-      </div>`;
-    document.body.appendChild(root);
-    root.addEventListener('click', (e) => { if (e.target === root) closeFormModal(); });
-  }
-  return root;
-}
-function openFormModal(config) {
-  const root = ensureFormModalRoot();
-  document.getElementById('formModalTitle').textContent = config.title || 'Thêm mới';
-  const body = document.getElementById('formModalBody');
-  body.innerHTML = config.fields.map(f => {
-    const id = 'fm_' + f.name;
-    if (f.type === 'select') {
-      const opts = f.options.map(o => `<option value="${o.value}" ${String(o.value) === String(f.value) ? 'selected' : ''}>${o.label}</option>`).join('');
-      return `<div class="form-group"><label>${f.label}</label><select class="form-control" id="${id}" ${f.disabled ? 'disabled' : ''}>${opts}</select></div>`;
-    }
-    if (f.type === 'checkbox') {
-      return `<div class="form-group"><label style="display:flex; align-items:center; gap:8px; font-weight:400;"><input type="checkbox" id="${id}" ${f.value ? 'checked' : ''}> ${f.label}</label></div>`;
-    }
-    return `<div class="form-group"><label>${f.label}</label><input type="${f.type || 'text'}" class="form-control" id="${id}" placeholder="${f.placeholder || ''}" value="${f.value != null ? f.value : ''}" ${f.disabled ? 'disabled' : ''}></div>`;
-  }).join('');
-
-  const submitBtn = document.getElementById('formModalSubmit');
-  submitBtn.textContent = config.submitLabel || 'Lưu';
-  submitBtn.onclick = () => {
-    const values = {};
-    config.fields.forEach(f => {
-      const el = document.getElementById('fm_' + f.name);
-      values[f.name] = f.type === 'checkbox' ? el.checked : el.value;
-    });
-    if (config.onSubmit(values) !== false) closeFormModal();
-  };
-  root.classList.add('open');
-}
-function closeFormModal() {
-  const root = document.getElementById('formModalRoot');
-  if (root) root.classList.remove('open');
-}
-
-/* ============================================================
-   TÌM KIẾM TRÊN TOPBAR
-   ============================================================ */
-function handleTopbarSearch(e) {
-  if (e.key !== 'Enter') return;
-  const keyword = e.target.value.trim();
-  const onIndex = /(^|\/)index\.html$/.test(window.location.pathname) || window.location.pathname.endsWith('/');
-  if (onIndex && typeof filterFeedByKeyword === 'function') {
-    filterFeedByKeyword(keyword);
-  } else {
-    const prefix = window.location.pathname.includes('/admin/') ? '../' : '';
-    window.location.href = `${prefix}index.html?search=${encodeURIComponent(keyword)}`;
-  }
-}
-
-/* ============================================================
-   KHỞI TẠO KHI TẢI TRANG
-   ============================================================ */
+// ============ Khởi tạo khi tải trang ============
 window.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('blog-theme') || 'light';
   applyTheme(savedTheme);
-  const savedLang = localStorage.getItem('blog-lang') || 'vi';
+  // Sync language: ensure current_language_id consistent with blog-lang
+  if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
+  
+  let savedLang = localStorage.getItem('blog-lang');
+  if (!savedLang) {
+    // try to get default from db
+    const dLangId = typeof db !== 'undefined' ? (db.get('settings')?.default_language_id || 2) : 2;
+    savedLang = ID_TO_LANG[dLangId.toString()] || 'vi';
+  }
+  
+  const savedLangId = localStorage.getItem('current_language_id');
+  if (savedLangId && ID_TO_LANG[savedLangId] && ID_TO_LANG[savedLangId] !== savedLang) {
+    localStorage.setItem('current_language_id', LANG_TO_ID[savedLang]);
+  } else if (!savedLangId && LANG_TO_ID[savedLang]) {
+    localStorage.setItem('current_language_id', LANG_TO_ID[savedLang]);
+  }
   applyLanguage(savedLang);
   ensureOverlay();
   applyBgFallback();
-  applyRoleSidebarVisibility();
+  injectRoleSidebarLinks();
 
-  // Logout
+  // Global Logout logic
   if (typeof db !== 'undefined') {
     const user = db.getCurrentUser();
     if (user) {
+      // Update avatar letter
+      document.querySelectorAll('.avatar').forEach(av => {
+        if (av.textContent.trim() === 'N' || av.textContent.trim() === 'A') {
+          av.textContent = (user.full_name || user.user_name || '?').charAt(0).toUpperCase();
+        }
+      });
+
       const topbarRight = document.querySelector('.topbar-right');
       if (topbarRight && !topbarRight.querySelector('.logout-link')) {
         const logoutBtn = document.createElement('a');
         logoutBtn.href = '#';
         logoutBtn.className = 'logout-link';
-        logoutBtn.textContent = t('logout');
-        logoutBtn.style.cssText = 'margin-left: 4px; color: var(--danger); text-decoration: none; font-size: 14px; font-weight: 600;';
+        logoutBtn.setAttribute('data-vi', 'Đăng xuất');
+        logoutBtn.setAttribute('data-en', 'Logout');
+        logoutBtn.textContent = 'Logout';
+        logoutBtn.style.cssText = 'margin-left:4px; color:var(--danger); text-decoration:none; font-size:14px; font-weight:600;';
         logoutBtn.onclick = (e) => {
           e.preventDefault();
-          db.logout();
-          window.location.href = window.location.pathname.includes('/admin/') ? '../login.html' : 'login.html';
+          showConfirm({
+            title: 'Đăng xuất',
+            message: 'Bạn có chắc muốn đăng xuất không?',
+            confirmText: 'Đăng xuất',
+            cancelText: 'Hủy',
+            danger: false,
+            onConfirm: () => {
+              db.logout();
+              window.location.href = window.location.pathname.includes('/admin/') ? '../login.html' : 'login.html';
+            }
+          });
         };
         topbarRight.appendChild(logoutBtn);
       }

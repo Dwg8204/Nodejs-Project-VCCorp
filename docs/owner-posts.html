@@ -3,6 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
   <title>Quản lý bài viết – Medium</title>
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -84,42 +86,35 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
-      <span class="write-link" onclick="location.href='post-form.html'">&#9998; Write</span>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout no-rail" id="layoutRoot">
-    <aside class="sidebar">
-      <a href="index.html"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <a href="owner-posts.html" class="active"><span class="icon">&#128221;</span> Manage posts</a>
-      <a href="#"><span class="icon">&#128202;</span> Stats</a>
-      <hr>
-      <a href="#"><span class="icon">&#128101;</span> Following</a>
+        <aside class="sidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-i18n="profile">Profile</span></a>
+      <a href="owner-posts.html" class="active"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-i18n="manage_posts">Manage posts</span></a>
     </aside>
 
     <main class="owner-main">
       <div class="owner-header">
         <h1>Quản lý bài viết</h1>
-        <a href="post-form.html" class="btn btn-primary">+ Viết bài mới</a>
+        <a href="post-form.html" class="btn btn-primary" data-i18n="write_new_post">+ Viết bài mới</a>
       </div>
 
       <div class="stats-row" id="stats-container">
@@ -127,7 +122,15 @@
       </div>
 
       <div class="card">
-        <table class="data-table">
+        <table class="data-table fixed-cols">
+          <colgroup>
+            <col style="width:34%;">
+            <col style="width:14%;">
+            <col style="width:13%;">
+            <col style="width:14%;">
+            <col style="width:15%;">
+            <col style="width:10%;">
+          </colgroup>
           <thead>
             <tr>
               <th>Tiêu đề</th>
@@ -203,15 +206,15 @@
 
         html += `
         <tr>
-          <td class="post-title-cell" onclick="location.href='article.html?id=${rp.id}'">${detail.title}</td>
+          <td class="post-title-cell wrap" onclick="location.href='article.html?id=${rp.id}'">${detail.title}</td>
           <td>${detail.category_name}</td>
           <td>VI / EN</td>
           <td>${statusBadge}</td>
           <td>${dateStr}</td>
           <td>
             <div class="action-icons">
-              <a href="post-form.html?id=${rp.id}" class="edit-icon" title="Sửa">&#9998;</a>
-              <button class="delete-icon" title="Xóa" onclick="deletePost(${rp.id}, '${detail.title}')">&#128465;</button>
+              <a href="post-form.html?id=${rp.id}" class="edit-icon" title="Sửa"><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon></a>
+              <button class="delete-icon" title="Xóa" onclick="deletePost(${rp.id}, '${detail.title}')"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>
             </div>
           </td>
         </tr>
@@ -222,13 +225,12 @@
     });
 
     function deletePost(id, title) {
-      if (confirm('Xóa bài viết "' + title + '"?')) {
+      openConfirmModal(`Xóa bài viết "${title}"?`, () => {
         const posts = db.get('posts');
         const filtered = posts.filter(p => p.id !== id);
         db.set('posts', filtered);
-        alert('Đã xóa bài viết!');
         location.reload();
-      }
+      }, { title: 'Xóa bài viết' });
     }
   </script>
 </body>

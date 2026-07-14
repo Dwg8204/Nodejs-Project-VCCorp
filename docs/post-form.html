@@ -3,6 +3,10 @@
 
 <head>
   <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
   <title>Viết bài – Medium</title>
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -56,6 +60,85 @@
       line-height: 1.5;
     }
 
+    /* Quill rich text editor */
+    #postContentEditor {
+      background: var(--card-bg);
+      color: var(--text);
+      min-height: 260px;
+      font-size: 16px;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+    .ql-toolbar.ql-snow {
+      border-color: var(--border-strong) !important;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      background: var(--bg-soft);
+    }
+    .ql-container.ql-snow { border-color: var(--border-strong) !important; }
+    .ql-snow .ql-stroke { stroke: var(--text) !important; }
+    .ql-snow .ql-fill { fill: var(--text) !important; }
+    .ql-snow .ql-picker { color: var(--text) !important; }
+    .ql-snow .ql-picker-options { background: var(--card-bg) !important; }
+    .ql-editor.ql-blank::before { color: var(--text-muted) !important; }
+
+    .panel-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    /* Preview modal */
+    .preview-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .preview-modal-overlay.open { display: flex; }
+    .preview-modal {
+      background: var(--card-bg);
+      border-radius: 12px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 32px;
+      position: relative;
+    }
+    .preview-modal .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--text-muted);
+    }
+    .preview-modal h1 {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 32px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .preview-modal .preview-content {
+      font-size: 17px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .preview-lang-badge {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
     .translate-pills {
       display: flex;
       flex-wrap: wrap;
@@ -99,42 +182,39 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout no-rail" id="layoutRoot">
-    <aside class="sidebar">
-      <a href="index.html"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <a href="owner-posts.html" class="active"><span class="icon">&#128221;</span> Manage posts</a>
-      <a href="#"><span class="icon">&#128202;</span> Stats</a>
+        <aside class="sidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-i18n="profile">Profile</span></a>
+      <a href="owner-posts.html" class="active"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-i18n="manage_posts">Manage posts</span></a>
     </aside>
 
     <main class="form-main">
       <div class="form-header">
         <h1 id="formTitle">Viết bài mới</h1>
         <div class="form-actions">
-          <a href="owner-posts.html" class="btn btn-outline">Hủy</a>
-          <button class="btn btn-outline" onclick="savePost('DRAFT')">Lưu nháp</button>
-          <button class="btn btn-primary" onclick="savePost('PUBLISHED')">Xuất bản</button>
+          <a href="owner-posts.html" class="btn btn-outline" data-i18n="cancel">Hủy</a>
+          <button class="btn btn-outline" onclick="openPreviewPicker()" data-i18n="preview"><iconify-icon icon="solar:eye-bold-duotone" style="margin-right:4px;"></iconify-icon>Xem trước</button>
+          <button class="btn btn-outline" onclick="savePost('DRAFT')" data-i18n="save_draft">Lưu nháp</button>
+          <button class="btn btn-primary" onclick="savePost('PUBLISHED')" data-i18n="publish">Xuất bản</button>
         </div>
       </div>
 
@@ -161,7 +241,7 @@
 
         <div class="form-group">
           <label>Nội dung bài viết</label>
-          <textarea id="postContent" class="form-control" placeholder="Viết nội dung ở đây..."></textarea>
+          <div id="postContentEditor"></div>
         </div>
 
         <div class="translate-section">
@@ -177,11 +257,21 @@
     </main>
   </div>
 
+  <div class="preview-modal-overlay" id="previewModalOverlay" onclick="if(event.target===this) closePreviewModal()">
+    <div class="preview-modal">
+      <iconify-icon icon="solar:close-circle-bold-duotone" class="close-btn" onclick="closePreviewModal()"></iconify-icon>
+      <span class="preview-lang-badge" id="previewLangBadge">English</span>
+      <h1 id="previewTitle">Tiêu đề</h1>
+      <div class="preview-content" id="previewContent"></div>
+    </div>
+  </div>
+
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
     let LANG_NAMES = {};
     let currentPostId = null;
+    let quill = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
@@ -190,6 +280,22 @@
         window.location.href = 'login.html';
         return;
       }
+
+      // Khởi tạo trình soạn thảo rich text
+      quill = new Quill('#postContentEditor', {
+        theme: 'snow',
+        placeholder: 'Viết nội dung ở đây...',
+        modules: {
+          toolbar: [
+            [{ header: [2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
 
       const languages = db.get('languages');
       const categories = db.get('categories');
@@ -205,6 +311,7 @@
         pillsHtml += `
         <label class="checkbox-pill" data-lang="${l.code}">
           <input type="checkbox" value="${l.code}" onchange="onTranslateToggle(this)"> ${l.name}
+          <iconify-icon icon="solar:eye-bold-duotone" class="preview-eye" style="display:none; margin-left:4px;" onclick="event.preventDefault(); previewTranslation('${l.code}')"></iconify-icon>
         </label>
       `;
       });
@@ -243,9 +350,65 @@
       });
     }
 
+    function openPreviewPicker() {
+      const sourceLang = document.getElementById('sourceLang').value;
+      const sourceLangObj = (db.get('languages')).find(l => l.code === sourceLang);
+      const checkedLangs = [...document.querySelectorAll('#translatePills input:checked')].map(cb => cb.value);
+
+      const options = [{ code: sourceLang, label: `${sourceLangObj ? sourceLangObj.name : sourceLang} (bản gốc)` }]
+        .concat(checkedLangs.map(code => ({ code, label: LANG_NAMES[code] || code })));
+
+      if (options.length === 1) {
+        previewLanguage(options[0].code, true);
+        return;
+      }
+
+      openFormModal({
+        title: 'Chọn ngôn ngữ cần xem trước',
+        submitLabel: 'Xem trước',
+        fields: [{ name: 'lang', label: 'Ngôn ngữ', type: 'select', options: options.map(o => ({ value: o.code, label: o.label })) }],
+        onSubmit: (values) => {
+          previewLanguage(values.lang, values.lang === sourceLang);
+        }
+      });
+    }
+
+    function previewLanguage(langCode, isSource) {
+      if (isSource) {
+        const title = document.getElementById('postTitle').value || '(Chưa có tiêu đề)';
+        const content = quill ? quill.root.innerHTML : '';
+        const lobj = (db.get('languages')).find(l => l.code === langCode);
+        showPreviewModal(title, content, lobj ? lobj.name : langCode);
+      } else {
+        previewTranslation(langCode);
+      }
+    }
+
     function onTranslateToggle(checkbox) {
       const pill = checkbox.closest('.checkbox-pill');
       pill.classList.toggle('active', checkbox.checked);
+      const eye = pill.querySelector('.preview-eye');
+      if (eye) eye.style.display = checkbox.checked ? 'inline-flex' : 'none';
+    }
+
+    function previewTranslation(langCode) {
+      const lobj = (db.get('languages')).find(l => l.code === langCode);
+      const title = document.getElementById('postTitle').value || '(Chưa có tiêu đề)';
+      const content = quill ? quill.root.innerHTML : '';
+      // Giả lập bản dịch tự động — thực tế sẽ gọi API dịch thuật
+      const tTitle = `[${lobj.name}] ${title}`;
+      const tContent = `<p><em>(Bản xem trước — nội dung tự động dịch sang ${lobj.name})</em></p>${content}`;
+      showPreviewModal(tTitle, tContent, lobj.name);
+    }
+
+    function showPreviewModal(title, content, langName) {
+      document.getElementById('previewLangBadge').textContent = langName;
+      document.getElementById('previewTitle').textContent = title;
+      document.getElementById('previewContent').innerHTML = content;
+      document.getElementById('previewModalOverlay').classList.add('open');
+    }
+    function closePreviewModal() {
+      document.getElementById('previewModalOverlay').classList.remove('open');
     }
 
     function loadPostData(postId) {
@@ -265,7 +428,7 @@
           document.getElementById('sourceLang').value = l.code;
           onSourceLangChange();
           document.getElementById('postTitle').value = mainTrans.title;
-          document.getElementById('postContent').value = mainTrans.content;
+          quill.root.innerHTML = mainTrans.content || '';
         }
       }
 
@@ -284,12 +447,13 @@
 
     function savePost(status) {
       const title = document.getElementById('postTitle').value;
-      const content = document.getElementById('postContent').value;
+      const content = quill ? quill.root.innerHTML : '';
+      const isEmpty = !quill || quill.getText().trim().length === 0;
       const catId = parseInt(document.getElementById('categoryId').value);
       const sourceLangCode = document.getElementById('sourceLang').value;
       const languages = db.get('languages');
 
-      if (!title || !content) {
+      if (!title || isEmpty) {
         alert("Vui lòng nhập tiêu đề và nội dung."); return;
       }
 

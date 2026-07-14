@@ -3,6 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
   <title>Medium</title>
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -13,21 +15,21 @@
     .tabs {
       display: flex;
       gap: 24px;
-      border-bottom: 1px solid #F2F2F2;
+      border-bottom: 1px solid var(--border);
       margin-bottom: 8px;
     }
 
     .tabs a {
       padding: 12px 0;
       font-size: 15px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       border-bottom: 2px solid transparent;
     }
 
     .tabs a.active {
-      color: #242424;
+      color: var(--text);
       font-weight: 600;
-      border-bottom: 2px solid #242424;
+      border-bottom: 2px solid var(--text);
     }
 
     .article-card {
@@ -35,7 +37,7 @@
       justify-content: space-between;
       gap: 24px;
       padding: 28px 0;
-      border-bottom: 1px solid #F2F2F2;
+      border-bottom: 1px solid var(--border);
     }
 
     .article-main {
@@ -48,7 +50,7 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
 
@@ -58,10 +60,6 @@
       border-radius: 4px;
       background: linear-gradient(135deg, #7C5CE0, #4A90E2);
       display: inline-block;
-    }
-
-    .source-badge.sport {
-      background: #1E90C9;
     }
 
     .article-title {
@@ -78,7 +76,7 @@
 
     .article-desc {
       font-size: 16px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 14px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -90,7 +88,7 @@
       display: flex;
       align-items: center;
       gap: 20px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       font-size: 14px;
     }
 
@@ -120,7 +118,7 @@
       align-items: center;
       gap: 8px;
       font-size: 13px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       padding: 20px 0 8px 0;
     }
 
@@ -129,7 +127,7 @@
       align-items: center;
       gap: 10px;
       font-size: 14px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 10px;
     }
 
@@ -147,48 +145,49 @@
   <!-- ===== Topbar ===== -->
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
       <span class="logo">Medium</span>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
-      <span class="write-link">&#9998; Write</span>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout" id="layoutRoot">
     <!-- ===== Sidebar ===== -->
-    <aside class="sidebar">
-      <a href="index.html" class="active"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <!-- <a href="#"><span class="icon">&#128221;</span> Stories</a>
-    <a href="#"><span class="icon">&#128202;</span> Stats</a> -->
-      <hr>
-      <a href="#"><span class="icon">&#128101;</span> Following</a>
-      <div class="follow-box">
-        Find writers and publications to follow.
-        <br><span class="see-suggestions">See suggestions</span>
-      </div>
+        <aside class="sidebar" id="mainSidebar">
+      <a href="index.html" class="active"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-i18n="profile">Profile</span></a>
+      <a href="owner-posts.html" data-role-link="2" style="display:none;"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-i18n="manage_posts">Manage posts</span></a>
+      <a href="admin/index.html" data-role-link="1" style="display:none;"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-i18n="admin_dashboard">Admin dashboard</span></a>
     </aside>
 
     <!-- ===== Main feed ===== -->
     <main class="feed-wrapper">
-      <div class="tabs">
-        <a href="#" class="active">For you</a>
-        <a href="#">Featured</a>
+      <div class="feed-header-row">
+        <div class="category-dropdown" id="categoryDropdown">
+          <button class="category-dropdown-btn" onclick="document.getElementById('categoryDropdownPanel').classList.toggle('open')">
+            <span><iconify-icon icon="solar:folder-bold-duotone" style="margin-right:6px;"></iconify-icon><span id="categoryDropdownLabel" data-i18n="all_categories">Tất cả danh mục</span></span>
+            <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+          </button>
+          <div class="category-dropdown-panel" id="categoryDropdownPanel">
+            <div class="category-search-box">
+              <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+              <input type="text" id="categorySearchInput" data-i18n-placeholder="search_category" placeholder="Tìm danh mục..." oninput="filterCategoryOptions(this.value)">
+            </div>
+            <div id="categoryOptionsList"><!-- Rendered by js --></div>
+          </div>
+        </div>
       </div>
 
       <div id="feed-articles">
@@ -214,42 +213,111 @@
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
-    function toggleSidebar() {
-      document.getElementById('layoutRoot').classList.toggle('sidebar-collapsed');
-    }
+    let allPosts = [];
+    let categoryOptions = [];
+    let currentCat = 'all';
+    let currentKeyword = '';
 
     // --- Render logic ---
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Setup Header based on Login status
       const currentUser = db.getCurrentUser();
       if (!currentUser) {
-        // Đổi Giao diện nếu chưa đăng nhập
         const topbarRight = document.querySelector('.topbar-right');
-        topbarRight.innerHTML = `
-        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
-        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
-      `;
+        topbarRight.insertAdjacentHTML('beforeend', `
+        <a href="login.html" style="margin-right:15px; color:var(--text-muted); text-decoration:none;" data-i18n="sign_in">Sign In</a>
+        <a href="register.html" style="background:var(--text); color:var(--bg); padding:8px 16px; border-radius:20px; text-decoration:none;" data-i18n="get_started">Get Started</a>
+      `);
+        applyLanguage(localStorage.getItem('blog-lang') || 'vi');
       }
 
-      // 2. Render Posts
+      // 2. Chuẩn bị dữ liệu bài viết theo ngôn ngữ đang chọn
       const langId = localStorage.getItem('current_language_id') || '1';
-      const posts = db.getPostsWithDetails(langId);
+      allPosts = db.getPostsWithDetails(langId).filter(post => {
+        const translations = db.get('post_translations');
+        return translations.some(t => t.post_id === post.id && String(t.language_id) === String(langId));
+      });
+
+      // 3. Chuẩn bị danh sách danh mục cho dropdown (kèm số bài)
+      const categories = db.get('categories');
+      const categoryTranslations = db.get('category_translation');
+      categoryOptions = [{ id: 'all', name: t('all_categories'), count: allPosts.length }];
+      categories.forEach(c => {
+        let tr = categoryTranslations.find(x => x.category_id === c.id && x.language_id == langId);
+        if (!tr) tr = categoryTranslations.find(x => x.category_id === c.id);
+        const count = allPosts.filter(p => p.category_id === c.id).length;
+        if (tr) categoryOptions.push({ id: c.id, name: tr.name, count });
+      });
+      renderCategoryOptions(categoryOptions);
+
+      // 4. Đọc query param ?search= và ?cat= nếu có (VD từ ô tìm kiếm topbar)
+      const params = new URLSearchParams(window.location.search);
+      currentKeyword = params.get('search') || '';
+      const initialCat = params.get('cat') || 'all';
+      selectCategory(initialCat);
+
+      // 5. Staff picks
+      renderStaffPicks();
+    });
+
+    function renderCategoryOptions(list) {
+      let html = '';
+      list.forEach(opt => {
+        html += `
+          <div class="category-option ${String(opt.id) === String(currentCat) ? 'active' : ''}" onclick="selectCategory('${opt.id}')">
+            <span>${opt.name}</span>
+            <span class="count">${opt.count}</span>
+          </div>`;
+      });
+      document.getElementById('categoryOptionsList').innerHTML = html || '<div style="padding:14px; color:var(--text-muted); font-size:14px;">Không tìm thấy danh mục</div>';
+    }
+
+    function filterCategoryOptions(keyword) {
+      const kw = keyword.trim().toLowerCase();
+      renderCategoryOptions(categoryOptions.filter(o => o.name.toLowerCase().includes(kw)));
+    }
+
+    function selectCategory(catId) {
+      currentCat = catId;
+      const matched = categoryOptions.find(o => String(o.id) === String(catId)) || categoryOptions[0];
+      if (matched) document.getElementById('categoryDropdownLabel').textContent = matched.name;
+      const panel = document.getElementById('categoryDropdownPanel');
+      if (panel) panel.classList.remove('open');
+      const searchInput = document.getElementById('categorySearchInput');
+      if (searchInput) searchInput.value = '';
+      renderCategoryOptions(categoryOptions);
+      renderFeed();
+    }
+
+    function filterFeedByKeyword(keyword) {
+      currentKeyword = keyword;
+      renderFeed();
+    }
+
+    function renderFeed() {
+      const filtered = allPosts.filter(post => {
+        const matchCat = currentCat === 'all' || String(post.category_id) === String(currentCat);
+        const matchKeyword = !currentKeyword || post.title.toLowerCase().includes(currentKeyword.toLowerCase());
+        return matchCat && matchKeyword;
+      });
 
       const container = document.getElementById('feed-articles');
       let html = '';
 
-      posts.forEach(post => {
-        // Trích xuất 1 đoạn ngắn text từ content html
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="padding:60px 0; text-align:center; color:var(--text-muted);">Không tìm thấy bài viết phù hợp.</div>`;
+        return;
+      }
+
+      filtered.forEach(post => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = post.content;
         const snippet = tempDiv.textContent || tempDiv.innerText || "";
         const shortDesc = snippet.length > 100 ? snippet.substring(0, 100) + '...' : snippet;
-
-        // Random 1 cái ảnh đại diện cho sinh động (thực tế lấy từ csdl)
         const randomImage = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
 
         html += `
-        <div class="article-card">
+        <div class="article-card" data-cat="${post.category_id}">
           <div class="article-main">
             <div class="article-source">
               <span class="source-badge"></span>
@@ -260,36 +328,38 @@
             </a>
             <div class="article-desc">${shortDesc}</div>
             <div class="article-meta">
-              <span class="meta-item">&#128075; ${post.likes}</span>
-              <span class="meta-item">&#128172; ${post.comments}</span>
+              <span class="meta-item like-btn ${isPostLiked(post.id) ? 'liked' : ''}" onclick="event.stopPropagation(); toggleLike(${post.id}, this)"><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon> <span class="like-count">${post.likes}</span></span>
+              <span class="meta-item comment-btn" onclick="location.href='article.html?id=${post.id}'"><iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon> ${post.comments}</span>
               <span class="spacer"></span>
-              <span class="meta-item" style="cursor:pointer;" onclick="alert('Đã bookmark!')">&#128278;</span>
-              <span class="meta-item">&#8943;</span>
+              <span class="meta-item bookmark-btn ${isPostBookmarked(post.id) ? 'active' : ''}" onclick="event.stopPropagation(); toggleBookmark(${post.id}, this)"><iconify-icon icon="solar:bookmark-bold-duotone"></iconify-icon></span>
+              <span class="meta-item"><iconify-icon icon="solar:menu-dots-bold"></iconify-icon></span>
             </div>
           </div>
           <a href="article.html?id=${post.id}">
-            <div class="article-thumb" style="background-image:url('${randomImage}');"></div>
+            <div class="article-thumb" style="background-image:url('${randomImage}');" data-fallback-bg="1"></div>
           </a>
         </div>
       `;
       });
       container.innerHTML = html;
+      applyBgFallback();
+    }
 
-      // 3. Render Staff Picks (Right Rail)
+    function renderStaffPicks() {
       const staffPicksContainer = document.getElementById('staff-picks-container');
       let picksHtml = '';
-      const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes).slice(0, 3);
+      const sortedPosts = [...allPosts].sort((a, b) => b.likes - a.likes).slice(0, 3);
       sortedPosts.forEach(post => {
         picksHtml += `
         <div class="pick">
           <div class="pick-source"><span class="badge" style="background:#7C5CE0;"></span> In ${post.category_name} by ${post.author_name}</div>
           <h4 onclick="location.href='article.html?id=${post.id}'" style="cursor:pointer">${post.title}</h4>
-          <div class="pick-date">&#10022; ${post.date_formatted}</div>
+          <div class="pick-date"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> ${post.date_formatted}</div>
         </div>
       `;
       });
       staffPicksContainer.innerHTML = picksHtml;
-    });
+    }
   </script>
 </body>
 

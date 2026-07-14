@@ -2,6 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
 <title>Quản lý danh mục – Medium</title>
 <link rel="stylesheet" href="../shared.css">
 <style>
@@ -30,46 +32,46 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
+    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
       </div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
     <div class="avatar" style="background:#5A3FBF;">A</div>
   </div>
 </div>
 
 <div class="layout no-rail" id="layoutRoot">
   <aside class="sidebar">
-    <a href="index.html"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="categories.html" class="active"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+    <a href="index.html"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-i18n="dashboard">Dashboard</span></a>
+    <a href="users.html"><span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span> <span data-i18n="manage_users">Manage users</span></a>
+    <a href="categories.html" class="active"><span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span> <span data-i18n="manage_categories">Manage categories</span></a>
+    <a href="languages.html"><span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span> <span data-i18n="manage_languages">Manage languages</span></a>
     <hr>
-    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+    <a href="../index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="back_to_blog">Về trang blog</span></a>
   </aside>
 
   <main class="admin-main">
     <div class="admin-header">
-      <h1>Quản lý danh mục</h1>
-    </div>
-
-    <div class="add-row">
-      <input type="text" class="form-control" id="newCatInput" placeholder="Tên danh mục mới...">
-      <button class="btn btn-primary" onclick="addCategory()">+ Thêm danh mục</button>
+      <h1 data-i18n="manage_categories">Quản lý danh mục</h1>
+      <button class="btn btn-primary" onclick="openAddCategoryModal()" data-i18n="add_category">+ Thêm danh mục</button>
     </div>
 
     <div class="card">
-      <table class="data-table" id="catTable">
+      <table class="data-table fixed-cols" id="catTable">
+        <colgroup>
+          <col style="width:60%;">
+          <col style="width:20%;">
+          <col style="width:20%;">
+        </colgroup>
         <thead>
           <tr>
             <th>Danh mục</th>
@@ -92,7 +94,7 @@
     const user = db.getCurrentUser();
     if (!user || user.role_id !== 1) {
       alert('Vui lòng đăng nhập với tài khoản Super Admin!');
-      window.location.href = 'login.html';
+      window.location.href = '../login.html';
       return;
     }
     renderCategories();
@@ -106,21 +108,21 @@
 
     let html = '';
     categories.forEach(cat => {
-      // Tìm bản dịch tiếng anh/việt
       let trans = translations.find(t => t.category_id === cat.id && t.language_id == langId);
-      if (!trans) trans = translations.find(t => t.category_id === cat.id); // fallback
-      
+      if (!trans) trans = translations.find(t => t.category_id === cat.id);
+
       const count = posts.filter(p => p.category_id === cat.id).length;
       const catName = trans ? trans.name : 'Chưa có tên';
+      const safeName = catName.replace(/'/g, "\\'");
 
       html += `
         <tr>
-          <td class="cat-name-cell">${catName}</td>
+          <td class="cat-name-cell wrap">${catName}</td>
           <td>${count}</td>
           <td>
             <div class="action-icons" style="display:flex; gap:12px;">
-              <button onclick="renameCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-              <button onclick="deleteCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
+              <button onclick="openEditCategoryModal(${cat.id}, '${safeName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);" title="Sửa"><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon></button>
+              <button onclick="confirmDeleteCategory(${cat.id}, '${safeName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);" title="Xóa"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>
             </div>
           </td>
         </tr>
@@ -129,59 +131,67 @@
     document.getElementById('cat-tbody').innerHTML = html;
   }
 
-  function addCategory() {
-    const input = document.getElementById('newCatInput');
-    const name = input.value.trim();
-    if (!name) return;
-    
-    const categories = db.get('categories');
-    const translations = db.get('category_translation');
-    const langId = localStorage.getItem('current_language_id') || '1';
-    
-    const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-    categories.push({ id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
-    
-    const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
-    translations.push({ id: newTransId, category_id: newId, language_id: parseInt(langId), name: name, des: '' });
-    
-    db.set('categories', categories);
-    db.set('category_translation', translations);
-    
-    input.value = '';
-    renderCategories();
-  }
+  function openAddCategoryModal() {
+    openFormModal({
+      title: 'Thêm danh mục mới',
+      submitLabel: 'Thêm',
+      fields: [{ name: 'name', label: 'Tên danh mục', type: 'text', placeholder: 'VD: Du lịch' }],
+      onSubmit: (values) => {
+        const name = values.name.trim();
+        if (!name) { alert('Vui lòng nhập tên danh mục.'); return false; }
 
-  function renameCategory(id, currentName) {
-    const newName = prompt('Đổi tên danh mục:', currentName);
-    if (newName && newName.trim()) {
-      const translations = db.get('category_translation');
-      const langId = localStorage.getItem('current_language_id') || '1';
-      
-      let trans = translations.find(t => t.category_id === id && t.language_id == langId);
-      if (trans) {
-        trans.name = newName.trim();
-      } else {
+        const categories = db.get('categories');
+        const translations = db.get('category_translation');
+        const langId = localStorage.getItem('current_language_id') || '1';
+
+        const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+        categories.push({ id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+
         const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
-        translations.push({ id: newTransId, category_id: id, language_id: parseInt(langId), name: newName.trim(), des: '' });
+        translations.push({ id: newTransId, category_id: newId, language_id: parseInt(langId), name: name, des: '' });
+
+        db.set('categories', categories);
+        db.set('category_translation', translations);
+        renderCategories();
       }
-      
-      db.set('category_translation', translations);
-      renderCategories();
-    }
+    });
   }
 
-  function deleteCategory(id, name) {
-    if (confirm('Xóa danh mục "' + name + '"? Các bài viết trong danh mục này cũng có thể bị ảnh hưởng.')) {
+  function openEditCategoryModal(id, currentName) {
+    openFormModal({
+      title: 'Chỉnh sửa danh mục',
+      submitLabel: 'Lưu thay đổi',
+      fields: [{ name: 'name', label: 'Tên danh mục', type: 'text', value: currentName }],
+      onSubmit: (values) => {
+        const newName = values.name.trim();
+        if (!newName) { alert('Tên danh mục không được để trống.'); return false; }
+
+        const translations = db.get('category_translation');
+        const langId = localStorage.getItem('current_language_id') || '1';
+
+        let trans = translations.find(t => t.category_id === id && t.language_id == langId);
+        if (trans) {
+          trans.name = newName;
+        } else {
+          const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
+          translations.push({ id: newTransId, category_id: id, language_id: parseInt(langId), name: newName, des: '' });
+        }
+        db.set('category_translation', translations);
+        renderCategories();
+      }
+    });
+  }
+
+  function confirmDeleteCategory(id, name) {
+    openConfirmModal(`Xóa danh mục "${name}"? Các bài viết trong danh mục này cũng có thể bị ảnh hưởng.`, () => {
       let categories = db.get('categories');
       let translations = db.get('category_translation');
-      
       categories = categories.filter(c => c.id !== id);
       translations = translations.filter(t => t.category_id !== id);
-      
       db.set('categories', categories);
       db.set('category_translation', translations);
       renderCategories();
-    }
+    }, { title: 'Xóa danh mục' });
   }
 </script>
 </body>

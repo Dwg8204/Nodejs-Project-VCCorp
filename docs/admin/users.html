@@ -2,6 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
 <title>Quản lý người dùng – Medium</title>
 <link rel="stylesheet" href="../shared.css">
 <style>
@@ -21,10 +23,11 @@
     display: flex;
     gap: 12px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
   }
   .filter-row .form-control { max-width: 220px; }
   .user-cell { display: flex; align-items: center; gap: 10px; }
-  .user-cell .mini-avatar { width: 30px; height: 30px; border-radius: 50%; background:#999; }
+  .user-cell .mini-avatar { width: 30px; height: 30px; border-radius: 50%; background:#999; flex-shrink:0; }
   select.role-select {
     border: 1px solid var(--border-strong);
     border-radius: 6px;
@@ -32,6 +35,16 @@
     font-size: 13px;
     background: var(--card-bg);
     color: var(--text);
+    width: 100%;
+  }
+  select.role-select:disabled { opacity: 0.6; cursor: not-allowed; }
+  .super-admin-lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
   }
 </style>
 </head>
@@ -39,52 +52,61 @@
 
 <div class="topbar">
   <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
+    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input type="text" data-i18n-placeholder="search_placeholder" placeholder="Tìm kiếm bài viết..." onkeydown="handleTopbarSearch(event)"></div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
       </div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
     <div class="avatar" style="background:#5A3FBF;">A</div>
   </div>
 </div>
 
 <div class="layout no-rail" id="layoutRoot">
   <aside class="sidebar">
-    <a href="index.html"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="users.html" class="active"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+    <a href="index.html"><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-i18n="dashboard">Dashboard</span></a>
+    <a href="users.html" class="active"><span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span> <span data-i18n="manage_users">Manage users</span></a>
+    <a href="categories.html"><span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span> <span data-i18n="manage_categories">Manage categories</span></a>
+    <a href="languages.html"><span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span> <span data-i18n="manage_languages">Manage languages</span></a>
     <hr>
-    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+    <a href="../index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-i18n="back_to_blog">Về trang blog</span></a>
   </aside>
 
   <main class="admin-main">
     <div class="admin-header">
-      <h1>Quản lý người dùng</h1>
-      <button class="btn btn-primary" onclick="alert('Mở form mời người dùng mới')">+ Thêm người dùng</button>
+      <h1 data-i18n="manage_users">Quản lý người dùng</h1>
+      <button class="btn btn-primary" onclick="openAddUserModal()" data-i18n="add_user">+ Thêm người dùng</button>
     </div>
 
     <div class="filter-row">
-      <input type="text" class="form-control" placeholder="Tìm theo tên hoặc email..." style="max-width:280px;">
-      <select class="form-control">
-        <option>Tất cả vai trò</option>
-        <option>Super Admin</option>
-        <option>Blog Owner</option>
-        <option>Authenticated User</option>
+      <input type="text" class="form-control" id="searchInput" data-i18n-placeholder="search_user" placeholder="Tìm theo tên hoặc email..." style="max-width:280px;" oninput="applyFilters()">
+      <select class="form-control" id="roleFilter" onchange="applyFilters()">
+        <option value="" data-i18n="all_roles">Tất cả vai trò</option>
+      </select>
+      <select class="form-control" id="statusFilter" onchange="applyFilters()">
+        <option value="" data-i18n="all_status">Tất cả trạng thái</option>
+        <option value="active" data-i18n="active">Hoạt động</option>
+        <option value="locked" data-i18n="locked">Đã khóa</option>
       </select>
     </div>
 
     <div class="card">
-      <table class="data-table">
+      <table class="data-table fixed-cols">
+        <colgroup>
+          <col style="width:22%;">
+          <col class="col-email">
+          <col style="width:16%;">
+          <col style="width:12%;">
+          <col style="width:13%;">
+          <col style="width:10%;">
+        </colgroup>
         <thead>
           <tr>
             <th>Người dùng</th>
@@ -106,42 +128,84 @@
 <script src="../shared.js"></script>
 <script src="../js/mockData.js"></script>
 <script>
+  let allUsers = [];
+  let allRoles = [];
+
   document.addEventListener('DOMContentLoaded', () => {
     const user = db.getCurrentUser();
     if (!user || user.role_id !== 1) {
       alert('Vui lòng đăng nhập với tài khoản Super Admin!');
-      window.location.href = 'login.html';
+      window.location.href = '../login.html';
       return;
     }
 
-    renderUsers();
+    allUsers = db.get('users');
+    allRoles = db.get('roles');
+
+    // Đổ danh sách vai trò vào bộ lọc
+    const roleFilter = document.getElementById('roleFilter');
+    allRoles.forEach(r => {
+      roleFilter.insertAdjacentHTML('beforeend', `<option value="${r.id}">${r.name_role}</option>`);
+    });
+
+    renderUsers(allUsers);
   });
 
-  function renderUsers() {
-    const users = db.get('users');
-    const roles = db.get('roles');
-    
-    let html = '';
-    users.forEach(u => {
-      const dateStr = new Date(u.created_at).toLocaleDateString();
-      const statusBadge = u.is_active 
-        ? '<span class="badge badge-green">Hoạt động</span>' 
-        : '<span class="badge badge-red">Đã khóa</span>';
-        
-      const actionBtn = u.is_active
-        ? `<button class="btn btn-sm btn-danger" onclick="toggleStatus(${u.id}, false)">Khóa</button>`
-        : `<button class="btn btn-sm btn-outline" onclick="toggleStatus(${u.id}, true)">Mở khóa</button>`;
+  // Số lượng Super Admin đang có trong hệ thống — chỉ 1 tài khoản mặc định, không cấp thêm qua UI
+  function getSuperAdminId() {
+    const superAdmin = allUsers.find(u => u.role_id === 1);
+    return superAdmin ? superAdmin.id : null;
+  }
 
-      const roleOptions = roles.map(r => 
-        `<option value="${r.id}" ${u.role_id === r.id ? 'selected' : ''}>${r.name_role}</option>`
-      ).join('');
+  function applyFilters() {
+    const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    const roleVal = document.getElementById('roleFilter').value;
+    const statusVal = document.getElementById('statusFilter').value;
+
+    const filtered = allUsers.filter(u => {
+      const name = (u.full_name || u.user_name || '').toLowerCase();
+      const matchKeyword = !keyword || name.includes(keyword) || (u.email || '').toLowerCase().includes(keyword);
+      const matchRole = !roleVal || String(u.role_id) === roleVal;
+      const matchStatus = !statusVal || (statusVal === 'active' ? u.is_active : !u.is_active);
+      return matchKeyword && matchRole && matchStatus;
+    });
+    renderUsers(filtered);
+  }
+
+  function renderUsers(list) {
+    const superAdminId = getSuperAdminId();
+    let html = '';
+    if (list.length === 0) {
+      document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:32px;">Không tìm thấy người dùng phù hợp.</td></tr>`;
+      return;
+    }
+
+    list.forEach(u => {
+      const isSuperAdmin = u.id === superAdminId;
+      const dateStr = new Date(u.created_at).toLocaleDateString();
+      const statusBadge = u.is_active
+        ? '<span class="badge badge-green" data-i18n="active">Hoạt động</span>'
+        : '<span class="badge badge-red" data-i18n="locked">Đã khóa</span>';
+
+      const actionBtn = isSuperAdmin
+        ? `<span class="super-admin-lock" title="Không thể khóa tài khoản Super Admin duy nhất"><iconify-icon icon="solar:lock-keyhole-bold-duotone"></iconify-icon></span>`
+        : (u.is_active
+            ? `<button class="btn btn-sm btn-danger" onclick="confirmToggleStatus(${u.id}, false, '${(u.full_name || u.user_name).replace(/'/g, "\\'")}')" data-i18n="lock">Khóa</button>`
+            : `<button class="btn btn-sm btn-outline" onclick="confirmToggleStatus(${u.id}, true, '${(u.full_name || u.user_name).replace(/'/g, "\\'")}')" data-i18n="unlock">Mở khóa</button>`);
+
+      // Super Admin: khóa cứng role select, không cho đổi vai trò của chính họ,
+      // đồng thời KHÔNG cho bất kỳ ai khác được gán lên vai trò Super Admin
+      const roleOptions = allRoles
+        .filter(r => r.id !== 1 || isSuperAdmin) // ẩn option "Super Admin" khỏi user thường
+        .map(r => `<option value="${r.id}" ${u.role_id === r.id ? 'selected' : ''}>${r.name_role}</option>`)
+        .join('');
 
       html += `
         <tr>
-          <td class="user-cell"><span class="mini-avatar"></span> ${u.full_name || u.user_name}</td>
+          <td class="user-cell wrap"><span class="mini-avatar"></span> ${u.full_name || u.user_name}</td>
           <td>${u.email}</td>
           <td>
-            <select class="role-select" onchange="changeRole(${u.id}, this.value)">
+            <select class="role-select" onchange="changeRole(${u.id}, this.value)" ${isSuperAdmin ? 'disabled title="Không thể đổi vai trò Super Admin"' : ''}>
               ${roleOptions}
             </select>
           </td>
@@ -151,28 +215,64 @@
         </tr>
       `;
     });
-    
+
     document.getElementById('users-tbody').innerHTML = html;
+    applyLanguage(localStorage.getItem('blog-lang') || 'vi');
   }
 
-  function toggleStatus(userId, isActive) {
-    const users = db.get('users');
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex > -1) {
-      users[userIndex].is_active = isActive;
-      db.set('users', users);
-      renderUsers();
-    }
+  function confirmToggleStatus(userId, willBeActive, name) {
+    const action = willBeActive ? 'mở khóa' : 'khóa';
+    openConfirmModal(`Bạn có chắc muốn ${action} tài khoản "${name}"?`, () => {
+      const users = db.get('users');
+      const idx = users.findIndex(u => u.id === userId);
+      if (idx > -1) {
+        users[idx].is_active = willBeActive;
+        db.set('users', users);
+        allUsers = users;
+        applyFilters();
+      }
+    }, { title: willBeActive ? 'Mở khóa tài khoản' : 'Khóa tài khoản', okLabel: willBeActive ? 'Mở khóa' : 'Khóa' });
   }
 
   function changeRole(userId, newRoleId) {
-    const users = db.get('users');
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex > -1) {
-      users[userIndex].role_id = parseInt(newRoleId);
-      db.set('users', users);
-      // alert('Đã cập nhật phân quyền!');
+    if (parseInt(newRoleId) === 1) {
+      alert('Không thể gán vai trò Super Admin cho tài khoản khác.');
+      renderUsers(allUsers);
+      return;
     }
+    const users = db.get('users');
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx > -1) {
+      users[idx].role_id = parseInt(newRoleId);
+      db.set('users', users);
+      allUsers = users;
+    }
+  }
+
+  function openAddUserModal() {
+    openFormModal({
+      title: 'Thêm người dùng mới',
+      submitLabel: 'Tạo tài khoản',
+      fields: [
+        { name: 'full_name', label: 'Họ và tên', type: 'text', placeholder: 'Nguyễn Văn A' },
+        { name: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com' },
+        { name: 'role_id', label: 'Vai trò', type: 'select', value: '3', options: allRoles.filter(r => r.id !== 1).map(r => ({ value: r.id, label: r.name_role })) },
+      ],
+      onSubmit: (values) => {
+        if (!values.full_name || !values.email) { alert('Vui lòng nhập đủ thông tin.'); return false; }
+        const users = db.get('users');
+        if (users.find(u => u.email === values.email)) { alert('Email này đã tồn tại!'); return false; }
+        const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+        users.push({
+          id: newId, user_name: values.email.split('@')[0], email: values.email, full_name: values.full_name,
+          is_active: true, password_hash: '123456', email_verified: false, role_id: parseInt(values.role_id),
+          created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+        });
+        db.set('users', users);
+        allUsers = users;
+        applyFilters();
+      }
+    });
   }
 </script>
 </body>

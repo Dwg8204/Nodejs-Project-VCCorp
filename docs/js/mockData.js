@@ -75,15 +75,15 @@ const MOCK_DATA = {
   ],
 
   languages: [
-    { id: 1, code: 'en', name: 'English', flag: '🇬🇧', created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' },
-    { id: 2, code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳', created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }
+    { id: 1, code: 'en', name: 'English', flag: '<img src="https://flagcdn.com/w20/gb.png" style="width:20px; vertical-align:middle; border-radius:2px; margin-top:-2px;" alt="English">', created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' },
+    { id: 2, code: 'vi', name: 'Tiếng Việt', flag: '<img src="https://flagcdn.com/w20/vn.png" style="width:20px; vertical-align:middle; border-radius:2px; margin-top:-2px;" alt="Tiếng Việt">', created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }
   ],
 
   categories: [
-    { id: 1, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, // UX/UI
-    { id: 2, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, // Sports
-    { id: 3, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, // Programming
-    { id: 4, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }  // Lifestyle
+    { id: 1, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, 
+    { id: 2, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, 
+    { id: 3, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }, 
+    { id: 4, created_at: '2026-07-01T00:00:00Z', updated_at: '2026-07-01T00:00:00Z' }  
   ],
 
   category_translation: [
@@ -145,9 +145,10 @@ const MOCK_DATA = {
 
 // Hàm khởi tạo Mock Data
 function initMockData() {
-  const isInitialized = localStorage.getItem('vccorp_mock_initialized');
+  // Đổi key để force reset trên máy bạn, tránh phải clear localStorage bằng tay
+  const isInitialized = localStorage.getItem('vccorp_mock_init_v2');
   if (!isInitialized) {
-    console.log('Khởi tạo Mock Data lần đầu...');
+    console.log('Khởi tạo Mock Data bản mới (V2)...');
     // Đẩy từng table vào localStorage
     Object.keys(MOCK_DATA).forEach(table => {
       localStorage.setItem(`db_${table}`, JSON.stringify(MOCK_DATA[table]));
@@ -156,15 +157,15 @@ function initMockData() {
     // Set current language default is English (id = 1)
     localStorage.setItem('current_language_id', '1');
 
-    // Đánh dấu đã khởi tạo
-    localStorage.setItem('vccorp_mock_initialized', 'true');
+    // Đánh dấu đã khởi tạo bản v2
+    localStorage.setItem('vccorp_mock_init_v2', 'true');
   }
 }
 
 // Chạy khởi tạo
 initMockData();
 
-// Hotfix: vá lỗi dữ liệu bài viết bị thiếu source_language_id (do lỗi cũ)
+// Hotfix: vá lỗi dữ liệu bài viết bị thiếu source_language_id
 (function fixLegacyPosts() {
   const posts = JSON.parse(localStorage.getItem('db_posts') || '[]');
   let changed = false;
@@ -179,12 +180,11 @@ initMockData();
   }
 })();
 
-// Utility helpers để truy xuất dữ liệu dễ dàng hơn
+// Utility helpers
 const db = {
   get: (table) => JSON.parse(localStorage.getItem(`db_${table}`) || '[]'),
   set: (table, data) => localStorage.setItem(`db_${table}`, JSON.stringify(data)),
 
-  // Hàm lấy data join (ví dụ lấy Post kèm thông tin Author và Category Translation)
   getPostsWithDetails: (languageId) => {
     const posts = db.get('posts').filter(p => p.status === 'PUBLISHED');
     const users = db.get('users');
@@ -196,19 +196,16 @@ const db = {
     return posts.map(post => {
       const author = users.find(u => u.id === post.author_id) || {};
 
-      // Tìm bản dịch bài viết theo ngôn ngữ, nếu không có fallback về source_language
       let postTrans = translations.find(t => t.post_id === post.id && t.language_id == languageId);
       if (!postTrans) {
         postTrans = translations.find(t => t.post_id === post.id && t.language_id == post.source_language_id) || {};
       }
 
-      // Tìm bản dịch danh mục
       let catTrans = categoryTrans.find(c => c.category_id === post.category_id && c.language_id == languageId);
       if (!catTrans) {
         catTrans = categoryTrans.find(c => c.category_id === post.category_id) || {};
       }
 
-      // Đếm like và comment
       const postLikeCount = likes.filter(l => l.post_id === post.id && l.is_liked).length;
       const postCommentCount = comments.filter(c => c.post_id === post.id).length;
 

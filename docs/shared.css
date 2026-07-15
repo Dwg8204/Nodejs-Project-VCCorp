@@ -245,7 +245,7 @@ a {
   margin: 0 auto;
   gap: 0;
   transition: grid-template-columns 0.2s ease;
-  align-items: start;
+  align-items: start; /* Cực kỳ quan trọng để 'sticky' hoạt động độc lập */
 }
 
 .layout.sidebar-collapsed {
@@ -260,18 +260,34 @@ a {
   grid-template-columns: 0px 1fr;
 }
 
+/* --- SỬA ĐỔI: Cố định Sidebar --- */
 .sidebar {
   padding: 24px 16px;
   border-right: 1px solid var(--border);
-  min-height: calc(100vh - 60px);
-  overflow-y: auto;
+  
+  /* Cố định vị trí khi cuộn trang */
+  position: sticky;
+  top: 60px; /* Bằng đúng chiều cao của Header/Topbar để không bị đè lên */
+  height: calc(100vh - 60px); /* Chiều cao chiếm trọn màn hình trừ Header */
+  
+  overflow-y: auto; /* Tự động xuất hiện thanh cuộn nếu danh sách tab quá dài */
   white-space: nowrap;
   transition: padding 0.2s ease;
+}
+
+/* Đảm bảo thanh cuộn của sidebar mượt và gọn gàng */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 
 .layout.sidebar-collapsed .sidebar {
   padding: 24px 0;
   border-right: none;
+  overflow: hidden; /* Ẩn hoàn toàn thanh cuộn khi thu nhỏ */
 }
 
 .sidebar a {
@@ -330,9 +346,25 @@ a {
 }
 
 /* ===== Right rail ===== */
+/* --- SỬA ĐỔI: Cố định Right Rail --- */
 .right-rail {
   padding: 24px 16px;
   border-left: 1px solid var(--border);
+  
+  /* Cố định vị trí khi cuộn trang */
+  position: sticky;
+  top: 60px; /* Khớp vị trí bắt đầu với sidebar */
+  height: calc(100vh - 60px);
+  overflow-y: auto; /* Cho phép cuộn độc lập nếu content cột phải quá dài */
+}
+
+/* Đảm bảo thanh cuộn của Right Rail mượt */
+.right-rail::-webkit-scrollbar {
+  width: 4px;
+}
+.right-rail::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 
 .right-rail h3 {

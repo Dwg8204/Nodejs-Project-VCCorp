@@ -58,7 +58,8 @@ function initDynamicLanguages() {
   if (!dLanguages.length) return;
   
   dLanguages.forEach(l => {
-    LANG_LABELS[l.code] = `${l.flag || ''} ${l.name}`;
+    // Bao bọc tên vào span để canh giữa dòng chuẩn xác với thẻ img của cờ
+    LANG_LABELS[l.code] = `${l.flag || ''} <span style="vertical-align:middle; display:inline-block; margin-left:4px;">${l.name}</span>`;
     LANG_TO_ID[l.code] = l.id.toString();
     ID_TO_LANG[l.id.toString()] = l.code;
   });
@@ -66,7 +67,7 @@ function initDynamicLanguages() {
   // Re-render dropdowns dynamically
   document.querySelectorAll('.lang-menu').forEach(menu => {
     menu.innerHTML = dLanguages.map(l => 
-      `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${l.flag || ''} ${l.name}</a>`
+      `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${l.flag || ''} <span style="vertical-align:middle; display:inline-block; margin-left:6px;">${l.name}</span></a>`
     ).join('');
   });
 }
@@ -75,12 +76,16 @@ function applyLanguage(lang) {
   if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
   
   localStorage.setItem('blog-lang', lang);
+  
+  // Dùng innerHTML thay vì textContent để render được thẻ <img> của cờ
   document.querySelectorAll('.lang-current-label').forEach(el => {
-    el.textContent = LANG_LABELS[lang] || lang;
+    el.innerHTML = LANG_LABELS[lang] || lang; 
   });
+  
   document.querySelectorAll('.lang-menu a').forEach(a => {
     a.classList.toggle('active', a.dataset.lang === lang);
   });
+  
   // Apply data-vi / data-en translations across the whole page
   document.querySelectorAll('[data-vi],[data-en]').forEach(el => {
     const val = el.dataset[lang];
@@ -122,7 +127,6 @@ document.addEventListener('click', (e) => {
 
 // ============ ConfirmDialog — reusable modal thay confirm() native ============
 function showConfirm({ title = 'Xác nhận', message = '', confirmText = 'Xác nhận', cancelText = 'Hủy', danger = false, onConfirm, onCancel }) {
-  // Remove existing if any
   const existing = document.getElementById('confirmDialogOverlay');
   if (existing) existing.remove();
 
@@ -372,12 +376,17 @@ function focusCommentBox() {
 window.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('blog-theme') || 'light';
   applyTheme(savedTheme);
+  
+  // Đưa hàm injectRoleSidebarLinks lên TRƯỚC applyLanguage để đảm bảo DOM sidebar hoàn chỉnh
+  ensureOverlay();
+  applyBgFallback();
+  injectRoleSidebarLinks();
+
   // Sync language: ensure current_language_id consistent with blog-lang
   if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
   
   let savedLang = localStorage.getItem('blog-lang');
   if (!savedLang) {
-    // try to get default from db
     const dLangId = typeof db !== 'undefined' ? (db.get('settings')?.default_language_id || 2) : 2;
     savedLang = ID_TO_LANG[dLangId.toString()] || 'vi';
   }
@@ -388,16 +397,14 @@ window.addEventListener('DOMContentLoaded', () => {
   } else if (!savedLangId && LANG_TO_ID[savedLang]) {
     localStorage.setItem('current_language_id', LANG_TO_ID[savedLang]);
   }
+  
+  // Gọi hàm gán ngôn ngữ dịch thuật
   applyLanguage(savedLang);
-  ensureOverlay();
-  applyBgFallback();
-  injectRoleSidebarLinks();
 
   // Global Logout logic
   if (typeof db !== 'undefined') {
     const user = db.getCurrentUser();
     if (user) {
-      // Update avatar letter
       document.querySelectorAll('.avatar').forEach(av => {
         if (av.textContent.trim() === 'N' || av.textContent.trim() === 'A') {
           av.textContent = (user.full_name || user.user_name || '?').charAt(0).toUpperCase();

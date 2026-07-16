@@ -199,16 +199,16 @@
       <div class="modal-body">
         <div class="form-group">
           <label>Mã ngôn ngữ <span style="color:var(--text-muted);font-weight:400;">(VD: ja, fr, de)</span></label>
-          <input type="text" id="newLangCode" class="form-control" placeholder="ja" maxlength="5">
+          <input type="text" id="newLangCode" class="form-control" placeholder="ja" maxlength="5" oninput="document.getElementById('newLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
         </div>
         <div class="form-group">
           <label>Tên ngôn ngữ</label>
           <input type="text" id="newLangName" class="form-control" placeholder="日本語">
         </div>
         <div class="form-group">
-          <label>Emoji cờ <span style="color:var(--text-muted);font-weight:400;">(VD: 🇯🇵)</span></label>
-          <input type="text" id="newLangFlag" class="form-control" placeholder="🇯🇵" maxlength="4">
-          <div class="hint">Nhập emoji cờ quốc gia (copy từ 🌐 hoặc tìm "flag emoji")</div>
+          <label>Cờ</label>
+          <div id="newLangFlagPreview" style="padding:6px 0;"><img src="https://flagcdn.com/w40/un.png" width="20" alt="flag" style="vertical-align:middle; border-radius:2px;"></div>
+          <div class="hint">Cờ được tự động lấy theo mã ngôn ngữ, không cần nhập tay.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -230,15 +230,16 @@
         <input type="hidden" id="editLangId">
         <div class="form-group">
           <label>Mã ngôn ngữ</label>
-          <input type="text" id="editLangCode" class="form-control" maxlength="5">
+          <input type="text" id="editLangCode" class="form-control" maxlength="5" oninput="document.getElementById('editLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
         </div>
         <div class="form-group">
           <label>Tên ngôn ngữ</label>
           <input type="text" id="editLangName" class="form-control">
         </div>
         <div class="form-group">
-          <label>Emoji cờ</label>
-          <input type="text" id="editLangFlag" class="form-control" maxlength="4">
+          <label>Cờ</label>
+          <div id="editLangFlagPreview" style="padding:6px 0;"></div>
+          <div class="hint">Cờ được tự động lấy theo mã ngôn ngữ, không cần nhập tay.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -279,7 +280,7 @@
       }
       document.getElementById('lang-tbody').innerHTML = languages.map(lang => {
         const isDefault = lang.id === defaultLangId;
-        const flagHtml = lang.flag ? `<span style="font-size:24px;">${lang.flag}</span>` : '<span style="color:var(--text-muted);font-size:13px;">–</span>';
+        const flagHtml = flagImgFor(lang.code, 22);
         const nameHtml = `<span class="lang-name-cell">${lang.name} ${isDefault ? '<span class="default-star" title="Ngôn ngữ mặc định"><iconify-icon icon="solar:star-bold" style="color:#FFC017;"></iconify-icon></span>' : ''}</span>`;
         const defaultLabel = isDefault
           ? '<span class="badge badge-green"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> Mặc định</span>'
@@ -325,14 +326,13 @@
     function openAddModal() {
       document.getElementById('newLangCode').value = '';
       document.getElementById('newLangName').value = '';
-      document.getElementById('newLangFlag').value = '';
+      document.getElementById('newLangFlagPreview').innerHTML = flagImgFor('', 22);
       openModal('addLangModal');
     }
 
     function submitAddLanguage() {
       const code = document.getElementById('newLangCode').value.trim().toLowerCase();
       const name = document.getElementById('newLangName').value.trim();
-      const flag = document.getElementById('newLangFlag').value.trim();
 
       if (!code || !name) { showToast('Vui lòng nhập mã và tên ngôn ngữ!', 'error'); return; }
 
@@ -340,7 +340,7 @@
       if (languages.find(l => l.code === code)) { showToast('Mã ngôn ngữ này đã tồn tại!', 'error'); return; }
 
       const newId = languages.length ? Math.max(...languages.map(l => l.id)) + 1 : 1;
-      languages.push({ id: newId, code, name, flag, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+      languages.push({ id: newId, code, name, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
       db.set('languages', languages);
       showToast('Đã thêm ngôn ngữ!', 'success');
       closeModal('addLangModal');
@@ -354,7 +354,7 @@
       document.getElementById('editLangId').value = lang.id;
       document.getElementById('editLangCode').value = lang.code;
       document.getElementById('editLangName').value = lang.name;
-      document.getElementById('editLangFlag').value = lang.flag || '';
+      document.getElementById('editLangFlagPreview').innerHTML = flagImgFor(lang.code, 22);
       openModal('editLangModal');
     }
 
@@ -362,14 +362,13 @@
       const id = parseInt(document.getElementById('editLangId').value);
       const code = document.getElementById('editLangCode').value.trim().toLowerCase();
       const name = document.getElementById('editLangName').value.trim();
-      const flag = document.getElementById('editLangFlag').value.trim();
 
       if (!code || !name) { showToast('Vui lòng nhập mã và tên ngôn ngữ!', 'error'); return; }
 
       const languages = db.get('languages');
       const idx = languages.findIndex(l => l.id === id);
       if (idx > -1) {
-        languages[idx] = { ...languages[idx], code, name, flag, updated_at: new Date().toISOString() };
+        languages[idx] = { ...languages[idx], code, name, updated_at: new Date().toISOString() };
         db.set('languages', languages);
         showToast('Đã cập nhật ngôn ngữ!', 'success');
         closeModal('editLangModal');

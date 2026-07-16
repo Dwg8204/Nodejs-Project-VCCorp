@@ -47,6 +47,27 @@ function toggleTheme() {
   applyTheme(current === 'dark' ? 'light' : 'dark');
 }
 
+// ============ CỜ NGÔN NGỮ — luôn là ẢNH THẬT, tự tính từ mã ngôn ngữ ============
+// Mã ngôn ngữ (ISO 639) không trùng mã quốc gia (ISO 3166) dùng cho ảnh cờ,
+// nên cần bảng ánh xạ. Ngôn ngữ mới thêm ở Admin sẽ TỰ ĐỘNG có cờ đúng nếu
+// mã đã có trong bảng bên dưới; nếu là mã lạ sẽ tự dùng cờ "un" (Liên Hợp Quốc)
+// làm mặc định — chỉ cần bổ sung thêm 1 dòng vào bảng này khi phát sinh mã mới.
+const LANG_TO_COUNTRY = {
+  vi: 'vn', en: 'gb', ja: 'jp', ko: 'kr', fr: 'fr', zh: 'cn',
+  es: 'es', de: 'de', th: 'th', ru: 'ru', pt: 'pt', it: 'it',
+  id: 'id', ar: 'sa', hi: 'in', nl: 'nl', pl: 'pl', tr: 'tr'
+};
+function flagImgFor(code, size) {
+  size = size || 20;
+  // flagcdn.com chỉ hỗ trợ các bucket kích thước cố định: 20,40,80,160,320,640,1280,2560
+  // -> làm tròn lên bucket hợp lệ gần nhất để tránh URL 404 khi có nơi truyền size lẻ (VD 22)
+  const VALID_BUCKETS = [20, 40, 80, 160, 320, 640, 1280, 2560];
+  const wanted = size * 2;
+  const bucket = VALID_BUCKETS.find(b => b >= wanted) || VALID_BUCKETS[VALID_BUCKETS.length - 1];
+  const country = LANG_TO_COUNTRY[(code || '').toLowerCase()] || 'un';
+  return `<img src="https://flagcdn.com/w${bucket}/${country}.png" width="${size}" alt="${code}" style="vertical-align:middle; border-radius:2px; box-shadow:0 0 0 1px rgba(0,0,0,0.08);">`;
+}
+
 // ============ Ngôn ngữ hiển thị của blog (Dynamic) ============
 let LANG_LABELS = {};
 let LANG_TO_ID = {};
@@ -58,8 +79,8 @@ function initDynamicLanguages() {
   if (!dLanguages.length) return;
   
   dLanguages.forEach(l => {
-    // Bao bọc tên vào span để canh giữa dòng chuẩn xác với thẻ img của cờ
-    LANG_LABELS[l.code] = `${l.flag || ''} <span style="vertical-align:middle; display:inline-block; margin-left:4px;">${l.name}</span>`;
+    // Bao bọc tên vào span để canh giữa dòng chuẩn xác với ảnh cờ
+    LANG_LABELS[l.code] = `${flagImgFor(l.code)} <span style="vertical-align:middle; display:inline-block; margin-left:4px;">${l.name}</span>`;
     LANG_TO_ID[l.code] = l.id.toString();
     ID_TO_LANG[l.id.toString()] = l.code;
   });
@@ -67,7 +88,7 @@ function initDynamicLanguages() {
   // Re-render dropdowns dynamically
   document.querySelectorAll('.lang-menu').forEach(menu => {
     menu.innerHTML = dLanguages.map(l => 
-      `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${l.flag || ''} <span style="vertical-align:middle; display:inline-block; margin-left:6px;">${l.name}</span></a>`
+      `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${flagImgFor(l.code)} <span style="vertical-align:middle; display:inline-block; margin-left:6px;">${l.name}</span></a>`
     ).join('');
   });
 }

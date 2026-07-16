@@ -436,10 +436,10 @@
       let pillsHtml = '';
       languages.forEach(l => {
         LANG_NAMES[l.code] = l.name;
-        langOptionsHtml += `<option value="${l.code}">${l.flag || ''} ${l.name}</option>`;
+        langOptionsHtml += `<option value="${l.code}">${l.name}</option>`;
         pillsHtml += `
           <label class="checkbox-pill" data-lang="${l.code}">
-            <input type="checkbox" value="${l.code}" onchange="onTranslateToggle(this)"> ${l.flag || ''} ${l.name}
+            <input type="checkbox" value="${l.code}" onchange="onTranslateToggle(this)"> ${flagImgFor(l.code)} ${l.name}
           </label>`;
       });
       document.getElementById('sourceLang').innerHTML = langOptionsHtml;
@@ -500,7 +500,7 @@
       const title = document.getElementById('postTitle')?.value || '(Chưa có tiêu đề)';
       const content = quill ? quill.root.innerHTML : '';
       const lObj = LANG_OBJS.find(l => l.code === lang);
-      const langName = lObj ? `${lObj.flag || ''} ${lObj.name}` : lang;
+      const langName = lObj ? `${flagImgFor(lObj.code)} ${lObj.name}` : lang;
 
       let previewTitle = title;
       let previewContent = content;
@@ -508,7 +508,7 @@
         previewTitle = `[${lObj ? lObj.name : lang}] ${title}`;
         previewContent = `<p><em style="color:var(--text-muted)">(Bản xem trước — sẽ được tự động dịch sang ${lObj ? lObj.name : lang})</em></p>${content}`;
       }
-      document.getElementById('previewLangBadge').textContent = langName;
+      document.getElementById('previewLangBadge').innerHTML = langName;
       document.getElementById('previewPanelTitle').textContent = previewTitle || '(Chưa có tiêu đề)';
       document.getElementById('previewPanelContent').innerHTML = previewContent;
     }

@@ -241,8 +241,8 @@ a {
 .layout {
   display: grid;
   grid-template-columns: 220px 1fr 300px;
-  max-width: 1336px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   gap: 0;
   transition: grid-template-columns 0.2s ease;
   align-items: start; /* Cực kỳ quan trọng để 'sticky' hoạt động độc lập */
@@ -1591,4 +1591,82 @@ img.with-fallback {
 
 .col-langs {
   width: 100px;
+}
+/* ============================================================
+   RESPONSIVE — BẢN TỔNG HỢP CUỐI CÙNG (3 mốc rõ ràng)
+   Đặt cuối file để chắc chắn được áp dụng, không sửa/xóa rule cũ
+   nhằm tránh phá vỡ hành vi đang hoạt động (sidebar drawer, sticky...)
+   ============================================================ */
+
+/* ---- 1. Laptop / màn hình vừa: sidebar cố định bám trái, không còn canh giữa
+   nên không cần giới hạn max-width cho .layout ở tầng này nữa ---- */
+
+/* ---- 2. Tablet (761px–1080px): main content giãn hết phần trống của right-rail ---- */
+@media (min-width: 761px) and (max-width: 1080px) {
+  .feed-wrapper, .owner-main, .admin-main, .form-main, .profile-main, .category-main {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .quick-links { grid-template-columns: 1fr !important; }
+}
+
+/* ---- 3. Mobile (≤760px): full-width, giảm padding, gộp control lên 1 hàng ---- */
+@media (max-width: 760px) {
+  .layout, .layout.no-rail {
+    padding: 0;
+    max-width: 100%;
+  }
+  .feed-wrapper, .owner-main, .admin-main, .form-main, .profile-main, .category-main {
+    padding: 14px !important;
+  }
+  .article-card, .post-body {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .article-thumb, .post-thumb {
+    width: 100% !important;
+    height: 190px !important;
+  }
+  .article-title, .post-title { font-size: 19px !important; }
+  .article-meta, .post-meta { flex-wrap: wrap; row-gap: 8px; }
+
+  .stats-row, .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .quick-links { grid-template-columns: 1fr !important; }
+
+  .filter-bar, .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-bar .form-control, .filter-row .form-control { max-width: 100% !important; }
+
+  .owner-header, .admin-header, .form-header, .profile-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  table.data-table { font-size: 13px; }
+  .card:has(table.data-table) { overflow-x: auto; }
+
+  h1.title { font-size: 26px !important; }
+  .subtitle { font-size: 16px !important; }
+  .body-text { font-size: 17px !important; }
+  .hero-image { height: 200px !important; }
+  .article-wrapper, .responses-section { padding: 16px 12px 50px 12px !important; }
+
+  .lang-row { flex-direction: column !important; }
+  .translate-pills { gap: 8px !important; }
+
+  .auth-wrapper { margin: 32px auto !important; padding: 0 16px !important; }
+}
+
+/* ---- 4. Mobile nhỏ (≤400px): thêm 1 bậc siết gọn cho màn hình rất hẹp ---- */
+@media (max-width: 400px) {
+  .topbar { padding: 10px 12px; }
+  .logo { font-size: 19px; }
+  .btn-getapp, .write-link span { display: none; }
+  h1, .article-title, .post-title { font-size: 18px !important; }
+  .stat-card .num { font-size: 20px; }
+  .modal, .app-modal { padding: 18px; }
 }

@@ -1,120 +1,495 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-<title>Admin Dashboard – Medium</title>
-<link rel="stylesheet" href="../shared.css">
-<style>
-  .admin-main { padding: 24px 40px; }
-  .admin-main h1 { font-family: inherit; font-size: 32px; font-weight: 400; margin-bottom: 24px; }
-  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 32px; }
-  .stat-card { padding: 20px; border: 1px solid var(--border); border-radius: 10px; }
-  .stat-card .num { font-size: 28px; font-weight: 700; }
-  .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
-  .quick-links { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-  .quick-link-card { padding: 24px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color 0.15s; }
-  .quick-link-card:hover { border-color: var(--text); }
-  .quick-link-card .icon { font-size: 28px; margin-bottom: 12px; color: var(--accent); }
-  .quick-link-card h3 { font-size: 16px; margin-bottom: 6px; }
-  .quick-link-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Admin Dashboard – Medium</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
+  <style>
+    .admin-main {
+      padding: 24px 40px;
+    }
+
+    .admin-main h1 {
+      font-family: inherit;
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .stat-card .num {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .quick-link-card {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .quick-link-card:hover {
+      border-color: var(--text);
+    }
+
+    .quick-link-card .icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .quick-link-card h3 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .quick-link-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  
+/* ===== Responsive Breakpoints ===== */
+
+/* --- Tablet (max-width: 1080px) --- */
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 220px 1fr !important;
+  }
+  .right-rail {
+    display: none !important;
+  }
+  .feed-wrapper,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main,
+  .category-main {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .quick-links {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Mobile (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* Layout reset */
+  .layout, .layout.sidebar-collapsed, .layout.no-rail, .layout.no-rail.sidebar-collapsed {
+    display: block !important;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 0;
+  }
+
+  /* Padding adjustments for main content */
+  .feed-wrapper,
+  .category-main,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main {
+    padding: 16px !important;
+  }
+
+  /* Sidebar styling to drawer */
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px;
+    width: 260px !important;
+    height: 100vh !important;
+    background: var(--card-bg) !important;
+    z-index: 1001 !important;
+    border-right: 1px solid var(--border);
+    transition: left 0.3s ease;
+    padding: 24px 16px !important;
+    box-shadow: var(--shadow);
+  }
+  .layout.sidebar-collapsed .sidebar {
+    border-right: none;
+  }
+  .sidebar.drawer-open {
+    left: 0;
+  }
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .drawer-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Topbar / Header adjustments */
+  .topbar {
+    padding: 12px 16px;
+  }
+  .topbar-left {
+    gap: 12px;
+  }
+  .logo {
+    font-size: 21px;
+  }
+  .topbar-right {
+    gap: 12px;
+  }
+  .lang-btn {
+    padding: 4px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 24px;
+  }
+  .theme-toggle .knob {
+    width: 18px;
+    height: 18px;
+  }
+  [data-theme="dark"] .theme-toggle .knob {
+    left: 18px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .topbar-right .btn-getapp,
+  .topbar-right .write-link,
+  .topbar-right .lang-dropdown {
+    display: none !important;
+  }
+  .search-box, .search-box-wrap {
+    display: none !important;
+  }
+  .mobile-search-icon {
+    display: flex !important;
+    font-size: 22px;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  /* Card layouts (posts/articles) */
+  .article-card,
+  .post-body {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  .article-thumb,
+  .post-thumb {
+    width: 100% !important;
+    height: 200px !important;
+    margin-bottom: 16px;
+  }
+  .article-title,
+  .post-title,
+  h1.title {
+    font-size: 24px !important;
+  }
+  .article-meta,
+  .post-meta {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  
+  /* Article specific */
+  .article-wrapper,
+  .responses-section {
+    padding: 16px 12px 50px 12px !important;
+  }
+  .hero-image {
+    height: 200px !important;
+  }
+  .body-text {
+    font-size: 17px !important;
+  }
+  .toolbar, .byline {
+    flex-wrap: wrap;
+    gap: 14px !important;
+  }
+  
+  /* Form, auth, filter rows */
+  .filter-bar,
+  .filter-row,
+  .owner-header,
+  .admin-header,
+  .form-header,
+  .profile-header,
+  .lang-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .filter-bar .form-control,
+  .filter-row .form-control {
+    max-width: 100% !important;
+  }
+  .auth-wrapper {
+    margin: 32px auto !important;
+    padding: 0 16px !important;
+  }
+  .auth-topbar {
+    padding: 12px 16px !important;
+  }
+  .form-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .form-actions .btn {
+    flex: 1;
+  }
+  
+  /* Tables */
+  table.data-table {
+    font-size: 13px;
+    min-width: 600px;
+  }
+  .card:has(table.data-table) {
+    overflow-x: auto;
+  }
+  
+  /* Modals */
+  .preview-modal {
+    padding: 20px;
+    max-height: 90vh;
+  }
+  .modal,
+  .app-modal {
+    padding: 18px;
+  }
+  
+  /* Mobile category chips */
+  .mobile-categories-chips {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .mobile-categories-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-cat-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .mobile-cat-chip.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  
+  /* Category Dropdown Reset */
+  .category-dropdown {
+    max-width: 100%;
+  }
+
+  /* Stats grid */
+  .stats-row,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  /* Profile tabs */
+  .profile-tabs {
+    gap: 14px !important;
+    overflow-x: auto;
+  }
+}
+
+/* --- Small Mobile (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+  .logo {
+    font-size: 19px;
+  }
+  .stat-card .num {
+    font-size: 20px;
+  }
+}
+
+  </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
-    <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box-wrap">
-      <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
-      <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..." data-en-placeholder="Search...">
-      <div class="search-results-dropdown"></div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <a href="../index.html" class="logo">Medium</a>
+      <div class="search-box-wrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..."
+          data-en-placeholder="Search...">
+        <div class="search-results-dropdown"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu">
+          <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+          <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar" style="background:#5A3FBF;">A</div>
     </div>
   </div>
-  <div class="topbar-right">
-    <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">English</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
-      <div class="lang-menu">
-        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
-        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html" class="active">
+        <span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span>
+        <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
+      </a>
+      <a href="posts.html">
+        <span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span>
+        <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span>
+      </a>
+      <a href="users.html">
+        <span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span>
+        <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
+      </a>
+      <a href="categories.html">
+        <span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span>
+        <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
+      </a>
+      <a href="languages.html">
+        <span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span>
+        <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
+      </a>
+      <a href="../index.html">
+        <span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
+      </a>
+    </aside>
+
+    <main class="admin-main">
+      <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="num" id="stat-users">0</div>
+          <div class="label" data-vi="Người dùng" data-en="Users">Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-posts">0</div>
+          <div class="label" data-vi="Bài viết" data-en="Posts">Posts</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-pending" style="color:var(--accent);">0</div>
+          <div class="label" data-vi="Bài chờ duyệt" data-en="Pending Posts">Pending Posts</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-categories">0</div>
+          <div class="label" data-vi="Danh mục" data-en="Categories">Categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="num" id="stat-languages">0</div>
+          <div class="label" data-vi="Ngôn ngữ" data-en="Languages">Languages</div>
+        </div>
       </div>
-    </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
-    <div class="avatar" style="background:#5A3FBF;">A</div>
+      <div class="quick-links">
+        <div class="quick-link-card" onclick="location.href='posts.html'">
+          <div class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></div>
+          <h3 data-vi="Quản lý bài viết" data-en="Manage Posts">Manage Posts</h3>
+          <p data-vi="Duyệt bài, từ chối bài viết từ Blog Owner." data-en="Approve or reject posts from Blog Owners.">
+            Approve or reject posts from Blog Owners.</p>
+        </div>
+        <div class="quick-link-card" onclick="location.href='users.html'">
+          <div class="icon"><iconify-icon icon="solar:users-group-rounded-bold-duotone"></iconify-icon></div>
+          <h3 data-vi="Quản lý người dùng" data-en="Manage Users">Manage Users</h3>
+          <p data-vi="Xem, phân quyền, khóa/mở tài khoản người dùng."
+            data-en="View, assign roles, lock/unlock accounts.">View, assign roles, lock/unlock accounts.</p>
+        </div>
+        <div class="quick-link-card" onclick="location.href='categories.html'">
+          <div class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></div>
+          <h3 data-vi="Quản lý danh mục" data-en="Manage Categories">Manage Categories</h3>
+          <p data-vi="Thêm, sửa, xóa các danh mục bài đăng." data-en="Add, edit, delete post categories.">Add, edit,
+            delete post categories.</p>
+        </div>
+        <div class="quick-link-card" onclick="location.href='languages.html'">
+          <div class="icon"><iconify-icon icon="fa:language"></iconify-icon></div>
+          <h3 data-vi="Quản lý ngôn ngữ" data-en="Manage Languages">Manage Languages</h3>
+          <p data-vi="Cấu hình ngôn ngữ hỗ trợ đa ngôn ngữ." data-en="Configure supported languages.">Configure
+            supported languages.</p>
+        </div>
+      </div>
+    </main>
   </div>
-</div>
 
-<div class="layout no-rail" id="layoutRoot">
-  <aside class="sidebar" id="mainSidebar">
-    <a href="index.html" class="active">
-      <span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span>
-      <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
-    </a>
-    <a href="users.html">
-      <span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span>
-      <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
-    </a>
-    <a href="categories.html">
-      <span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span>
-      <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
-    </a>
-    <a href="languages.html">
-      <span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span>
-      <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
-    </a>
-    <hr>
-    <a href="../index.html">
-      <span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span>
-      <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
-    </a>
-  </aside>
-
-  <main class="admin-main">
-    <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label" data-vi="Người dùng" data-en="Users">Users</div></div>
-      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label" data-vi="Bài viết" data-en="Posts">Posts</div></div>
-      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label" data-vi="Danh mục" data-en="Categories">Categories</div></div>
-      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label" data-vi="Ngôn ngữ" data-en="Languages">Languages</div></div>
-    </div>
-    <div class="quick-links">
-      <div class="quick-link-card" onclick="location.href='users.html'">
-        <div class="icon"><iconify-icon icon="solar:users-group-rounded-bold-duotone"></iconify-icon></div>
-        <h3 data-vi="Quản lý người dùng" data-en="Manage Users">Manage Users</h3>
-        <p data-vi="Xem, phân quyền, khóa/mở tài khoản người dùng." data-en="View, assign roles, lock/unlock accounts.">View, assign roles, lock/unlock accounts.</p>
-      </div>
-      <div class="quick-link-card" onclick="location.href='categories.html'">
-        <div class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></div>
-        <h3 data-vi="Quản lý danh mục" data-en="Manage Categories">Manage Categories</h3>
-        <p data-vi="Thêm, sửa, xóa các danh mục bài đăng." data-en="Add, edit, delete post categories.">Add, edit, delete post categories.</p>
-      </div>
-      <div class="quick-link-card" onclick="location.href='languages.html'">
-        <div class="icon"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon></div>
-        <h3 data-vi="Quản lý ngôn ngữ" data-en="Manage Languages">Manage Languages</h3>
-        <p data-vi="Cấu hình ngôn ngữ hỗ trợ đa ngôn ngữ." data-en="Configure supported languages.">Configure supported languages.</p>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script src="../shared.js"></script>
-<script src="../js/mockData.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const user = db.getCurrentUser();
-    if (!user || user.role_id !== 1) {
-      showToast('Vui lòng đăng nhập với tài khoản Admin!', 'error');
-      setTimeout(() => window.location.href = '../login.html', 1500);
-      return;
-    }
-    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
-    document.getElementById('stat-users').textContent = db.get('users').length;
-    document.getElementById('stat-posts').textContent = db.get('posts').length;
-    document.getElementById('stat-categories').textContent = db.get('categories').length;
-    document.getElementById('stat-languages').textContent = db.get('languages').length;
-    applyLanguage(localStorage.getItem('blog-lang') || 'vi');
-  });
-</script>
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        showToast('Vui lòng đăng nhập với tài khoản Admin!', 'error');
+        setTimeout(() => window.location.href = '../login.html', 1500);
+        return;
+      }
+      document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+      document.getElementById('stat-users').textContent = db.get('users').length;
+      document.getElementById('stat-posts').textContent = db.get('posts').length;
+      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'DRAFT').length;
+      document.getElementById('stat-categories').textContent = db.get('categories').length;
+      document.getElementById('stat-languages').textContent = db.get('languages').length;
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
+  </script>
 </body>
+
 </html>

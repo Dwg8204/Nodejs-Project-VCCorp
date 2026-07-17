@@ -1,30 +1,42 @@
 // ============ Sidebar toggle (desktop collapse + mobile drawer) ============
 function ensureOverlay() {
-  let overlay = document.querySelector('.sidebar-overlay');
+  let overlay = document.getElementById('drawerOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
-    overlay.className = 'sidebar-overlay';
+    overlay.id = 'drawerOverlay';
+    overlay.className = 'drawer-overlay';
     overlay.onclick = () => toggleSidebar(true);
-    document.body.appendChild(overlay);
+    const layout = document.getElementById('layoutRoot');
+    if (layout) {
+      layout.insertBefore(overlay, layout.firstChild);
+    } else {
+      document.body.appendChild(overlay);
+    }
   }
   return overlay;
 }
 
 function toggleSidebar(forceClose) {
   const layout = document.getElementById('layoutRoot');
+  const sidebar = document.getElementById('mainSidebar');
   if (!layout) return;
   const overlay = ensureOverlay();
-  const isMobile = window.innerWidth <= 760;
+  const isMobile = window.innerWidth <= 768;
 
   if (forceClose === true) {
     layout.classList.remove('sidebar-collapsed');
+    if (sidebar) sidebar.classList.remove('drawer-open');
     overlay.classList.remove('show');
     return;
   }
 
-  layout.classList.toggle('sidebar-collapsed');
   if (isMobile) {
-    overlay.classList.toggle('show', layout.classList.contains('sidebar-collapsed'));
+    if (sidebar) {
+      const isOpen = sidebar.classList.toggle('drawer-open');
+      overlay.classList.toggle('show', isOpen);
+    }
+  } else {
+    layout.classList.toggle('sidebar-collapsed');
   }
 }
 
@@ -77,7 +89,7 @@ function initDynamicLanguages() {
   if (typeof db === 'undefined') return;
   const dLanguages = db.get('languages') || [];
   if (!dLanguages.length) return;
-  
+
   dLanguages.forEach(l => {
     // Bao bọc tên vào span để canh giữa dòng chuẩn xác với ảnh cờ
     LANG_LABELS[l.code] = `${flagImgFor(l.code)} <span style="vertical-align:middle; display:inline-block; margin-left:4px;">${l.name}</span>`;
@@ -87,7 +99,7 @@ function initDynamicLanguages() {
 
   // Re-render dropdowns dynamically
   document.querySelectorAll('.lang-menu').forEach(menu => {
-    menu.innerHTML = dLanguages.map(l => 
+    menu.innerHTML = dLanguages.map(l =>
       `<a href="#" data-lang="${l.code}" onclick="selectLanguage('${l.code}');return false;">${flagImgFor(l.code)} <span style="vertical-align:middle; display:inline-block; margin-left:6px;">${l.name}</span></a>`
     ).join('');
   });
@@ -95,18 +107,18 @@ function initDynamicLanguages() {
 
 function applyLanguage(lang) {
   if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
-  
+
   localStorage.setItem('blog-lang', lang);
-  
+
   // Dùng innerHTML thay vì textContent để render được thẻ <img> của cờ
   document.querySelectorAll('.lang-current-label').forEach(el => {
-    el.innerHTML = LANG_LABELS[lang] || lang; 
+    el.innerHTML = LANG_LABELS[lang] || lang;
   });
-  
+
   document.querySelectorAll('.lang-menu a').forEach(a => {
     a.classList.toggle('active', a.dataset.lang === lang);
   });
-  
+
   // Apply data-vi / data-en translations across the whole page
   document.querySelectorAll('[data-vi],[data-en]').forEach(el => {
     const val = el.dataset[lang];
@@ -157,7 +169,7 @@ function showConfirm({ title = 'Xác nhận', message = '', confirmText = 'Xác 
   overlay.innerHTML = `
     <div class="confirm-modal" role="dialog" aria-modal="true">
       <div class="confirm-icon ${danger ? 'danger' : 'info'}">
-        <iconify-icon icon="${danger ? 'solar:trash-bin-trash-bold-duotone' : 'solar:question-circle-bold-duotone'}"></iconify-icon>
+        <iconify-icon icon="${danger ? 'weui:delete-outlined' : 'solar:question-circle-bold-duotone'}"></iconify-icon>
       </div>
       <h3 class="confirm-title">${title}</h3>
       <p class="confirm-message">${message}</p>
@@ -273,13 +285,13 @@ function injectRoleSidebarLinks() {
 
   let extraHtml = '';
   if (user.role_id === 2 && !hasOwnerLink) {
-    extraHtml += `<a href="${prefix}owner-posts.html"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>`;
+    extraHtml += `<a href="${prefix}owner-posts.html"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span> <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>`;
   }
   if (user.role_id === 1 && !hasAdminLink) {
-    extraHtml += `<a href="${prefix}admin/index.html" data-admin><span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span> <span data-vi="Bảng điều khiển Admin" data-en="Admin Dashboard">Admin dashboard</span></a>`;
+    extraHtml += `<a href="${prefix}admin/index.html" data-admin><span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span> <span data-vi="Bảng điều khiển Admin" data-en="Admin Dashboard">Admin dashboard</span></a>`;
   }
   if (extraHtml) {
-    sidebar.insertAdjacentHTML('beforeend', `<hr>${extraHtml}`);
+    sidebar.insertAdjacentHTML('beforeend', extraHtml);
   }
 }
 
@@ -397,7 +409,7 @@ function focusCommentBox() {
 window.addEventListener('DOMContentLoaded', () => {
   const savedTheme = localStorage.getItem('blog-theme') || 'light';
   applyTheme(savedTheme);
-  
+
   // Đưa hàm injectRoleSidebarLinks lên TRƯỚC applyLanguage để đảm bảo DOM sidebar hoàn chỉnh
   ensureOverlay();
   applyBgFallback();
@@ -405,20 +417,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Sync language: ensure current_language_id consistent with blog-lang
   if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
-  
+
   let savedLang = localStorage.getItem('blog-lang');
   if (!savedLang) {
     const dLangId = typeof db !== 'undefined' ? (db.get('settings')?.default_language_id || 2) : 2;
     savedLang = ID_TO_LANG[dLangId.toString()] || 'vi';
   }
-  
+
   const savedLangId = localStorage.getItem('current_language_id');
   if (savedLangId && ID_TO_LANG[savedLangId] && ID_TO_LANG[savedLangId] !== savedLang) {
     localStorage.setItem('current_language_id', LANG_TO_ID[savedLang]);
   } else if (!savedLangId && LANG_TO_ID[savedLang]) {
     localStorage.setItem('current_language_id', LANG_TO_ID[savedLang]);
   }
-  
+
   // Gọi hàm gán ngôn ngữ dịch thuật
   applyLanguage(savedLang);
 
@@ -466,3 +478,111 @@ window.addEventListener('resize', () => {
     ensureOverlay().classList.remove('show');
   }
 });
+
+// ============ Floating Preview Panel ============
+function injectPreviewPanel() {
+  if (document.getElementById('previewPanel')) return;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'previewOverlay';
+  overlay.className = 'preview-overlay';
+  overlay.onclick = closePreview;
+  document.body.appendChild(overlay);
+
+  const panel = document.createElement('div');
+  panel.id = 'previewPanel';
+  panel.className = 'preview-panel';
+  panel.innerHTML = `
+    <div class="preview-header">
+      <h3 data-vi="Xem trước bài viết" data-en="Post Preview">Xem trước bài viết</h3>
+      <button onclick="closePreview()" class="preview-close-btn">&times;</button>
+    </div>
+    <div class="preview-body" id="previewPanelBody">
+      <!-- Loading or content -->
+    </div>
+    <div class="preview-footer">
+      <a href="#" id="previewFullLink" class="btn btn-primary" data-vi="Đọc đầy đủ" data-en="Read Full Article">Đọc đầy đủ</a>
+    </div>
+  `;
+  document.body.appendChild(panel);
+}
+
+function openPreview(postId) {
+  injectPreviewPanel();
+  const panel = document.getElementById('previewPanel');
+  const overlay = document.getElementById('previewOverlay');
+  const body = document.getElementById('previewPanelBody');
+  const fullLink = document.getElementById('previewFullLink');
+
+  if (typeof db === 'undefined') return;
+
+  const langId = localStorage.getItem('current_language_id') || '1';
+  const posts = db.get('posts');
+  const post = posts.find(p => p.id === postId);
+  if (!post) return;
+
+  const users = db.get('users');
+  const author = users.find(u => u.id === post.author_id) || {};
+  const trans = db.get('post_translations');
+  const categoryTrans = db.get('category_translation');
+
+  let pt = trans.find(t => t.post_id === post.id && t.language_id == langId) || trans.find(t => t.post_id === post.id) || {};
+  let ct = categoryTrans.find(c => c.category_id === post.category_id && c.language_id == langId) || categoryTrans.find(c => c.category_id === post.category_id) || {};
+
+  const title = pt.title || 'Untitled';
+  const content = pt.content || '';
+  const catName = ct.name || 'Uncategorized';
+  const authorName = author.full_name || author.user_name || 'Anonymous';
+  const dateFormatted = new Date(post.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const imgUrl = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=600`;
+
+  body.innerHTML = `
+    <div class="preview-img" style="background-image: url('${imgUrl}'); height: 200px; background-size: cover; background-position: center; border-radius: 12px; margin-bottom: 20px;"></div>
+    <span class="badge badge-yellow" style="margin-bottom: 12px; display: inline-block;">${catName}</span>
+    <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 10px; color: var(--text);">${title}</h2>
+    <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+      <span>Tác giả: <strong>${authorName}</strong></span> &nbsp;&middot;&nbsp; <span>${dateFormatted}</span>
+    </div>
+    <div class="preview-text-content" style="line-height: 1.6; color: var(--text);">${content}</div>
+  `;
+
+  const isSubFolder = window.location.pathname.includes('/admin/');
+  fullLink.href = (isSubFolder ? '../' : '') + `article.html?id=${post.id}`;
+
+  // Re-apply translation on panel if any data-vi exists
+  if (typeof applyLanguage === 'function') {
+    const currentLang = localStorage.getItem('blog-lang') || 'vi';
+    applyLanguage(currentLang);
+  }
+
+  overlay.classList.add('open');
+  panel.classList.add('open');
+}
+
+function closePreview() {
+  const panel = document.getElementById('previewPanel');
+  const overlay = document.getElementById('previewOverlay');
+  if (panel && overlay) {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+}
+
+// ============ Reveal on Scroll ============
+function initRevealOnScroll() {
+  const elements = document.querySelectorAll('.reveal-on-scroll');
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    elements.forEach(el => observer.observe(el));
+  } else {
+    elements.forEach(el => el.classList.add('is-visible'));
+  }
+}
+window.addEventListener('DOMContentLoaded', initRevealOnScroll);

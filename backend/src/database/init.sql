@@ -33,6 +33,8 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(255) DEFAULT NULL,
   `phone` VARCHAR(20) DEFAULT NULL COMMENT 'Số điện thoại của người dùng',
   `avatar` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh đại diện',
+  `cover_image` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh bìa trang cá nhân',
+  `date_of_birth` DATE DEFAULT NULL COMMENT 'Ngày tháng năm sinh',
   `is_active` TINYINT(1) DEFAULT 1,
   `password_hash` VARCHAR(255) DEFAULT NULL,
   `email_verified` TINYINT(1) DEFAULT 0,
@@ -187,3 +189,8 @@ ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian x�
 -- 3. Bổ sung trường xóa mềm cho bảng Bình luận (comments)
 ALTER TABLE `comments` 
 ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, khi hiển thị nếu không NULL sẽ hiện chữ: Bình luận này đã bị xóa';
+
+-- 4. Bổ sung lý do từ chối cho bảng Posts
+ALTER TABLE `posts`
+ADD COLUMN `rejection_reason` TEXT DEFAULT NULL
+  COMMENT 'Lý do từ chối bài viết (chỉ có giá trị khi status = REJECTED, do Super Admin điền)';

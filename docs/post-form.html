@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
@@ -279,7 +280,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
-          icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
       <div class="search-box-wrap" id="topSearchWrap">
         <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
@@ -290,7 +291,6 @@
     <div class="topbar-right">
       <div class="lang-dropdown">
         <button class="lang-btn" onclick="toggleLangMenu()">
-          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
           <span class="lang-current-label">English</span>
           <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
         </button>
@@ -307,14 +307,12 @@
 
   <div class="layout no-rail" id="layoutRoot">
     <aside class="sidebar" id="mainSidebar">
-      <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span>
+      <a href="index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
         <span data-vi="Trang chủ" data-en="Home">Home</span></a>
-      <a href="profile.html"><span class="icon"><iconify-icon
-            icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-vi="Hồ sơ"
-          data-en="Profile">Profile</span></a>
-      <a href="owner-posts.html"><span class="icon"><iconify-icon
-            icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-vi="Quản lý bài viết"
-          data-en="Manage posts">Manage posts</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span>
+        <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
+      <a href="owner-posts.html"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span> <span
+          data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>
     </aside>
 
     <!-- Wrap form + preview side panel -->
@@ -327,7 +325,7 @@
             <button class="btn btn-outline" onclick="savePost('DRAFT')" data-vi="Lưu nháp" data-en="Save Draft">Save
               Draft</button>
             <button class="btn-preview-toggle" id="previewToggleBtn" onclick="togglePreviewPanel()">
-              <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon> Preview
+              <iconify-icon icon="iconamoon:eye"></iconify-icon> Preview
             </button>
             <button class="btn btn-primary" onclick="savePost('PUBLISHED')" data-vi="Xuất bản"
               data-en="Publish">Publish</button>
@@ -376,7 +374,7 @@
       <div class="preview-side-panel" id="previewSidePanel">
         <div class="preview-panel-inner">
           <div class="preview-panel-header">
-            <h3><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon> Preview</h3>
+            <h3><iconify-icon icon="iconamoon:eye"></iconify-icon> Preview</h3>
             <button class="preview-close-btn" onclick="togglePreviewPanel()">
               <iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon>
             </button>

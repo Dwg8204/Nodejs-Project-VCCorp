@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Quản lý bài viết – Admin</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
+  <style>
+    .admin-main {
+      padding: 24px 40px;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .admin-header h1 {
+      font-family: inherit;
+      font-size: 32px;
+      font-weight: 400;
+    }
+
+    .post-title-cell {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .post-title-cell:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .action-icons button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .action-icons .approve-btn:hover {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .action-icons .reject-btn:hover {
+      color: var(--danger);
+      background: #FCEBEA;
+    }
+
+    .action-icons .view-btn:hover {
+      color: var(--icon-info);
+      background: var(--bg-soft);
+    }
+
+    [data-theme="dark"] .action-icons .reject-btn:hover {
+      background: #3A1E1C;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .stat-card .num {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <a href="../index.html" class="logo">Medium</a>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu">
+          <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+          <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar" style="background:#5A3FBF;">A</div>
+    </div>
+  </div>
+
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html">
+        <span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span>
+        <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
+      </a>
+      <a href="posts.html" class="active">
+        <span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span>
+        <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span>
+      </a>
+      <a href="users.html">
+        <span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span>
+        <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
+      </a>
+      <a href="categories.html">
+        <span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span>
+        <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
+      </a>
+      <a href="languages.html">
+        <span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span>
+        <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
+      </a>
+
+      <a href="../index.html">
+        <span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
+      </a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1 data-vi="Quản lý bài viết" data-en="Manage Posts">Manage Posts</h1>
+      </div>
+
+      <div class="stats-grid" id="stats-container">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="searchPosts" class="form-control" placeholder="Tìm kiếm bài viết..."
+          oninput="applyFilters()" style="max-width:280px;">
+        <select id="filterStatus" class="form-control" onchange="applyFilters()" style="max-width:180px;">
+          <option value="">Tất cả trạng thái</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+          <option value="REJECTED">Bị từ chối</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <table class="data-table" style="table-layout:fixed; width:100%;">
+          <colgroup>
+            <col style="width:30%;">
+            <col style="width:15%;">
+            <col style="width:20%;">
+            <col style="width:15%;">
+            <col style="width:20%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th data-vi="Tiêu đề" data-en="Title">Title</th>
+              <th data-vi="Tác giả" data-en="Author">Author</th>
+              <th data-vi="Danh mục" data-en="Category">Category</th>
+              <th data-vi="Trạng thái" data-en="Status">Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="posts-tbody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal-overlay" id="rejectModal" onclick="if(event.target===this)closeModal('rejectModal')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2><iconify-icon icon="material-symbols:cancel" style="color: var(--danger)"></iconify-icon> Từ chối bài viết
+        </h2>
+        <button class="modal-close" onclick="closeModal('rejectModal')"><iconify-icon icon="material-symbols:cancel"
+            style="color: var(--danger)"></iconify-icon></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="rejectPostId">
+        <div class="form-group">
+          <label>Lý do từ chối <span class="required-star">*</span></label>
+          <textarea id="rejectionReason" class="form-control" rows="4"
+            placeholder="Nhập lý do chi tiết để tác giả có thể chỉnh sửa..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('rejectModal')">Hủy</button>
+        <button class="btn" style="background:var(--danger);color:#fff;" onclick="submitRejectPost()">Từ chối bài
+          viết</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    let allPosts = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
+        setTimeout(() => window.location.href = '../login.html', 1500);
+        return;
+      }
+      document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+
+      loadPosts();
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
+
+    function loadPosts() {
+      const langId = localStorage.getItem('current_language_id') || '1';
+      const detailPosts = db.getPostsWithDetails(langId);
+
+      // Merge full author info
+      const users = db.get('users');
+      allPosts = db.get('posts').map(rp => {
+        const detail = detailPosts.find(p => p.id === rp.id);
+        const author = users.find(u => u.id === rp.author_id);
+
+        let title = detail ? detail.title : 'Untitled';
+        let category_name = detail ? detail.category_name : 'Unknown';
+
+        if (!detail) {
+          const translations = db.get('post_translations');
+          const catTrans = db.get('category_translation');
+          let pt = translations.find(t => t.post_id === rp.id && t.language_id == langId) || translations.find(t => t.post_id === rp.id);
+          let ct = catTrans.find(c => c.category_id === rp.category_id && c.language_id == langId) || catTrans.find(c => c.category_id === rp.category_id);
+          title = pt ? pt.title : 'Untitled';
+          category_name = ct ? ct.name : 'Unknown';
+        }
+
+        return {
+          ...rp,
+          title,
+          category_name,
+          author_name: author ? (author.full_name || author.user_name) : 'Unknown'
+        };
+      });
+
+      renderStats();
+      applyFilters();
+    }
+
+    function renderStats() {
+      const total = allPosts.length;
+      const published = allPosts.filter(p => p.status === 'PUBLISHED').length;
+      const drafts = allPosts.filter(p => p.status === 'PENDING').length;
+      const rejected = allPosts.filter(p => p.status === 'REJECTED').length;
+
+      document.getElementById('stats-container').innerHTML = `
+      <div class="stat-card"><div class="num">${total}</div><div class="label" data-vi="Tổng số bài" data-en="Total Posts">Total Posts</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--icon-star);">${drafts}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--accent);">${published}</div><div class="label" data-vi="Đã duyệt" data-en="Approved">Approved</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--danger);">${rejected}</div><div class="label" data-vi="Bị từ chối" data-en="Rejected">Rejected</div></div>
+    `;
+    }
+
+    function applyFilters() {
+      const kw = document.getElementById('searchPosts').value.trim().toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+
+      const filtered = allPosts.filter(p => {
+        const matchKw = !kw || p.title.toLowerCase().includes(kw) || p.author_name.toLowerCase().includes(kw);
+        const matchStatus = !status || p.status === status;
+        return matchKw && matchStatus;
+      });
+
+      renderTable(filtered);
+    }
+
+    function renderTable(posts) {
+      if (!posts.length) {
+        document.getElementById('posts-tbody').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy bài viết.</td></tr>`;
+        return;
+      }
+
+      document.getElementById('posts-tbody').innerHTML = posts.map(p => {
+        let statusBadge = '';
+        if (p.status === 'PUBLISHED') statusBadge = '<span class="badge badge-green">Đã duyệt</span>';
+        else if (p.status === 'REJECTED') statusBadge = `<span class="badge badge-red" title="${p.rejection_reason || 'Không rõ'}">Bị từ chối</span>`;
+        else statusBadge = '<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> Chờ duyệt</span>';
+
+        const safeTitle = p.title.replace(/'/g, "\\'");
+
+        return `
+      <tr>
+        <td class="post-title-cell" onclick="window.open('../article.html?id=${p.id}', '_blank')" title="${safeTitle}">${p.title}</td>
+        <td>${p.author_name}</td>
+        <td>${p.category_name}</td>
+        <td>${statusBadge}</td>
+        <td>
+          <div class="action-icons">
+            <button class="view-btn" onclick="openPreview(${p.id})" title="Xem"><iconify-icon icon="iconamoon:eye"></iconify-icon></button>
+            ${p.status !== 'PUBLISHED' ? `<button class="approve-btn" onclick="approvePost(${p.id}, '${safeTitle}')" title="Duyệt"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon></button>` : ''}
+            ${p.status !== 'REJECTED' ? `<button class="reject-btn" onclick="openRejectModal(${p.id})" title="Từ chối"><iconify-icon icon="material-symbols:cancel" style="color: var(--danger)"></iconify-icon></button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+      }).join('');
+    }
+
+    function approvePost(id, title) {
+      showConfirm({
+        title: 'Duyệt bài viết',
+        message: `Bạn có chắc muốn duyệt và xuất bản bài viết "<strong>${title}</strong>"?`,
+        confirmText: 'Duyệt',
+        cancelText: 'Hủy',
+        danger: false,
+        onConfirm: () => {
+          let posts = db.get('posts');
+          const p = posts.find(x => x.id === id);
+          if (p) {
+            p.status = 'PUBLISHED';
+            p.rejection_reason = null;
+            p.updated_at = new Date().toISOString();
+            db.set('posts', posts);
+            showToast('Đã duyệt bài viết!', 'success');
+            loadPosts();
+          }
+        }
+      });
+    }
+
+    function openRejectModal(id) {
+      document.getElementById('rejectPostId').value = id;
+      document.getElementById('rejectionReason').value = '';
+      openModal('rejectModal');
+    }
+
+    function submitRejectPost() {
+      const id = parseInt(document.getElementById('rejectPostId').value);
+      const reason = document.getElementById('rejectionReason').value.trim();
+
+      if (!reason) {
+        showToast('Vui lòng nhập lý do từ chối!', 'error');
+        return;
+      }
+
+      let posts = db.get('posts');
+      const p = posts.find(x => x.id === id);
+      if (p) {
+        p.status = 'REJECTED';
+        p.rejection_reason = reason;
+        p.updated_at = new Date().toISOString();
+        db.set('posts', posts);
+        showToast('Đã từ chối bài viết!', 'success');
+        closeModal('rejectModal');
+        loadPosts();
+      }
+    }
+  </script>
+</body>
+
+</html>

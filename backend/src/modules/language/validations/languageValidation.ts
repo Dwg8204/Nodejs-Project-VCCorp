@@ -1,53 +1,62 @@
 /**
  * =============================================================
- * User Validation - DTOs (Data Transfer Objects)
+ * Language Validation - DTOs
  * =============================================================
- *
- * Đặt tên file: xXXValidation.ts (camelCase)
- * Sử dụng class-validator để validate dữ liệu đầu vào.
- * NestJS tự động validate qua ValidationPipe toàn cục.
  */
 
 import {
-  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
   MaxLength,
-  Matches,
-  IsUrl,
   IsNumber,
   Min,
 } from 'class-validator';
 
+// =============================================================
+// DTO cho tạo ngôn ngữ mới
+// =============================================================
+export class CreateLanguageDto {
+  @IsNotEmpty({ message: 'Mã ngôn ngữ là bắt buộc' })
+  @IsString()
+  @MaxLength(5, { message: 'Mã ngôn ngữ tối đa 5 ký tự' })
+  code: string;
 
+  @IsNotEmpty({ message: 'Tên ngôn ngữ là bắt buộc' })
+  @IsString()
+  @MaxLength(255)
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  flag?: string;
+}
 
 // =============================================================
-// DTO cho cập nhật profile
+// DTO cho cập nhật ngôn ngữ
 // =============================================================
-export class UpdateProfileDto {
+export class UpdateLanguageDto {
   @IsOptional()
   @IsString()
-  @MinLength(2, { message: 'Tên phải có ít nhất 2 ký tự' })
-  @MaxLength(255, { message: 'Tên không được quá 255 ký tự' })
-  fullName?: string;
+  @MaxLength(5, { message: 'Mã ngôn ngữ tối đa 5 ký tự' })
+  code?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^(\+84|0)\d{9,10}$/, { message: 'Số điện thoại không hợp lệ' })
-  phone?: string;
+  @MaxLength(255)
+  name?: string;
 
   @IsOptional()
   @IsString()
-  @IsUrl({}, { message: 'Avatar phải là một URL hợp lệ' })
-  avatar?: string;
+  @MaxLength(255)
+  flag?: string;
 }
 
 // =============================================================
 // DTO cho query params (phân trang + tìm kiếm)
 // =============================================================
-export class QueryUserDto {
+export class QueryLanguageDto {
   @IsOptional()
   @IsNumber()
   @Min(1)

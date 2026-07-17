@@ -30,32 +30,14 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from 'modules/user/services/userService';
-import { RegisterDto, LoginDto, UpdateProfileDto, QueryUserDto } from 'modules/user/validations/userValidation';
+import { UpdateProfileDto, QueryUserDto } from 'modules/user/validations/userValidation';
 import { AuthGuard, RolesGuard, Roles } from 'modules/user/middlewares/authMiddleware';
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  /**
-   * Đăng ký tài khoản mới
-   * POST /api/users/register
-   * @access Public
-   */
-  @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.userService.register(registerDto);
-  }
 
-  /**
-   * Đăng nhập
-   * POST /api/users/login
-   * @access Public
-   */
-  @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.userService.login(loginDto);
-  }
 
   /**
    * Lấy thông tin profile người dùng hiện tại
@@ -86,7 +68,7 @@ export class UserController {
    */
   @Get()
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('SUPER_ADMIN')
   getAllUsers(@Query() queryDto: QueryUserDto) {
     return this.userService.getAllUsers(queryDto);
   }
@@ -98,7 +80,7 @@ export class UserController {
    */
   @Get(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('SUPER_ADMIN')
   getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id);
   }
@@ -110,7 +92,7 @@ export class UserController {
    */
   @Delete(':id')
   @UseGuards(AuthGuard, RolesGuard)
-  @Roles('admin')
+  @Roles('SUPER_ADMIN')
   deleteUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.deleteUser(id);
   }

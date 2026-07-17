@@ -14,34 +14,53 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   BeforeInsert,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { Role } from './role';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 50 })
-  name: string;
+  @Column({ name: 'user_name', type: 'varchar', length: 255, unique: true })
+  userName: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 255, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255, select: false })
-  password: string;
+  @Column({ name: 'full_name', type: 'varchar', length: 255, nullable: true })
+  fullName: string;
 
-  @Column({ type: 'enum', enum: ['user', 'admin'], default: 'user' })
-  role: string;
-
-  @Column({ name: 'is_active', type: 'boolean', default: true })
-  isActive: boolean;
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   avatar: string;
 
-  @Column({ type: 'varchar', length: 15, nullable: true })
-  phone: string;
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
+  @Column({ name: 'password_hash', type: 'varchar', length: 255, select: false, nullable: true })
+  passwordHash: string;
+
+  @Column({ name: 'email_verified', type: 'boolean', default: false })
+  emailVerified: boolean;
+
+  @ManyToOne(() => Role, (role) => role.users, { eager: true })
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
+
+  @Column({ name: 'otp_code', type: 'varchar', length: 10, nullable: true })
+  otpCode: string;
+
+  @Column({ name: 'otp_created_at', type: 'timestamp', nullable: true })
+  otpCreatedAt: Date;
+
+  @Column({ name: 'otp_ttl_seconds', type: 'int', default: 180 })
+  otpTtlSeconds: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -54,10 +73,10 @@ export class User {
   // =============================================================
   @BeforeInsert()
   async hashPassword() {
-    if (this.password) {
+    if (this.passwordHash) {
       const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10;
       const salt = await bcrypt.genSalt(saltRounds);
-      this.password = await bcrypt.hash(this.password, salt);
+      this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
     }
   }
 
@@ -65,6 +84,7 @@ export class User {
   // Instance Method: So sánh password
   // =============================================================
   async comparePassword(candidatePassword: string): Promise<boolean> {
-    return bcrypt.compare(candidatePassword, this.password);
+    if (!this.passwordHash) return false;
+    return bcrypt.compare(candidatePassword, this.passwordHash);
   }
 }

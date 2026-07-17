@@ -3,10 +3,12 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <title>Medium – Trang chủ</title>
   <meta name="description" content="Đọc các bài viết chất lượng về công nghệ, thiết kế, thể thao và đời sống.">
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="unified_media.css">
   <style>
     .feed-wrapper {
       padding: 24px 32px;
@@ -119,6 +121,7 @@
     .cat-dropdown {
       position: relative;
     }
+
     .cat-dropdown-btn {
       display: flex;
       align-items: center;
@@ -132,9 +135,11 @@
       cursor: pointer;
       transition: all 0.2s;
     }
+
     .cat-dropdown-btn:hover {
       background: var(--bg-soft);
     }
+
     .cat-dropdown-panel {
       display: none;
       position: absolute;
@@ -148,9 +153,11 @@
       min-width: 200px;
       box-shadow: var(--shadow);
     }
+
     .cat-dropdown-panel.open {
       display: block;
     }
+
     .cat-search-wrap {
       display: flex;
       align-items: center;
@@ -160,6 +167,7 @@
       padding: 6px 10px;
       margin-bottom: 10px;
     }
+
     .cat-search-wrap input {
       border: none;
       background: transparent;
@@ -168,6 +176,7 @@
       font-size: 13px;
       width: 100%;
     }
+
     .cat-dropdown-list {
       max-height: 220px;
       overflow-y: auto;
@@ -175,6 +184,7 @@
       flex-direction: column;
       gap: 4px;
     }
+
     .cat-drop-item {
       padding: 8px 12px;
       border: none;
@@ -185,14 +195,296 @@
       border-radius: 4px;
       cursor: pointer;
     }
+
     .cat-drop-item:hover {
       background: var(--bg-soft);
     }
+
     .cat-drop-item.active {
       color: var(--accent);
       background: var(--accent-soft);
       font-weight: 600;
     }
+  
+/* ===== Responsive Breakpoints ===== */
+
+/* --- Tablet (max-width: 1080px) --- */
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 220px 1fr !important;
+  }
+  .right-rail {
+    display: none !important;
+  }
+  .feed-wrapper,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main,
+  .category-main {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .quick-links {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Mobile (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* Layout reset */
+  .layout, .layout.sidebar-collapsed, .layout.no-rail, .layout.no-rail.sidebar-collapsed {
+    display: block !important;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 0;
+  }
+
+  /* Padding adjustments for main content */
+  .feed-wrapper,
+  .category-main,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main {
+    padding: 16px !important;
+  }
+
+  /* Sidebar styling to drawer */
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px;
+    width: 260px !important;
+    height: 100vh !important;
+    background: var(--card-bg) !important;
+    z-index: 1001 !important;
+    border-right: 1px solid var(--border);
+    transition: left 0.3s ease;
+    padding: 24px 16px !important;
+    box-shadow: var(--shadow);
+  }
+  .layout.sidebar-collapsed .sidebar {
+    border-right: none;
+  }
+  .sidebar.drawer-open {
+    left: 0;
+  }
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .drawer-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Topbar / Header adjustments */
+  .topbar {
+    padding: 12px 16px;
+  }
+  .topbar-left {
+    gap: 12px;
+  }
+  .logo {
+    font-size: 21px;
+  }
+  .topbar-right {
+    gap: 12px;
+  }
+  .lang-btn {
+    padding: 4px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 24px;
+  }
+  .theme-toggle .knob {
+    width: 18px;
+    height: 18px;
+  }
+  [data-theme="dark"] .theme-toggle .knob {
+    left: 18px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .topbar-right .btn-getapp,
+  .topbar-right .write-link,
+  .topbar-right .lang-dropdown {
+    display: none !important;
+  }
+  .search-box, .search-box-wrap {
+    display: none !important;
+  }
+  .mobile-search-icon {
+    display: flex !important;
+    font-size: 22px;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  /* Card layouts (posts/articles) */
+  .article-card,
+  .post-body {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  .article-thumb,
+  .post-thumb {
+    width: 100% !important;
+    height: 200px !important;
+    margin-bottom: 16px;
+  }
+  .article-title,
+  .post-title,
+  h1.title {
+    font-size: 24px !important;
+  }
+  .article-meta,
+  .post-meta {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  
+  /* Article specific */
+  .article-wrapper,
+  .responses-section {
+    padding: 16px 12px 50px 12px !important;
+  }
+  .hero-image {
+    height: 200px !important;
+  }
+  .body-text {
+    font-size: 17px !important;
+  }
+  .toolbar, .byline {
+    flex-wrap: wrap;
+    gap: 14px !important;
+  }
+  
+  /* Form, auth, filter rows */
+  .filter-bar,
+  .filter-row,
+  .owner-header,
+  .admin-header,
+  .form-header,
+  .profile-header,
+  .lang-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .filter-bar .form-control,
+  .filter-row .form-control {
+    max-width: 100% !important;
+  }
+  .auth-wrapper {
+    margin: 32px auto !important;
+    padding: 0 16px !important;
+  }
+  .auth-topbar {
+    padding: 12px 16px !important;
+  }
+  .form-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .form-actions .btn {
+    flex: 1;
+  }
+  
+  /* Tables */
+  table.data-table {
+    font-size: 13px;
+    min-width: 600px;
+  }
+  .card:has(table.data-table) {
+    overflow-x: auto;
+  }
+  
+  /* Modals */
+  .preview-modal {
+    padding: 20px;
+    max-height: 90vh;
+  }
+  .modal,
+  .app-modal {
+    padding: 18px;
+  }
+  
+  /* Mobile category chips */
+  .mobile-categories-chips {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .mobile-categories-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-cat-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .mobile-cat-chip.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  
+  /* Category Dropdown Reset */
+  .category-dropdown {
+    max-width: 100%;
+  }
+
+  /* Stats grid */
+  .stats-row,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  /* Profile tabs */
+  .profile-tabs {
+    gap: 14px !important;
+    overflow-x: auto;
+  }
+}
+
+/* --- Small Mobile (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+  .logo {
+    font-size: 19px;
+  }
+  .stat-card .num {
+    font-size: 20px;
+  }
+}
+
   </style>
 </head>
 
@@ -202,7 +494,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
-          icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <span class="logo">Medium</span>
       <div class="search-box-wrap" id="topSearchWrap">
         <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
@@ -211,9 +503,11 @@
       </div>
     </div>
     <div class="topbar-right">
+      <div class="mobile-search-icon" onclick="document.getElementById('topSearchInput').focus()" style="display:none;">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+      </div>
       <div class="lang-dropdown">
         <button class="lang-btn" onclick="toggleLangMenu()">
-          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
           <span class="lang-current-label">English</span>
           <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
         </button>
@@ -232,15 +526,16 @@
     <!-- ===== Sidebar ===== -->
     <aside class="sidebar" id="mainSidebar">
       <a href="index.html" class="active"><span class="icon"><iconify-icon
-            icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-vi="Trang chủ"
+            icon="material-symbols:home-rounded"></iconify-icon></span> <span data-vi="Trang chủ"
           data-en="Home">Home</span></a>
-      <a href="profile.html"><span class="icon"><iconify-icon
-            icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-vi="Hồ sơ"
-          data-en="Profile">Profile</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span>
+        <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
     </aside>
 
     <!-- ===== Main feed ===== -->
     <main class="feed-wrapper">
+      <div class="mobile-categories-chips" id="mobileCatChips"></div>
+
       <!-- Category filter bar -->
       <div class="feed-header">
         <div class="feed-title" data-vi="Bài viết nổi bật" data-en="Latest Posts">Latest Posts</div>
@@ -253,7 +548,8 @@
           <div class="cat-dropdown-panel" id="catDropdownPanel">
             <div class="cat-search-wrap">
               <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
-              <input type="text" id="catSearchInput" placeholder="Tìm danh mục..." oninput="filterCatDropdown(this.value)" autocomplete="off">
+              <input type="text" id="catSearchInput" placeholder="Tìm danh mục..."
+                oninput="filterCatDropdown(this.value)" autocomplete="off">
             </div>
             <div class="cat-dropdown-list" id="catDropdownList"></div>
           </div>
@@ -295,7 +591,6 @@
         topbarRight.innerHTML = `
           <div class="lang-dropdown">
             <button class="lang-btn" onclick="toggleLangMenu()">
-              <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
               <span class="lang-current-label">English</span>
               <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
             </button>
@@ -367,7 +662,67 @@
       // 6. Init search
       initSearch(() => allPosts);
       applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+
+      // Render mobile chips
+      renderMobileChips();
     });
+
+    let hoverCardTimeout;
+    function showAuthorCard(el, authorId) {
+      clearTimeout(hoverCardTimeout);
+      const user = db.get('users').find(u => u.id === authorId);
+      if (!user) return;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+
+      // Gather author details
+      const allPosts = db.get('posts').filter(p => p.author_id === authorId && p.status === 'PUBLISHED');
+      const allLikes = db.get('post_likes');
+      const likesCount = allLikes.filter(l => allPosts.some(ap => ap.id === l.post_id) && l.is_liked).length;
+
+      let hc = document.getElementById('authorHoverCard');
+      if (!hc) {
+        hc = document.createElement('div');
+        hc.id = 'authorHoverCard';
+        hc.className = 'author-hover-card';
+        hc.onmouseenter = () => clearTimeout(hoverCardTimeout);
+        hc.onmouseleave = () => hideAuthorCard();
+        document.body.appendChild(hc);
+      }
+
+      const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name || user.user_name || 'U'}`;
+
+      hc.innerHTML = `
+        <img src="${avatarUrl}" alt="Avatar">
+        <div class="hc-name">${user.full_name || user.user_name}</div>
+        <div class="hc-stats">
+          <span><strong>${allPosts.length}</strong> ${lang === 'vi' ? 'Bài viết' : 'Posts'}</span>
+          <span><strong>${likesCount}</strong> ${lang === 'vi' ? 'Lượt thích' : 'Likes'}</span>
+        </div>
+      `;
+
+      const rect = el.getBoundingClientRect();
+      hc.style.top = (rect.bottom + window.scrollY) + 'px';
+      hc.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
+      hc.classList.add('show');
+    }
+
+    function hideAuthorCard() {
+      hoverCardTimeout = setTimeout(() => {
+        const hc = document.getElementById('authorHoverCard');
+        if (hc) hc.classList.remove('show');
+      }, 300);
+    }
+
+    function renderMobileChips() {
+      const container = document.getElementById('mobileCatChips');
+      if (!container) return;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+
+      container.innerHTML = allCatOptions.map(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        return `<div class="mobile-cat-chip ${c.id === currentCatFilter ? 'active' : ''}" onclick="filterByCat('${c.id}')">${label}</div>`;
+      }).join('');
+    }
 
     function toggleCatDropdown() {
       const panel = document.getElementById('catDropdownPanel');
@@ -403,6 +758,7 @@
       document.getElementById('catDropdownLabel').textContent = label;
       document.getElementById('catDropdownPanel').classList.remove('open');
       renderCatDropdown();
+      renderMobileChips();
       const filtered = catId === 'all' ? allPosts : allPosts.filter(p => String(p.category_id) === String(catId));
       renderPosts(filtered);
       document.getElementById('feedEmpty').style.display = filtered.length === 0 ? 'block' : 'none';
@@ -422,13 +778,17 @@
         tempDiv.innerHTML = post.content;
         const snippet = (tempDiv.textContent || tempDiv.innerText || '');
         const shortDesc = snippet.length > 120 ? snippet.substring(0, 120) + '...' : snippet;
-        const randomImage = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
+        const randomImage = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
         return `
         <div class="article-card">
           <div class="article-main">
             <div class="article-source">
-              <span class="source-badge"></span>
-              In ${post.category_name} by <a href="profile.html?id=${post.author_id}" style="color:inherit;font-weight:600;">${post.author_name}</a> &nbsp;&middot;&nbsp; ${post.date_formatted}
+              <img src="${post.author_avatar}" class="author-avatar-feed" alt="avatar" />
+              <span>In ${post.category_name} by</span>
+              <div class="author-name-wrapper" style="position:relative; display:inline-block;" onmouseenter="showAuthorCard(this, ${post.author_id})" onmouseleave="hideAuthorCard(this)">
+                <a href="profile.html?id=${post.author_id}" style="color:inherit;font-weight:600;">${post.author_name}</a>
+              </div>
+              <span>&middot; ${post.date_formatted}</span>
             </div>
             <a href="article.html?id=${post.id}" style="text-decoration:none;color:inherit;">
               <div class="article-title">${post.title}</div>

@@ -3,39 +3,121 @@
 
 <head>
   <meta charset="UTF-8">
-<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
   <title>Quản lý bài viết – Medium</title>
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="responsive-pages.css">
   <style>
-    .owner-main { padding: 24px 40px; }
+    .owner-main {
+      padding: 24px 40px;
+    }
+
     .owner-header {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
     }
-    .owner-header h1 { font-size: 32px; font-weight: 400; }
-    .post-title-cell { font-weight: 600; cursor: pointer; max-width: 280px; }
-    .post-title-cell:hover { text-decoration: underline; }
-    .action-icons { display: flex; gap: 10px; justify-content: flex-end; }
-    .action-icons a, .action-icons button {
-      font-size: 16px; cursor: pointer;
-      background: none; border: none; color: var(--text-muted);
-      display: flex; align-items: center; padding: 4px;
-      border-radius: 6px; transition: color 0.15s, background 0.15s;
+
+    .owner-header h1 {
+      font-size: 32px;
+      font-weight: 400;
     }
-    .action-icons .delete-icon:hover { color: var(--danger); background: #FCEBEA; }
-    .action-icons .edit-icon:hover { color: var(--text); background: var(--bg-soft); }
-    [data-theme="dark"] .action-icons .delete-icon:hover { background: #3A1E1C; }
-    .stats-row { display: flex; gap: 16px; margin-bottom: 24px; }
-    .stat-card { flex: 1; padding: 16px 20px; border: 1px solid var(--border); border-radius: 10px; }
-    .stat-card .num { font-size: 24px; font-weight: 700; }
-    .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .filter-bar .form-control { max-width: 240px; }
-    .lang-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    .post-title-cell {
+      font-weight: 600;
+      cursor: pointer;
+      max-width: 280px;
+    }
+
+    .post-title-cell:hover {
+      text-decoration: underline;
+    }
+
+    .action-icons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .action-icons a,
+    .action-icons button {
+      font-size: 16px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .action-icons .delete-icon:hover {
+      color: var(--danger);
+      background: #FCEBEA;
+    }
+
+    .action-icons .edit-icon:hover {
+      color: var(--text);
+      background: var(--bg-soft);
+    }
+
+    [data-theme="dark"] .action-icons .delete-icon:hover {
+      background: #3A1E1C;
+    }
+
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      flex: 1;
+      padding: 16px 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .stat-card .num {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar .form-control {
+      max-width: 240px;
+    }
+
+    .lang-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
     .lang-badge-sm {
-      font-size: 11px; font-weight: 600; padding: 2px 7px;
-      border-radius: 8px; background: var(--bg-pill); color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: var(--bg-pill);
+      color: var(--text-muted);
     }
   </style>
 </head>
@@ -44,7 +126,8 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
       <div class="search-box-wrap" id="topSearchWrap">
         <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
@@ -55,7 +138,6 @@
     <div class="topbar-right">
       <div class="lang-dropdown">
         <button class="lang-btn" onclick="toggleLangMenu()">
-          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
           <span class="lang-current-label">English</span>
           <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
         </button>
@@ -64,23 +146,28 @@
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout no-rail" id="layoutRoot">
     <aside class="sidebar" id="mainSidebar">
-      <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-vi="Trang chủ" data-en="Home">Home</span></a>
-      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
-      <a href="owner-posts.html" class="active"><span class="icon"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>
+      <a href="index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Trang chủ" data-en="Home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span>
+        <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
+      <a href="owner-posts.html" class="active"><span class="icon"><iconify-icon
+            icon="fluent-mdl2:blog"></iconify-icon></span> <span data-vi="Quản lý bài viết"
+          data-en="Manage posts">Manage posts</span></a>
     </aside>
 
     <main class="owner-main">
       <div class="owner-header">
         <h1 data-vi="Quản lý bài viết" data-en="Manage Posts">Manage Posts</h1>
         <a href="post-form.html" class="btn btn-primary">
-          <iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon>
+          <iconify-icon icon="basil:add-solid"></iconify-icon>
           <span data-vi="Viết bài mới" data-en="New Post">New Post</span>
         </a>
       </div>
@@ -89,11 +176,13 @@
 
       <!-- Filter bar -->
       <div class="filter-bar">
-        <input type="text" id="searchPosts" class="form-control" placeholder="Tìm kiếm bài viết..." oninput="applyFilters()" style="max-width:280px;">
+        <input type="text" id="searchPosts" class="form-control" placeholder="Tìm kiếm bài viết..."
+          oninput="applyFilters()" style="max-width:280px;">
         <select id="filterStatus" class="form-control" onchange="applyFilters()" style="max-width:180px;">
           <option value="">Tất cả trạng thái</option>
           <option value="PUBLISHED">Đã xuất bản</option>
-          <option value="DRAFT">Bản nháp</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="REJECTED">Bị từ chối</option>
         </select>
       </div>
 
@@ -143,11 +232,13 @@
       // Stats
       const total = rawPostsGlobal.length;
       const published = rawPostsGlobal.filter(p => p.status === 'PUBLISHED').length;
-      const drafts = total - published;
+      const drafts = rawPostsGlobal.filter(p => p.status === 'PENDING').length;
+      const rejected = rawPostsGlobal.filter(p => p.status === 'REJECTED').length;
       document.getElementById('stats-container').innerHTML = `
         <div class="stat-card"><div class="num">${total}</div><div class="label" data-vi="Tổng bài viết" data-en="Total Posts">Total Posts</div></div>
         <div class="stat-card"><div class="num">${published}</div><div class="label" data-vi="Đã xuất bản" data-en="Published">Published</div></div>
-        <div class="stat-card"><div class="num">${drafts}</div><div class="label" data-vi="Bản nháp" data-en="Drafts">Drafts</div></div>
+        <div class="stat-card"><div class="num">${drafts}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--danger);">${rejected}</div><div class="label" data-vi="Bị từ chối" data-en="Rejected">Rejected</div></div>
       `;
 
       const allDetailPosts = db.getPostsWithDetails(langId);
@@ -158,9 +249,9 @@
           const translations = db.get('post_translations');
           const catTrans = db.get('category_translation');
           let pt = translations.find(t => t.post_id === rp.id && t.language_id == langId) ||
-                   translations.find(t => t.post_id === rp.id);
+            translations.find(t => t.post_id === rp.id);
           let ct = catTrans.find(c => c.category_id === rp.category_id && c.language_id == langId) ||
-                   catTrans.find(c => c.category_id === rp.category_id);
+            catTrans.find(c => c.category_id === rp.category_id);
           detail = { title: pt ? pt.title : 'Untitled', category_name: ct ? ct.name : 'Unknown', created_at: rp.created_at, status: rp.status };
         }
 
@@ -200,20 +291,23 @@
         const dateStr = new Date(p.created_at).toLocaleDateString('vi-VN');
         const statusBadge = p.status === 'PUBLISHED'
           ? '<span class="badge badge-green">Đã xuất bản</span>'
-          : '<span class="badge badge-gray">Bản nháp</span>';
+          : p.status === 'REJECTED'
+            ? `<span class="badge badge-red" title="${p.rejection_reason || 'Không rõ lý do'}">Bị từ chối <iconify-icon icon="solar:info-circle-bold-duotone" style="margin-left:4px;vertical-align:middle;"></iconify-icon></span>`
+            : '<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> Chờ duyệt</span>';
         const langBadges = (p.langs || []).map(l => `<span class="lang-badge-sm">${l}</span>`).join('');
         const safeTitle = (p.title || 'Untitled').replace(/'/g, "\\'");
         return `
         <tr>
-          <td class="post-title-cell" onclick="location.href='article.html?id=${p.id}'" title="${p.title}">${p.title}</td>
+          <td class="post-title-cell" onclick="openPreview(${p.id})" title="${p.title}">${p.title}</td>
           <td>${p.category_name}</td>
           <td><div class="lang-badges">${langBadges || '<span class="lang-badge-sm">–</span>'}</div></td>
           <td>${statusBadge}</td>
           <td>${dateStr}</td>
           <td>
             <div class="action-icons">
-              <a href="post-form.html?id=${p.id}" class="edit-icon" title="Sửa"><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon></a>
-              <button class="delete-icon" title="Xóa" onclick="confirmDeletePost(${p.id}, '${safeTitle}')"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>
+              <button class="view-btn" onclick="openPreview(${p.id})" title="Xem" style="background:none; border:none; cursor:pointer; padding:6px; display:inline-flex; align-items:center; color:var(--text-muted);"><iconify-icon icon="iconamoon:eye" style="font-size:19px;"></iconify-icon></button>
+              <a href="post-form.html?id=${p.id}" class="edit-icon" title="Sửa" style="padding:6px; display:inline-flex; align-items:center;"><iconify-icon icon="tabler:edit" style="font-size:19px;"></iconify-icon></a>
+              <button class="delete-icon" title="Xóa" onclick="confirmDeletePost(${p.id}, '${safeTitle}')" style="padding:6px; display:inline-flex; align-items:center;"><iconify-icon icon="weui:delete-outlined" style="font-size:19px;"></iconify-icon></button>
             </div>
           </td>
         </tr>`;
@@ -239,4 +333,5 @@
     }
   </script>
 </body>
+
 </html>

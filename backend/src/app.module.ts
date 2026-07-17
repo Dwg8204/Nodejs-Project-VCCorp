@@ -11,6 +11,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from 'modules/user/user.module';
+import { AuthModule } from 'modules/auth/auth.module';
+import { LanguageModule } from 'modules/language/language.module';
+import { CategoryModule } from 'modules/category/category.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -33,16 +36,18 @@ import { AppController } from './app.controller';
         password: configService.get<string>('DB_PASSWORD', ''),
         database: configService.get<string>('DB_NAME', 'vccorp_db'),
         autoLoadEntities: true, // Tự động load entities từ các module
-        synchronize: configService.get<string>('NODE_ENV') === 'development', // Tự động tạo/sync bảng (chỉ dev)
+        synchronize: false, // Tắt sync - schema được quản lý bằng init.sql
         timezone: '+07:00',
       }),
     }),
 
     // =============================================================
-    // Import các module nghiệp vụ tại đây
-    // Ví dụ: CategoryModule, ProductModule, OrderModule, ...
+    // Import các module nghiệp vụ
     // =============================================================
     UserModule,
+    AuthModule,
+    LanguageModule,
+    CategoryModule,
   ],
   controllers: [AppController],
 })

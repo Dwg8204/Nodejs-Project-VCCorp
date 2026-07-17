@@ -3,9 +3,11 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
   <title>Quản lý ngôn ngữ – Medium</title>
   <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
   <style>
     .admin-main {
       padding: 24px 40px;
@@ -95,18 +97,18 @@
   <div class="topbar">
     <div class="topbar-left">
       <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
-          icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <a href="../index.html" class="logo">Medium</a>
       <div class="search-box-wrap">
         <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
-        <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..." data-en-placeholder="Search...">
+        <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..."
+          data-en-placeholder="Search...">
         <div class="search-results-dropdown"></div>
       </div>
     </div>
     <div class="topbar-right">
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon
-            icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">English</span>
+        <button class="lang-btn" onclick="toggleLangMenu()"> <span class="lang-current-label">English</span>
           <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
@@ -122,24 +124,27 @@
   <div class="layout no-rail" id="layoutRoot">
     <aside class="sidebar" id="mainSidebar">
       <a href="index.html">
-        <span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span>
+        <span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span>
         <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
       </a>
+      <a href="posts.html">
+        <span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span>
+        <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span>
+      </a>
       <a href="users.html">
-        <span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span>
+        <span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span>
         <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
       </a>
       <a href="categories.html">
-        <span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span>
+        <span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span>
         <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
       </a>
       <a href="languages.html" class="active">
-        <span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span>
+        <span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span>
         <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
       </a>
-      <hr>
       <a href="../index.html">
-        <span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span>
+        <span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
         <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
       </a>
     </aside>
@@ -148,7 +153,7 @@
       <div class="admin-header">
         <h1 data-vi="Quản lý ngôn ngữ" data-en="Manage Languages">Manage Languages</h1>
         <button class="btn btn-primary" onclick="openAddModal()">
-          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
+          <iconify-icon icon="fa:language"></iconify-icon>
           <span data-vi="Thêm ngôn ngữ" data-en="Add Language">Add Language</span>
         </button>
       </div>
@@ -192,14 +197,15 @@
   <div class="modal-overlay" id="addLangModal" onclick="if(event.target===this)closeModal('addLangModal')">
     <div class="modal-box">
       <div class="modal-header">
-        <h2><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> Thêm ngôn ngữ</h2>
+        <h2><iconify-icon icon="fa:language"></iconify-icon> Thêm ngôn ngữ</h2>
         <button class="modal-close" onclick="closeModal('addLangModal')"><iconify-icon
             icon="solar:close-circle-bold-duotone"></iconify-icon></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
           <label>Mã ngôn ngữ <span style="color:var(--text-muted);font-weight:400;">(VD: ja, fr, de)</span></label>
-          <input type="text" id="newLangCode" class="form-control" placeholder="ja" maxlength="5" oninput="document.getElementById('newLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
+          <input type="text" id="newLangCode" class="form-control" placeholder="ja" maxlength="5"
+            oninput="document.getElementById('newLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
         </div>
         <div class="form-group">
           <label>Tên ngôn ngữ</label>
@@ -207,7 +213,8 @@
         </div>
         <div class="form-group">
           <label>Cờ</label>
-          <div id="newLangFlagPreview" style="padding:6px 0;"><img src="https://flagcdn.com/w40/un.png" width="20" alt="flag" style="vertical-align:middle; border-radius:2px;"></div>
+          <div id="newLangFlagPreview" style="padding:6px 0;"><img src="https://flagcdn.com/w40/un.png" width="20"
+              alt="flag" style="vertical-align:middle; border-radius:2px;"></div>
           <div class="hint">Cờ được tự động lấy theo mã ngôn ngữ, không cần nhập tay.</div>
         </div>
       </div>
@@ -222,7 +229,7 @@
   <div class="modal-overlay" id="editLangModal" onclick="if(event.target===this)closeModal('editLangModal')">
     <div class="modal-box">
       <div class="modal-header">
-        <h2><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon> Chỉnh sửa ngôn ngữ</h2>
+        <h2><iconify-icon icon="tabler:edit"></iconify-icon> Chỉnh sửa ngôn ngữ</h2>
         <button class="modal-close" onclick="closeModal('editLangModal')"><iconify-icon
             icon="solar:close-circle-bold-duotone"></iconify-icon></button>
       </div>
@@ -230,7 +237,8 @@
         <input type="hidden" id="editLangId">
         <div class="form-group">
           <label>Mã ngôn ngữ</label>
-          <input type="text" id="editLangCode" class="form-control" maxlength="5" oninput="document.getElementById('editLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
+          <input type="text" id="editLangCode" class="form-control" maxlength="5"
+            oninput="document.getElementById('editLangFlagPreview').innerHTML = flagImgFor(this.value, 22);">
         </div>
         <div class="form-group">
           <label>Tên ngôn ngữ</label>
@@ -286,8 +294,8 @@
           ? '<span class="badge badge-green"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> Mặc định</span>'
           : `<button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px; height: 26px;" onclick="setDefaultLang(${lang.id}, '${lang.name}')">Đặt làm mặc định</button>`;
         const deleteBtn = isDefault
-          ? `<button class="delete-btn" disabled title="Không thể xóa ngôn ngữ mặc định" style="opacity:0.4;cursor:not-allowed;"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>`
-          : `<button class="delete-btn" onclick="confirmDeleteLang(${lang.id}, '${lang.name}', '${lang.code}')"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>`;
+          ? `<button class="delete-btn" disabled title="Không thể xóa ngôn ngữ mặc định" style="opacity:0.4;cursor:not-allowed;"><iconify-icon icon="weui:delete-outlined"></iconify-icon></button>`
+          : `<button class="delete-btn" onclick="confirmDeleteLang(${lang.id}, '${lang.name}', '${lang.code}')"><iconify-icon icon="weui:delete-outlined"></iconify-icon></button>`;
 
         return `
         <tr>
@@ -297,7 +305,7 @@
           <td>${defaultLabel}</td>
           <td>
             <div class="action-icons">
-              <button class="edit-btn" onclick="openEditModal(${lang.id})" title="Chỉnh sửa"><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon></button>
+              <button class="edit-btn" onclick="openEditModal(${lang.id})" title="Chỉnh sửa"><iconify-icon icon="tabler:edit"></iconify-icon></button>
               ${deleteBtn}
             </div>
           </td>

@@ -80,7 +80,7 @@ export class AuthGuard implements CanActivate {
         id: user.id,
         email: user.email,
         role: user.role?.nameRole || '',
-        name: user.userName,
+        name: user.fullName,
       };
 
       return true;

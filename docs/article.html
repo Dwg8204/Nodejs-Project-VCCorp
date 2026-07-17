@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
 <title>What good writing looks like</title>
@@ -168,13 +169,13 @@
 <!-- ===== Topbar (kế thừa giống trang chủ) ===== -->
 <div class="topbar">
   <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
+    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="material-symbols:menu-rounded"></iconify-icon></span>
     <a href="index.html" class="logo">Medium</a>
     <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon> <span>Search</span></div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="fa:language"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
@@ -188,8 +189,8 @@
 <div class="layout" id="layoutRoot">
   <!-- ===== Sidebar (kế thừa giống trang chủ) ===== -->
     <aside class="sidebar" id="mainSidebar">
-    <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> Home</a>
-    <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> Profile</a>
+    <a href="index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span> Home</a>
+    <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span> Profile</a>
   </aside>
 
   <!-- ===== Article content ===== -->

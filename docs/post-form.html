@@ -3,11 +3,23 @@
 
 <head>
   <meta charset="UTF-8">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
   <title>Viết bài – Medium</title>
   <link rel="stylesheet" href="shared.css">
   <style>
+    .form-layout-wrap {
+      display: flex;
+      gap: 0;
+      min-height: calc(100vh - 60px);
+    }
+
     .form-main {
       padding: 24px 40px 80px 40px;
+      flex: 1;
+      min-width: 0;
       max-width: 760px;
     }
 
@@ -19,14 +31,14 @@
     }
 
     .form-header h1 {
-      /* font-family: Georgia, 'Times New Roman', serif; */
-      font-size: 32px;
-      font-weight: 400;
+      font-size: 28px;
+      font-weight: 600;
     }
 
     .form-actions {
       display: flex;
       gap: 10px;
+      align-items: center;
     }
 
     .lang-row {
@@ -54,6 +66,47 @@
       color: var(--text-muted);
       margin-bottom: 16px;
       line-height: 1.5;
+    }
+
+    /* Quill */
+    #postContentEditor {
+      background: var(--card-bg);
+      color: var(--text);
+      min-height: 260px;
+      font-size: 16px;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+
+    .ql-toolbar.ql-snow {
+      border-color: var(--border-strong) !important;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+      background: var(--bg-soft);
+    }
+
+    .ql-container.ql-snow {
+      border-color: var(--border-strong) !important;
+    }
+
+    .ql-snow .ql-stroke {
+      stroke: var(--text) !important;
+    }
+
+    .ql-snow .ql-fill {
+      fill: var(--text) !important;
+    }
+
+    .ql-snow .ql-picker {
+      color: var(--text) !important;
+    }
+
+    .ql-snow .ql-picker-options {
+      background: var(--card-bg) !important;
+    }
+
+    .ql-editor.ql-blank::before {
+      color: var(--text-muted) !important;
     }
 
     .translate-pills {
@@ -92,6 +145,132 @@
       padding: 2px 8px;
       border-radius: 10px;
     }
+
+    .panel-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    /* Preview side panel */
+    .preview-side-panel {
+      width: 0;
+      overflow: hidden;
+      border-left: 1px solid var(--border);
+      background: var(--card-bg);
+      transition: width 0.3s ease;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .preview-side-panel.open {
+      width: 380px;
+      min-width: 280px;
+    }
+
+    .preview-panel-inner {
+      padding: 24px 28px;
+      min-width: 320px;
+    }
+
+    .preview-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .preview-panel-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .preview-close-btn {
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .preview-lang-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .preview-lang-tab {
+      border: 1px solid var(--border-strong);
+      border-radius: 14px;
+      padding: 4px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      background: none;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .preview-lang-tab.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .preview-lang-badge {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 10px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+
+    .preview-title-text {
+      font-family: inherit;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      line-height: 1.3;
+    }
+
+    .preview-content-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* Toggle preview button */
+    .btn-preview-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: none;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+
+    .btn-preview-toggle:hover {
+      background: var(--bg-soft);
+    }
+
+    .btn-preview-toggle.active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
   </style>
 </head>
 
@@ -99,119 +278,173 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box-wrap" id="topSearchWrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" id="topSearchInput" type="text" placeholder="Search...">
+        <div class="search-results-dropdown" id="topSearchDropdown"></div>
+      </div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()">
+          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
+          <span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+        </button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout no-rail" id="layoutRoot">
-    <aside class="sidebar">
-      <a href="index.html"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <a href="owner-posts.html" class="active"><span class="icon">&#128221;</span> Manage posts</a>
-      <a href="#"><span class="icon">&#128202;</span> Stats</a>
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span>
+        <span data-vi="Trang chủ" data-en="Home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon
+            icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-vi="Hồ sơ"
+          data-en="Profile">Profile</span></a>
+      <a href="owner-posts.html"><span class="icon"><iconify-icon
+            icon="solar:document-text-bold-duotone"></iconify-icon></span> <span data-vi="Quản lý bài viết"
+          data-en="Manage posts">Manage posts</span></a>
     </aside>
 
-    <main class="form-main">
-      <div class="form-header">
-        <h1 id="formTitle">Viết bài mới</h1>
-        <div class="form-actions">
-          <a href="owner-posts.html" class="btn btn-outline">Hủy</a>
-          <button class="btn btn-outline" onclick="savePost('DRAFT')">Lưu nháp</button>
-          <button class="btn btn-primary" onclick="savePost('PUBLISHED')">Xuất bản</button>
+    <!-- Wrap form + preview side panel -->
+    <div class="form-layout-wrap">
+      <main class="form-main">
+        <div class="form-header">
+          <h1 id="formTitle" data-vi="Viết bài mới" data-en="New Post">New Post</h1>
+          <div class="form-actions">
+            <a href="owner-posts.html" class="btn btn-outline" data-vi="Hủy" data-en="Cancel">Cancel</a>
+            <button class="btn btn-outline" onclick="savePost('DRAFT')" data-vi="Lưu nháp" data-en="Save Draft">Save
+              Draft</button>
+            <button class="btn-preview-toggle" id="previewToggleBtn" onclick="togglePreviewPanel()">
+              <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon> Preview
+            </button>
+            <button class="btn btn-primary" onclick="savePost('PUBLISHED')" data-vi="Xuất bản"
+              data-en="Publish">Publish</button>
+          </div>
+        </div>
+
+        <form onsubmit="return false;">
+          <div class="lang-row">
+            <div class="form-group">
+              <label data-vi="Ngôn ngữ bài viết" data-en="Post Language">Post Language</label>
+              <select class="form-control" id="sourceLang" onchange="onSourceLangChange()">
+                <!-- Rendered by js -->
+              </select>
+            </div>
+            <div class="form-group">
+              <label data-vi="Danh mục" data-en="Category">Category</label>
+              <select class="form-control" id="categoryId">
+                <!-- Rendered by js -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-vi="Tiêu đề bài viết" data-en="Post Title">Post Title</label>
+            <input type="text" id="postTitle" class="form-control" placeholder="Nhập tiêu đề bài viết..."
+              oninput="updatePreview()">
+          </div>
+
+          <div class="form-group">
+            <label data-vi="Nội dung bài viết" data-en="Post Content">Post Content</label>
+            <div id="postContentEditor"></div>
+          </div>
+
+          <div class="translate-section">
+            <h2 data-vi="Dịch sang ngôn ngữ khác" data-en="Translate to other languages">Translate to other languages
+            </h2>
+            <div class="desc" data-vi="Chọn ngôn ngữ bạn muốn dịch và điền tiêu đề + nội dung tương ứng."
+              data-en="Select languages to translate and enter title + content for each.">Select languages to translate
+              and enter title + content for each.</div>
+            <div class="translate-pills" id="translatePills"><!-- Rendered by js --></div>
+          </div>
+        </form>
+      </main>
+
+      <!-- Preview side panel -->
+      <div class="preview-side-panel" id="previewSidePanel">
+        <div class="preview-panel-inner">
+          <div class="preview-panel-header">
+            <h3><iconify-icon icon="solar:eye-bold-duotone"></iconify-icon> Preview</h3>
+            <button class="preview-close-btn" onclick="togglePreviewPanel()">
+              <iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon>
+            </button>
+          </div>
+          <div class="preview-lang-tabs" id="previewLangTabs"></div>
+          <div id="previewPanelContent">
+            <span class="preview-lang-badge" id="previewLangBadge">English</span>
+            <div class="preview-title-text" id="previewPanelTitle">(Chưa có tiêu đề)</div>
+            <div class="preview-content-text" id="previewPanelContent"></div>
+          </div>
         </div>
       </div>
-
-      <form onsubmit="return false;">
-        <div class="lang-row">
-          <div class="form-group">
-            <label>Ngôn ngữ của bài viết</label>
-            <select class="form-control" id="sourceLang" onchange="onSourceLangChange()">
-              <!-- Rendered by js -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Danh mục</label>
-            <select class="form-control" id="categoryId">
-              <!-- Rendered by js -->
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Tên bài viết</label>
-          <input type="text" id="postTitle" class="form-control" placeholder="Nhập tiêu đề bài viết...">
-        </div>
-
-        <div class="form-group">
-          <label>Nội dung bài viết</label>
-          <textarea id="postContent" class="form-control" placeholder="Viết nội dung ở đây..."></textarea>
-        </div>
-
-        <div class="translate-section">
-          <h2>Dịch bài viết sang ngôn ngữ khác</h2>
-          <div class="desc">Chọn các ngôn ngữ bạn muốn dịch bài viết này sang. Với mỗi ngôn ngữ được chọn, hãy nhập tiêu
-            đề và nội dung tương ứng bên dưới.</div>
-
-          <div class="translate-pills" id="translatePills">
-            <!-- Rendered by js -->
-          </div>
-        </div>
-      </form>
-    </main>
+    </div>
   </div>
 
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
     let LANG_NAMES = {};
+    let LANG_OBJS = [];
     let currentPostId = null;
+    let quill = null;
+    let previewOpen = false;
+    let currentPreviewLang = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id === 3) {
-        alert('Vui lòng đăng nhập với tài khoản hợp lệ!');
-        window.location.href = 'login.html';
+        showToast('Vui lòng đăng nhập với tài khoản hợp lệ!', 'error');
+        setTimeout(() => window.location.href = 'login.html', 1500);
         return;
       }
+
+      quill = new Quill('#postContentEditor', {
+        theme: 'snow',
+        placeholder: 'Viết nội dung ở đây...',
+        modules: {
+          toolbar: [
+            [{ header: [2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            ['blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image'],
+            ['clean']
+          ]
+        }
+      });
+      quill.on('text-change', updatePreview);
 
       const languages = db.get('languages');
       const categories = db.get('categories');
       const categoryTranslations = db.get('category_translation');
       const langId = localStorage.getItem('current_language_id') || '1';
 
-      // Build Lang options
+      LANG_OBJS = languages;
       let langOptionsHtml = '';
       let pillsHtml = '';
       languages.forEach(l => {
         LANG_NAMES[l.code] = l.name;
         langOptionsHtml += `<option value="${l.code}">${l.name}</option>`;
         pillsHtml += `
-        <label class="checkbox-pill" data-lang="${l.code}">
-          <input type="checkbox" value="${l.code}" onchange="onTranslateToggle(this)"> ${l.name}
-        </label>
-      `;
+          <label class="checkbox-pill" data-lang="${l.code}">
+            <input type="checkbox" value="${l.code}" onchange="onTranslateToggle(this)"> ${flagImgFor(l.code)} ${l.name}
+          </label>`;
       });
       document.getElementById('sourceLang').innerHTML = langOptionsHtml;
       document.getElementById('translatePills').innerHTML = pillsHtml;
 
-      // Build categories
       let catOptionsHtml = '';
       categories.forEach(c => {
         let t = categoryTranslations.find(x => x.category_id === c.id && x.language_id == langId);
@@ -220,16 +453,74 @@
       });
       document.getElementById('categoryId').innerHTML = catOptionsHtml;
 
+      // Set default source lang from current UI lang
+      const uiLang = localStorage.getItem('blog-lang') || 'en';
+      const uiLangObj = languages.find(l => l.code === uiLang);
+      if (uiLangObj) document.getElementById('sourceLang').value = uiLang;
       onSourceLangChange();
 
-      // Init Edit mode
       const params = new URLSearchParams(window.location.search);
       if (params.get('id')) {
         document.getElementById('formTitle').textContent = 'Chỉnh sửa bài viết';
         currentPostId = parseInt(params.get('id'));
         loadPostData(currentPostId);
       }
+
+      // Init preview tabs
+      renderPreviewTabs();
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+      initSearch(() => db.getPostsWithDetails(langId));
     });
+
+    function renderPreviewTabs() {
+      const sourceLang = document.getElementById('sourceLang') ? document.getElementById('sourceLang').value : 'en';
+      const languages = LANG_OBJS;
+      const tabs = [{ code: sourceLang, name: LANG_NAMES[sourceLang] || sourceLang }];
+      // Add checked translations
+      document.querySelectorAll('#translatePills input:checked').forEach(cb => {
+        const lObj = LANG_OBJS.find(l => l.code === cb.value);
+        if (lObj) tabs.push({ code: lObj.code, name: lObj.name });
+      });
+      if (!currentPreviewLang) currentPreviewLang = sourceLang;
+      document.getElementById('previewLangTabs').innerHTML = tabs.map(t => `
+        <button class="preview-lang-tab ${t.code === currentPreviewLang ? 'active' : ''}"
+          onclick="switchPreviewLang('${t.code}')">${t.name}</button>`).join('');
+      updatePreview();
+    }
+
+    function switchPreviewLang(langCode) {
+      currentPreviewLang = langCode;
+      renderPreviewTabs();
+    }
+
+    function updatePreview() {
+      if (!previewOpen) return;
+      const lang = currentPreviewLang || document.getElementById('sourceLang')?.value || 'en';
+      const sourceLang = document.getElementById('sourceLang')?.value || 'en';
+      const title = document.getElementById('postTitle')?.value || '(Chưa có tiêu đề)';
+      const content = quill ? quill.root.innerHTML : '';
+      const lObj = LANG_OBJS.find(l => l.code === lang);
+      const langName = lObj ? `${flagImgFor(lObj.code)} ${lObj.name}` : lang;
+
+      let previewTitle = title;
+      let previewContent = content;
+      if (lang !== sourceLang) {
+        previewTitle = `[${lObj ? lObj.name : lang}] ${title}`;
+        previewContent = `<p><em style="color:var(--text-muted)">(Bản xem trước — sẽ được tự động dịch sang ${lObj ? lObj.name : lang})</em></p>${content}`;
+      }
+      document.getElementById('previewLangBadge').innerHTML = langName;
+      document.getElementById('previewPanelTitle').textContent = previewTitle || '(Chưa có tiêu đề)';
+      document.getElementById('previewPanelContent').innerHTML = previewContent;
+    }
+
+    function togglePreviewPanel() {
+      previewOpen = !previewOpen;
+      const panel = document.getElementById('previewSidePanel');
+      const btn = document.getElementById('previewToggleBtn');
+      panel.classList.toggle('open', previewOpen);
+      btn.classList.toggle('active', previewOpen);
+      if (previewOpen) { renderPreviewTabs(); updatePreview(); }
+    }
 
     function onSourceLangChange() {
       const source = document.getElementById('sourceLang').value;
@@ -241,56 +532,56 @@
           if (cb.checked) { cb.checked = false; onTranslateToggle(cb); }
         }
       });
+      currentPreviewLang = source;
+      renderPreviewTabs();
     }
 
     function onTranslateToggle(checkbox) {
       const pill = checkbox.closest('.checkbox-pill');
       pill.classList.toggle('active', checkbox.checked);
+      renderPreviewTabs();
     }
 
     function loadPostData(postId) {
       const posts = db.get('posts');
       const translations = db.get('post_translations');
       const languages = db.get('languages');
-
       const post = posts.find(p => p.id === postId);
       if (!post) return;
 
       document.getElementById('categoryId').value = post.category_id;
-      // Tìm language gốc dựa trên translation đầu tiên
-      const mainTrans = translations.find(t => t.post_id === postId);
-      if (mainTrans) {
-        const l = languages.find(lang => lang.id === mainTrans.language_id);
-        if (l) {
-          document.getElementById('sourceLang').value = l.code;
-          onSourceLangChange();
-          document.getElementById('postTitle').value = mainTrans.title;
-          document.getElementById('postContent').value = mainTrans.content;
-        }
+      const sourceLangObj = languages.find(l => l.id === post.source_language_id);
+      if (sourceLangObj) {
+        document.getElementById('sourceLang').value = sourceLangObj.code;
+        onSourceLangChange();
       }
 
-      // Load other translations (giả định)
-      translations.filter(t => t.id !== (mainTrans ? mainTrans.id : null)).forEach(t => {
-        const l = languages.find(lang => lang.id === t.language_id);
-        if (l && l.code !== document.getElementById('sourceLang').value) {
+      const mainTrans = translations.find(t => t.post_id === postId && t.language_id === post.source_language_id) ||
+        translations.find(t => t.post_id === postId);
+      if (mainTrans) {
+        document.getElementById('postTitle').value = mainTrans.title;
+        quill.root.innerHTML = mainTrans.content || '';
+      }
+
+      translations.filter(t => t.language_id !== post.source_language_id && t.post_id === postId).forEach(t => {
+        const l = languages.find(lg => lg.id === t.language_id);
+        if (l) {
           const cb = document.querySelector(`#translatePills input[value="${l.code}"]`);
-          if (cb) {
-            cb.checked = true;
-            onTranslateToggle(cb);
-          }
+          if (cb) { cb.checked = true; onTranslateToggle(cb); }
         }
       });
     }
 
     function savePost(status) {
-      const title = document.getElementById('postTitle').value;
-      const content = document.getElementById('postContent').value;
+      const title = document.getElementById('postTitle').value.trim();
+      const content = quill ? quill.root.innerHTML : '';
+      const isEmpty = !quill || quill.getText().trim().length === 0;
       const catId = parseInt(document.getElementById('categoryId').value);
       const sourceLangCode = document.getElementById('sourceLang').value;
       const languages = db.get('languages');
 
-      if (!title || !content) {
-        alert("Vui lòng nhập tiêu đề và nội dung."); return;
+      if (!title || isEmpty) {
+        showToast('Vui lòng nhập tiêu đề và nội dung!', 'error'); return;
       }
 
       const posts = db.get('posts');
@@ -301,64 +592,32 @@
       if (!postId) {
         postId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
         const sourceLangObj = languages.find(l => l.code === sourceLangCode);
-        posts.push({
-          id: postId,
-          author_id: user.id,
-          category_id: catId,
-          status: status,
-          source_language_id: sourceLangObj.id,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
+        posts.push({ id: postId, author_id: user.id, category_id: catId, status, source_language_id: sourceLangObj.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
       } else {
         const p = posts.find(x => x.id === postId);
-        p.category_id = catId;
-        p.status = status;
-        p.updated_at = new Date().toISOString();
+        if (p) { p.category_id = catId; p.status = status; p.updated_at = new Date().toISOString(); }
       }
       db.set('posts', posts);
 
-      // Save translation (source lang)
       const sourceLangObj = languages.find(l => l.code === sourceLangCode);
       let sTrans = transDB.find(t => t.post_id === postId && t.language_id === sourceLangObj.id);
-      if (sTrans) {
-        sTrans.title = title;
-        sTrans.content = content;
-      } else {
-        const tId = transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1;
-        transDB.push({
-          id: tId, post_id: postId, language_id: sourceLangObj.id,
-          title: title, content: content
-        });
+      if (sTrans) { sTrans.title = title; sTrans.content = content; }
+      else {
+        transDB.push({ id: transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1, post_id: postId, language_id: sourceLangObj.id, title, content });
       }
 
-      // Handle other checked translations (simulate auto-translation)
       document.querySelectorAll('#translatePills input:checked').forEach(cb => {
-        const lcode = cb.value;
-        const lobj = languages.find(l => l.code === lcode);
-
-        // Auto-translated fake data
-        const tTitle = `[${lobj.name}] ${title}`;
-        const tContent = `<p><em>(Nội dung được tự động dịch sang ${lobj.name})</em></p>${content}`;
-
-        let eTrans = transDB.find(t => t.post_id === postId && t.language_id === lobj.id);
-        if (eTrans) {
-          eTrans.title = tTitle;
-          eTrans.content = tContent;
-          eTrans.is_auto_translated = true;
-        } else {
-          const ntId = transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1;
-          transDB.push({
-            id: ntId, post_id: postId, language_id: lobj.id,
-            title: tTitle, content: tContent,
-            is_auto_translated: true
-          });
-        }
+        const lObj = languages.find(l => l.code === cb.value);
+        const tTitle = `[${lObj.name}] ${title}`;
+        const tContent = `<p><em>(Nội dung được tự động dịch sang ${lObj.name})</em></p>${content}`;
+        let eTrans = transDB.find(t => t.post_id === postId && t.language_id === lObj.id);
+        if (eTrans) { eTrans.title = tTitle; eTrans.content = tContent; eTrans.is_auto_translated = true; }
+        else { transDB.push({ id: transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1, post_id: postId, language_id: lObj.id, title: tTitle, content: tContent, is_auto_translated: true }); }
       });
 
       db.set('post_translations', transDB);
-      alert(status === 'PUBLISHED' ? 'Đã xuất bản!' : 'Đã lưu bản nháp!');
-      window.location.href = 'owner-posts.html';
+      showToast(status === 'PUBLISHED' ? 'Đã xuất bản thành công!' : 'Đã lưu bản nháp!', 'success');
+      setTimeout(() => window.location.href = 'owner-posts.html', 1200);
     }
   </script>
 </body>

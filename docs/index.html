@@ -3,31 +3,13 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Medium</title>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Medium – Trang chủ</title>
+  <meta name="description" content="Đọc các bài viết chất lượng về công nghệ, thiết kế, thể thao và đời sống.">
   <link rel="stylesheet" href="shared.css">
   <style>
     .feed-wrapper {
       padding: 24px 32px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 24px;
-      border-bottom: 1px solid #F2F2F2;
-      margin-bottom: 8px;
-    }
-
-    .tabs a {
-      padding: 12px 0;
-      font-size: 15px;
-      color: #6B6B6B;
-      border-bottom: 2px solid transparent;
-    }
-
-    .tabs a.active {
-      color: #242424;
-      font-weight: 600;
-      border-bottom: 2px solid #242424;
     }
 
     .article-card {
@@ -35,7 +17,7 @@
       justify-content: space-between;
       gap: 24px;
       padding: 28px 0;
-      border-bottom: 1px solid #F2F2F2;
+      border-bottom: 1px solid var(--border);
     }
 
     .article-main {
@@ -48,7 +30,7 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
 
@@ -58,10 +40,6 @@
       border-radius: 4px;
       background: linear-gradient(135deg, #7C5CE0, #4A90E2);
       display: inline-block;
-    }
-
-    .source-badge.sport {
-      background: #1E90C9;
     }
 
     .article-title {
@@ -78,7 +56,7 @@
 
     .article-desc {
       font-size: 16px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 14px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -90,7 +68,7 @@
       display: flex;
       align-items: center;
       gap: 20px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       font-size: 14px;
     }
 
@@ -115,29 +93,105 @@
       cursor: pointer;
     }
 
-    .because-follow {
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .feed-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .empty-feed {
+      padding: 60px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    /* Category Dropdown Styles */
+    .cat-dropdown {
+      position: relative;
+    }
+    .cat-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      background: var(--bg-pill);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .cat-dropdown-btn:hover {
+      background: var(--bg-soft);
+    }
+    .cat-dropdown-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 100;
+      min-width: 200px;
+      box-shadow: var(--shadow);
+    }
+    .cat-dropdown-panel.open {
+      display: block;
+    }
+    .cat-search-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      color: #6B6B6B;
-      padding: 20px 0 8px 0;
-    }
-
-    .author-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      color: #6B6B6B;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 6px 10px;
       margin-bottom: 10px;
     }
-
-    .author-row .mini-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #999;
+    .cat-search-wrap input {
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      width: 100%;
+    }
+    .cat-dropdown-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cat-drop-item {
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      text-align: left;
+      font-size: 14px;
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cat-drop-item:hover {
+      background: var(--bg-soft);
+    }
+    .cat-drop-item.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-weight: 600;
     }
   </style>
 </head>
@@ -147,66 +201,81 @@
   <!-- ===== Topbar ===== -->
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
       <span class="logo">Medium</span>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box-wrap" id="topSearchWrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" id="topSearchInput" type="text" placeholder="Search...">
+        <div class="search-results-dropdown" id="topSearchDropdown"></div>
+      </div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
-      <span class="write-link">&#9998; Write</span>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()">
+          <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
+          <span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+        </button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout" id="layoutRoot">
     <!-- ===== Sidebar ===== -->
-    <aside class="sidebar">
-      <a href="index.html" class="active"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <!-- <a href="#"><span class="icon">&#128221;</span> Stories</a>
-    <a href="#"><span class="icon">&#128202;</span> Stats</a> -->
-      <hr>
-      <a href="#"><span class="icon">&#128101;</span> Following</a>
-      <div class="follow-box">
-        Find writers and publications to follow.
-        <br><span class="see-suggestions">See suggestions</span>
-      </div>
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html" class="active"><span class="icon"><iconify-icon
+            icon="solar:home-2-bold-duotone"></iconify-icon></span> <span data-vi="Trang chủ"
+          data-en="Home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon
+            icon="solar:user-circle-bold-duotone"></iconify-icon></span> <span data-vi="Hồ sơ"
+          data-en="Profile">Profile</span></a>
     </aside>
 
     <!-- ===== Main feed ===== -->
     <main class="feed-wrapper">
-      <div class="tabs">
-        <a href="#" class="active">For you</a>
-        <a href="#">Featured</a>
+      <!-- Category filter bar -->
+      <div class="feed-header">
+        <div class="feed-title" data-vi="Bài viết nổi bật" data-en="Latest Posts">Latest Posts</div>
+        <!-- Category dropdown with search -->
+        <div class="cat-dropdown" id="catDropdown">
+          <button class="cat-dropdown-btn" onclick="toggleCatDropdown()" id="catDropdownBtn">
+            <span id="catDropdownLabel" data-vi="Tất cả" data-en="All">Tất cả</span>
+            <iconify-icon icon="solar:alt-arrow-down-linear" style="font-size:14px;"></iconify-icon>
+          </button>
+          <div class="cat-dropdown-panel" id="catDropdownPanel">
+            <div class="cat-search-wrap">
+              <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+              <input type="text" id="catSearchInput" placeholder="Tìm danh mục..." oninput="filterCatDropdown(this.value)" autocomplete="off">
+            </div>
+            <div class="cat-dropdown-list" id="catDropdownList"></div>
+          </div>
+        </div>
       </div>
 
       <div id="feed-articles">
         <!-- Articles will be rendered here by JS -->
       </div>
+      <div class="empty-feed" id="feedEmpty" style="display:none;" data-vi="Không có bài viết nào."
+        data-en="No articles found.">No articles found.</div>
     </main>
 
     <!-- ===== Right rail ===== -->
     <aside class="right-rail">
-      <h3>Staff Picks</h3>
+      <h3 data-vi="Bài nổi bật" data-en="Staff Picks">Staff Picks</h3>
       <div id="staff-picks-container">
         <!-- Rendered by JS -->
       </div>
-      <div class="see-full-list">See the full list</div>
-
       <div class="recommended-topics">
-        <h3>Recommended topics</h3>
-        <span class="topic-pill">Programming +</span>
+        <h3 data-vi="Chủ đề gợi ý" data-en="Recommended topics">Recommended topics</h3>
+        <div id="recommended-topics-list" style="margin-top:12px;"></div>
       </div>
     </aside>
   </div>
@@ -214,82 +283,177 @@
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
-    function toggleSidebar() {
-      document.getElementById('layoutRoot').classList.toggle('sidebar-collapsed');
-    }
+    let allPosts = [];
+    let allCatOptions = [];
+    let currentCatFilter = 'all';
 
-    // --- Render logic ---
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Setup Header based on Login status
+      // 1. Setup header based on login status
       const currentUser = db.getCurrentUser();
       if (!currentUser) {
-        // Đổi Giao diện nếu chưa đăng nhập
         const topbarRight = document.querySelector('.topbar-right');
         topbarRight.innerHTML = `
-        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
-        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
-      `;
+          <div class="lang-dropdown">
+            <button class="lang-btn" onclick="toggleLangMenu()">
+              <iconify-icon icon="solar:global-bold-duotone"></iconify-icon>
+              <span class="lang-current-label">English</span>
+              <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+            </button>
+            <div class="lang-menu">
+              <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+              <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+            </div>
+          </div>
+          <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
+          <a href="login.html" style="color:var(--text-muted);text-decoration:none;font-size:14px;">Sign In</a>
+          <a href="register.html" style="background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;text-decoration:none;font-size:14px;">Get Started</a>
+        `;
       }
 
-      // 2. Render Posts
       const langId = localStorage.getItem('current_language_id') || '1';
-      const posts = db.getPostsWithDetails(langId);
 
+      // 2. Build category filter pills
+      const categories = db.get('categories');
+      const categoryTranslations = db.get('category_translation');
+      allCatOptions = [{ id: 'all', name: 'All', nameVi: 'Tất cả' }];
+      categories.forEach(c => {
+        let tEn = categoryTranslations.find(x => x.category_id === c.id && x.language_id == 1);
+        let tVi = categoryTranslations.find(x => x.category_id === c.id && x.language_id == 2);
+        if (!tEn) tEn = categoryTranslations.find(x => x.category_id === c.id);
+        if (tEn) allCatOptions.push({ id: c.id, name: tEn.name, nameVi: tVi ? tVi.name : tEn.name });
+      });
+      renderCatDropdown();
+
+      // 3. Render Posts
+      allPosts = db.getPostsWithDetails(langId).filter(post => {
+        const translations = db.get('post_translations');
+        return translations.some(t => t.post_id === post.id && String(t.language_id) === String(langId));
+      });
+
+      // Check for search query in URL
+      const params = new URLSearchParams(window.location.search);
+      const qParam = params.get('q');
+      if (qParam) {
+        const input = document.getElementById('topSearchInput');
+        if (input) input.value = qParam;
+        const filtered = allPosts.filter(p =>
+          (p.title || '').toLowerCase().includes(qParam.toLowerCase()) ||
+          (p.author_name || '').toLowerCase().includes(qParam.toLowerCase()) ||
+          (p.category_name || '').toLowerCase().includes(qParam.toLowerCase())
+        );
+        renderPosts(filtered);
+      } else {
+        renderPosts(allPosts);
+      }
+
+      // 4. Staff Picks
+      const staffPicksContainer = document.getElementById('staff-picks-container');
+      const sortedPosts = [...allPosts].sort((a, b) => b.likes - a.likes).slice(0, 3);
+      staffPicksContainer.innerHTML = sortedPosts.map(post => `
+        <div class="pick">
+          <div class="pick-source"><span class="badge" style="background:#7C5CE0;width:14px;height:14px;border-radius:3px;display:inline-block;margin-right:6px;"></span> ${post.category_name} · ${post.author_name}</div>
+          <h4 onclick="location.href='article.html?id=${post.id}'" style="cursor:pointer;margin:6px 0 4px;">${post.title}</h4>
+          <div class="pick-date"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> ${post.date_formatted}</div>
+        </div>
+      `).join('');
+
+      // 5. Recommended topics (from categories)
+      const topicsList = document.getElementById('recommended-topics-list');
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      topicsList.innerHTML = allCatOptions.filter(c => c.id !== 'all').map(c => `
+        <span class="topic-pill" onclick="filterByCat('${c.id}', '${c.id}')" style="display:inline-flex;margin-right:8px;margin-bottom:8px;">${lang === 'vi' ? c.nameVi : c.name}</span>
+      `).join('');
+
+      // 6. Init search
+      initSearch(() => allPosts);
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
+
+    function toggleCatDropdown() {
+      const panel = document.getElementById('catDropdownPanel');
+      const isOpen = panel.classList.toggle('open');
+      if (isOpen) {
+        document.getElementById('catSearchInput').focus();
+        renderCatDropdown();
+      }
+    }
+
+    function renderCatDropdown(kw = '') {
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      const list = document.getElementById('catDropdownList');
+      const kl = kw.toLowerCase();
+      const opts = allCatOptions.filter(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        return label.toLowerCase().includes(kl);
+      });
+      list.innerHTML = opts.map(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        return `<button class="cat-drop-item ${c.id === currentCatFilter ? 'active' : ''}" onclick="filterByCat('${c.id}')">${label}</button>`;
+      }).join('');
+    }
+
+    function filterCatDropdown(kw) { renderCatDropdown(kw); }
+
+    function filterByCat(catId) {
+      currentCatFilter = catId;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      const langId = localStorage.getItem('current_language_id') || '1';
+      const catObj = allCatOptions.find(c => c.id === catId);
+      const label = catObj ? (lang === 'vi' ? (catObj.nameVi || catObj.name) : catObj.name) : 'Tất cả';
+      document.getElementById('catDropdownLabel').textContent = label;
+      document.getElementById('catDropdownPanel').classList.remove('open');
+      renderCatDropdown();
+      const filtered = catId === 'all' ? allPosts : allPosts.filter(p => String(p.category_id) === String(catId));
+      renderPosts(filtered);
+      document.getElementById('feedEmpty').style.display = filtered.length === 0 ? 'block' : 'none';
+    }
+
+    function renderPosts(posts) {
       const container = document.getElementById('feed-articles');
-      let html = '';
-
-      posts.forEach(post => {
-        // Trích xuất 1 đoạn ngắn text từ content html
+      const emptyEl = document.getElementById('feedEmpty');
+      if (!posts.length) {
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      container.innerHTML = posts.map(post => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = post.content;
-        const snippet = tempDiv.textContent || tempDiv.innerText || "";
-        const shortDesc = snippet.length > 100 ? snippet.substring(0, 100) + '...' : snippet;
-
-        // Random 1 cái ảnh đại diện cho sinh động (thực tế lấy từ csdl)
+        const snippet = (tempDiv.textContent || tempDiv.innerText || '');
+        const shortDesc = snippet.length > 120 ? snippet.substring(0, 120) + '...' : snippet;
         const randomImage = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
-
-        html += `
+        return `
         <div class="article-card">
           <div class="article-main">
             <div class="article-source">
               <span class="source-badge"></span>
-              In ${post.category_name} by <a href="profile.html?id=${post.author_id}" style="color:inherit; font-weight:600;">${post.author_name}</a> &nbsp;&middot;&nbsp; ${post.date_formatted}
+              In ${post.category_name} by <a href="profile.html?id=${post.author_id}" style="color:inherit;font-weight:600;">${post.author_name}</a> &nbsp;&middot;&nbsp; ${post.date_formatted}
             </div>
-            <a href="article.html?id=${post.id}" style="text-decoration:none; color:inherit;">
+            <a href="article.html?id=${post.id}" style="text-decoration:none;color:inherit;">
               <div class="article-title">${post.title}</div>
             </a>
             <div class="article-desc">${shortDesc}</div>
             <div class="article-meta">
-              <span class="meta-item">&#128075; ${post.likes}</span>
-              <span class="meta-item">&#128172; ${post.comments}</span>
+              <span class="meta-item like-btn ${isPostLiked(post.id) ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike(${post.id},this)">
+                <iconify-icon icon="solar:heart-bold-duotone"></iconify-icon> <span class="like-count">${post.likes}</span>
+              </span>
+              <span class="meta-item comment-btn" onclick="location.href='article.html?id=${post.id}'">
+                <iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon> ${post.comments}
+              </span>
               <span class="spacer"></span>
-              <span class="meta-item" style="cursor:pointer;" onclick="alert('Đã bookmark!')">&#128278;</span>
-              <span class="meta-item">&#8943;</span>
+              <span class="meta-item bookmark-btn ${isPostBookmarked(post.id) ? 'active' : ''}" onclick="event.stopPropagation();toggleBookmark(${post.id},this)">
+                <iconify-icon icon="solar:bookmark-bold-duotone"></iconify-icon>
+              </span>
             </div>
           </div>
           <a href="article.html?id=${post.id}">
-            <div class="article-thumb" style="background-image:url('${randomImage}');"></div>
+            <div class="article-thumb" style="background-image:url('${randomImage}');" data-fallback-bg="1"></div>
           </a>
-        </div>
-      `;
-      });
-      container.innerHTML = html;
-
-      // 3. Render Staff Picks (Right Rail)
-      const staffPicksContainer = document.getElementById('staff-picks-container');
-      let picksHtml = '';
-      const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes).slice(0, 3);
-      sortedPosts.forEach(post => {
-        picksHtml += `
-        <div class="pick">
-          <div class="pick-source"><span class="badge" style="background:#7C5CE0;"></span> In ${post.category_name} by ${post.author_name}</div>
-          <h4 onclick="location.href='article.html?id=${post.id}'" style="cursor:pointer">${post.title}</h4>
-          <div class="pick-date">&#10022; ${post.date_formatted}</div>
-        </div>
-      `;
-      });
-      staffPicksContainer.innerHTML = picksHtml;
-    });
+        </div>`;
+      }).join('');
+      applyBgFallback();
+    }
   </script>
 </body>
 

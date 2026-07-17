@@ -2,6 +2,8 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
 <title>What good writing looks like</title>
 <link rel="stylesheet" href="shared.css">
 <style>
@@ -11,11 +13,11 @@
     padding: 24px 20px 80px 20px;
   }
   .publication {
-    font-family: Georgia, serif;
+    font-family: inherit;
     font-weight: 700;
     font-size: 18px;
     padding: 16px 0;
-    border-bottom: 1px solid #F2F2F2;
+    border-bottom: 1px solid var(--border);
     margin-bottom: 24px;
   }
   .member-badge {
@@ -30,15 +32,20 @@
     border-radius: 14px;
     margin-bottom: 20px;
   }
+  [data-theme="dark"] .member-badge {
+    border-color: #B8891A;
+    color: #F2C94C;
+    background: rgba(255, 192, 23, 0.12);
+  }
   h1.title {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: inherit;
     font-size: 42px;
     line-height: 1.2;
     margin-bottom: 16px;
   }
   .subtitle {
     font-size: 20px;
-    color: #6B6B6B;
+    color: var(--text-muted);
     margin-bottom: 24px;
   }
   .byline {
@@ -53,7 +60,7 @@
   }
   .byline .author-name { font-weight: 600; font-size: 15px; }
   .byline .follow-btn {
-    border: 1px solid #242424;
+    border: 1px solid var(--text);
     border-radius: 16px;
     padding: 4px 14px;
     font-size: 13px;
@@ -63,17 +70,17 @@
   }
   .byline .meta {
     font-size: 13px;
-    color: #6B6B6B;
+    color: var(--text-muted);
   }
   .toolbar {
     display: flex;
     align-items: center;
     gap: 24px;
     padding: 12px 0;
-    border-top: 1px solid #F2F2F2;
-    border-bottom: 1px solid #F2F2F2;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
     margin-bottom: 32px;
-    color: #6B6B6B;
+    color: var(--text-muted);
     font-size: 15px;
   }
   .toolbar .spacer { flex: 1; }
@@ -89,7 +96,7 @@
   .body-text {
     font-size: 20px;
     line-height: 1.7;
-    color: #242424;
+    color: var(--text);
   }
   .body-text p { margin-bottom: 24px; }
 
@@ -100,7 +107,7 @@
     padding: 24px 20px 80px 20px;
   }
   .responses-title {
-    font-family: Georgia, serif;
+    font-family: inherit;
     font-size: 26px;
     margin-bottom: 24px;
   }
@@ -112,22 +119,22 @@
   }
   .comment-input .author-avatar {
     width: 36px; height: 36px; border-radius: 50%; background:#7A5C42;
-    color:#fff; display:flex; align-items:center; justify-content:center;
+    color:var(--bg); display:flex; align-items:center; justify-content:center;
     font-size:13px; font-weight:600;
   }
   .comment-input .input-box {
     flex: 1;
     border: none;
-    border-bottom: 1px solid #E5E5E5;
+    border-bottom: 1px solid var(--border-strong);
     padding: 8px 0;
     font-size: 16px;
-    color: #6B6B6B;
+    color: var(--text-muted);
   }
   .comment {
     display: flex;
     gap: 12px;
     padding: 20px 0;
-    border-bottom: 1px solid #F2F2F2;
+    border-bottom: 1px solid var(--border);
   }
   .comment .author-avatar {
     width: 32px; height: 32px; border-radius: 50%; background: #555;
@@ -142,17 +149,17 @@
     margin-bottom: 6px;
   }
   .comment-header .name { font-weight: 600; }
-  .comment-header .date { color: #6B6B6B; }
+  .comment-header .date { color: var(--text-muted); }
   .comment-text {
     font-size: 15px;
-    color: #242424;
+    color: var(--text);
     margin-bottom: 10px;
   }
   .comment-actions {
     display: flex;
     gap: 16px;
     font-size: 13px;
-    color: #6B6B6B;
+    color: var(--text-muted);
   }
 </style>
 </head>
@@ -161,40 +168,28 @@
 <!-- ===== Topbar (kế thừa giống trang chủ) ===== -->
 <div class="topbar">
   <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
+    <div class="search-box"><iconify-icon icon="solar:magnifer-linear"></iconify-icon> <span>Search</span></div>
   </div>
   <div class="topbar-right">
-    <button class="btn-getapp">&#9638; Get app</button>
-    <span class="write-link">&#9998; Write</span>
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">Tiếng Việt</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
       </div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
     <div class="avatar">N</div>
   </div>
 </div>
 
 <div class="layout" id="layoutRoot">
   <!-- ===== Sidebar (kế thừa giống trang chủ) ===== -->
-  <aside class="sidebar">
-    <a href="index.html"><span class="icon">&#8962;</span> Home</a>
-    <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-    <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-    <a href="#"><span class="icon">&#128221;</span> Stories</a>
-    <a href="#"><span class="icon">&#128202;</span> Stats</a>
-    <hr>
-    <a href="#"><span class="icon">&#128101;</span> Following</a>
-    <div class="follow-box">
-      Find writers and publications to follow.
-      <br><span class="see-suggestions">See suggestions</span>
-    </div>
+    <aside class="sidebar" id="mainSidebar">
+    <a href="index.html"><span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span> Home</a>
+    <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-circle-bold-duotone"></iconify-icon></span> Profile</a>
   </aside>
 
   <!-- ===== Article content ===== -->
@@ -207,9 +202,14 @@
     <div class="responses-section">
       <div class="responses-title" id="responses-count-title">Responses (0)</div>
 
+      <div class="guest-comment-notice" id="guest-comment-notice" style="display:none;">
+        <iconify-icon icon="solar:lock-keyhole-bold-duotone" style="font-size:20px;"></iconify-icon>
+        <span>Bạn cần <a href="login.html">đăng nhập</a> để thực hiện chức năng bình luận.</span>
+      </div>
+
       <div class="comment-input" id="comment-input-area" style="display:none;">
         <div class="author-avatar" id="current-user-avatar">N</div>
-        <input type="text" id="newCommentText" class="input-box" placeholder="What are your thoughts?" style="background:transparent;outline:none;" onkeypress="handleComment(event)">
+        <textarea id="newCommentText" class="comment-textarea" rows="1" placeholder="What are your thoughts?" onkeydown="handleComment(event)" oninput="autoResizeTextarea(this)"></textarea>
       </div>
 
       <div id="comments-container">
@@ -230,9 +230,10 @@
     if (!currentUser) {
       const topbarRight = document.querySelector('.topbar-right');
       topbarRight.innerHTML = `
-        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
-        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
+        <a href="login.html" style="margin-right:15px; color:var(--text-muted); text-decoration:none;">Sign In</a>
+        <a href="register.html" style="background:var(--text); color:var(--bg); padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
       `;
+      document.getElementById('guest-comment-notice').style.display = 'flex';
     } else {
       document.getElementById('comment-input-area').style.display = 'flex';
       document.getElementById('current-user-avatar').textContent = (currentUser.full_name || currentUser.user_name || 'U').charAt(0).toUpperCase();
@@ -267,7 +268,7 @@
       <div class="publication">${post.category_name}</div>
       <h1 class="title">${post.title}</h1>
       <div class="byline">
-        <a href="profile.html?id=${post.author_id}"><div class="author-avatar" style="background-image:url('https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_name}'); background-size:cover;"></div></a>
+        <a href="profile.html?id=${post.author_id}"><div class="author-avatar" data-fallback-bg="1" style="background-image:url('https://api.dicebear.com/7.x/avataaars/svg?seed=${post.author_name}'); background-size:cover;"></div></a>
         <div>
           <a href="profile.html?id=${post.author_id}" class="author-name" style="color:inherit;">${post.author_name}</a>
         </div>
@@ -276,20 +277,21 @@
       </div>
 
       <div class="toolbar">
-        <span style="cursor:pointer" onclick="likePost()">&#128075; <span id="like-count">${post.likes}</span></span>
-        <span>&#128172; ${post.comments}</span>
+        <span class="like-btn ${isPostLiked(post.id) ? 'liked' : ''}" onclick="toggleLike(${post.id}, this)"><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon> <span class="like-count">${post.likes}</span></span>
+        <span class="comment-btn" onclick="focusCommentBox()"><iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon> ${post.comments}</span>
         <span class="spacer"></span>
-        <span style="cursor:pointer" onclick="alert('Đã bookmark!')">&#128278;</span>
-        <span>&#8943;</span>
+        <span class="bookmark-btn ${isPostBookmarked(post.id) ? 'active' : ''}" onclick="toggleBookmark(${post.id}, this)"><iconify-icon icon="solar:bookmark-bold-duotone"></iconify-icon></span>
+        <span><iconify-icon icon="solar:menu-dots-bold"></iconify-icon></span>
       </div>
 
-      <div class="hero-image" style="background-image:url('${imgUrl}');"></div>
+      <div class="hero-image" data-fallback-bg="1" style="background-image:url('${imgUrl}');"></div>
 
       <div class="body-text">
         ${post.content || '<p>Không có nội dung</p>'}
       </div>
     `;
 
+    applyBgFallback();
     renderComments();
   });
 
@@ -302,27 +304,37 @@
     const rootComments = allComments.filter(c => !c.parent_id);
     let html = '';
 
+    function renderMentionContent(content) {
+      const m = content.match(/^@@(.+?)@@ ([\s\S]*)$/);
+      if (m) {
+        return `<b style="color:var(--accent);">@${m[1]}</b> ${m[2]}`;
+      }
+      return content;
+    }
+
     function buildCommentHTML(c, isChild) {
       const user = users.find(u => u.id === c.user_id);
       const name = user ? (user.full_name || user.user_name) : 'Anonymous';
       const initial = name.charAt(0).toUpperCase();
       const dateStr = new Date(c.created_at).toLocaleDateString();
       const margin = isChild ? 'margin-left: 44px; border-left: 2px solid var(--border); padding-left: 12px;' : '';
+      const safeName = name.replace(/'/g, "\\'");
 
       let res = `
         <div class="comment" style="${margin}">
-          <div class="author-avatar" style="color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px;">${initial}</div>
+          <div class="author-avatar" style="color:var(--bg); display:flex; align-items:center; justify-content:center; font-size:12px;">${initial}</div>
           <div class="comment-body">
             <div class="comment-header">
               <span class="name">${name}</span>
               <span class="date">${dateStr}</span>
             </div>
-            <div class="comment-text">${c.content}</div>
+            <div class="comment-text" style="white-space:pre-wrap; word-break:break-word;">${renderMentionContent(c.content)}</div>
             <div class="comment-actions">
-              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id})">Reply</span>
+              <span style="cursor:pointer; color: var(--text);" onclick="toggleReplyForm(${c.id}, '${safeName}')">Reply</span>
             </div>
-            <div id="reply-form-${c.id}" style="display:none; margin-top: 10px;">
-              <input type="text" class="input-box" placeholder="Viết phản hồi..." style="width:100%; border:none; border-bottom:1px solid #E5E5E5; padding:8px 0; outline:none; background:transparent;" onkeypress="submitReply(event, ${c.id})">
+            <div id="reply-form-${c.id}" data-reply-to="${name}" style="display:none; margin-top: 10px;">
+              <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">Đang trả lời <b style="color:var(--text);">${name}</b> <span style="cursor:pointer; margin-left:6px;" onclick="toggleReplyForm(${c.id}, '${safeName}')">&times;</span></div>
+              <textarea class="comment-textarea" rows="1" placeholder="Viết phản hồi..." onkeydown="submitReply(event, ${c.id})" oninput="autoResizeTextarea(this)"></textarea>
             </div>
           </div>
         </div>
@@ -343,28 +355,36 @@
   }
 
   function handleComment(e) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       submitReply(e, null);
     }
   }
 
-  function toggleReplyForm(id) {
+  function toggleReplyForm(id, replyToName) {
     const form = document.getElementById('reply-form-' + id);
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
     if(form.style.display === 'block') {
-      form.querySelector('input').focus();
+      form.querySelector('textarea').focus();
     }
   }
 
   function submitReply(e, parentId) {
-    if (e.key === 'Enter') {
-      const text = e.target.value.trim();
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      let text = e.target.value.trim();
       if (!text) return;
 
       const user = db.getCurrentUser();
       if (!user) {
         alert('Bạn cần đăng nhập để bình luận!');
         return;
+      }
+
+      // Gắn tag tên người được reply vào đầu nội dung
+      const formEl = e.target.closest('[data-reply-to]');
+      if (formEl && formEl.dataset.replyTo) {
+        text = `@@${formEl.dataset.replyTo}@@ ${text}`;
       }
 
       const comments = db.get('comments');
@@ -382,36 +402,9 @@
       db.set('comments', comments);
       
       e.target.value = '';
+      e.target.style.height = 'auto';
       renderComments();
     }
-  }
-
-  function likePost() {
-    const user = db.getCurrentUser();
-    if (!user) {
-      alert('Bạn cần đăng nhập để like!');
-      return;
-    }
-    
-    const likes = db.get('post_likes');
-    const existing = likes.find(l => l.post_id === currentPostId && l.user_id === user.id);
-    
-    if (existing) {
-      // Unlike
-      const filtered = likes.filter(l => l.id !== existing.id);
-      db.set('post_likes', filtered);
-    } else {
-      // Like
-      const newId = likes.length ? Math.max(...likes.map(l => l.id)) + 1 : 1;
-      likes.push({
-        id: newId, post_id: currentPostId, user_id: user.id, created_at: new Date().toISOString()
-      });
-      db.set('post_likes', likes);
-    }
-    
-    // update UI
-    const currentLikes = db.get('post_likes').filter(l => l.post_id === currentPostId).length;
-    document.getElementById('like-count').textContent = currentLikes;
   }
 </script>
 </body>

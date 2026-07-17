@@ -2,87 +2,184 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 <title>Quản lý danh mục – Medium</title>
 <link rel="stylesheet" href="../shared.css">
 <style>
   .admin-main { padding: 24px 40px; }
-  .admin-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
+  .admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+  .admin-header h1 { font-family: inherit; font-size:32px; font-weight:400; }
+  .cat-name-cell { font-weight:600; }
+  .cat-desc-cell { font-size:13px; color:var(--text-muted); }
+  .action-icons { display:flex; gap:8px; justify-content:flex-end; }
+  .action-icons button {
+    background:none; border:none; cursor:pointer; font-size:16px;
+    display:flex; align-items:center; padding:6px; border-radius:6px;
+    color:var(--text-muted); transition:all 0.15s;
   }
-  .admin-header h1 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 32px;
-    font-weight: 400;
-  }
-  .add-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .add-row .form-control { max-width: 280px; }
-  .cat-name-cell { font-weight: 600; }
+  .action-icons .edit-btn:hover { color:var(--text); background:var(--bg-soft); }
+  .action-icons .delete-btn:hover { color:var(--danger); background:#FCEBEA; }
+  [data-theme="dark"] .action-icons .delete-btn:hover { background:#3A1E1C; }
+  .trans-group { border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:12px; }
+  .trans-group .lang-label { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="solar:hamburger-menu-bold-duotone"></iconify-icon></span>
     <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
+    <div class="search-box-wrap">
+      <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+      <input class="search-input" id="topSearchInput" type="text" placeholder="Tìm danh mục..." data-vi-placeholder="Tìm danh mục..." data-en-placeholder="Search categories..." oninput="filterTable(this.value)">
+      <div class="search-results-dropdown"></div>
+    </div>
   </div>
   <div class="topbar-right">
     <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
+      <button class="lang-btn" onclick="toggleLangMenu()"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon> <span class="lang-current-label">English</span> <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
       <div class="lang-menu">
         <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
         <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
       </div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
     <div class="avatar" style="background:#5A3FBF;">A</div>
   </div>
 </div>
 
 <div class="layout no-rail" id="layoutRoot">
-  <aside class="sidebar">
-    <a href="index.html"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="categories.html" class="active"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
+  <aside class="sidebar" id="mainSidebar">
+    <a href="index.html">
+      <span class="icon"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span>
+      <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
+    </a>
+    <a href="users.html">
+      <span class="icon"><iconify-icon icon="solar:shield-user-bold-duotone"></iconify-icon></span>
+      <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
+    </a>
+    <a href="categories.html" class="active">
+      <span class="icon"><iconify-icon icon="solar:folder-bold-duotone"></iconify-icon></span>
+      <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
+    </a>
+    <a href="languages.html">
+      <span class="icon"><iconify-icon icon="solar:translation-bold-duotone"></iconify-icon></span>
+      <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
+    </a>
     <hr>
-    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
+    <a href="../index.html">
+      <span class="icon"><iconify-icon icon="solar:home-2-bold-duotone"></iconify-icon></span>
+      <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
+    </a>
   </aside>
 
   <main class="admin-main">
     <div class="admin-header">
-      <h1>Quản lý danh mục</h1>
-    </div>
-
-    <div class="add-row">
-      <input type="text" class="form-control" id="newCatInput" placeholder="Tên danh mục mới...">
-      <button class="btn btn-primary" onclick="addCategory()">+ Thêm danh mục</button>
+      <h1 data-vi="Quản lý danh mục" data-en="Manage Categories">Manage Categories</h1>
+      <button class="btn btn-primary" onclick="openAddCatModal()">
+        <iconify-icon icon="solar:folder-with-files-bold-duotone"></iconify-icon>
+        <span data-vi="Thêm danh mục" data-en="Add Category">Add Category</span>
+      </button>
     </div>
 
     <div class="card">
-      <table class="data-table" id="catTable">
+      <table class="data-table" style="table-layout:fixed; width:100%;" id="catTable">
+        <colgroup>
+          <col class="col-cat">
+          <col style="min-width:180px;">
+          <col class="col-count">
+          <col class="col-actions">
+        </colgroup>
         <thead>
           <tr>
-            <th>Danh mục</th>
-            <th>Số bài viết</th>
+            <th data-vi="Tên (EN)" data-en="Name (EN)">Name (EN)</th>
+            <th data-vi="Tên (VI)" data-en="Name (VI)">Name (VI)</th>
+            <th data-vi="Số bài viết" data-en="Posts">Posts</th>
             <th></th>
           </tr>
         </thead>
-        <tbody id="cat-tbody">
-          <!-- Rendered by js -->
-        </tbody>
+        <tbody id="cat-tbody"></tbody>
       </table>
     </div>
   </main>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-overlay" id="addCatModal" onclick="if(event.target===this)closeModal('addCatModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2><iconify-icon icon="solar:folder-with-files-bold-duotone"></iconify-icon> Thêm danh mục</h2>
+      <button class="modal-close" onclick="closeModal('addCatModal')"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon></button>
+    </div>
+    <div class="modal-body">
+      <div class="trans-group">
+        <div class="lang-label">🇬🇧 English</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Tên danh mục (EN)</label>
+          <input type="text" id="newCatNameEn" class="form-control" placeholder="e.g. Technology">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Mô tả (EN)</label>
+          <input type="text" id="newCatDescEn" class="form-control" placeholder="Short description...">
+        </div>
+      </div>
+      <div class="trans-group">
+        <div class="lang-label">🇻🇳 Tiếng Việt</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Tên danh mục (VI)</label>
+          <input type="text" id="newCatNameVi" class="form-control" placeholder="VD: Công nghệ">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Mô tả (VI)</label>
+          <input type="text" id="newCatDescVi" class="form-control" placeholder="Mô tả ngắn...">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('addCatModal')">Hủy</button>
+      <button class="btn btn-primary" onclick="submitAddCategory()">Tạo danh mục</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal-overlay" id="editCatModal" onclick="if(event.target===this)closeModal('editCatModal')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon> Chỉnh sửa danh mục</h2>
+      <button class="modal-close" onclick="closeModal('editCatModal')"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editCatId">
+      <div class="trans-group">
+        <div class="lang-label">🇬🇧 English</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Tên danh mục (EN)</label>
+          <input type="text" id="editCatNameEn" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Mô tả (EN)</label>
+          <input type="text" id="editCatDescEn" class="form-control">
+        </div>
+      </div>
+      <div class="trans-group">
+        <div class="lang-label">🇻🇳 Tiếng Việt</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label>Tên danh mục (VI)</label>
+          <input type="text" id="editCatNameVi" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Mô tả (VI)</label>
+          <input type="text" id="editCatDescVi" class="form-control">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('editCatModal')">Hủy</button>
+      <button class="btn btn-primary" onclick="submitEditCategory()">Lưu thay đổi</button>
+    </div>
+  </div>
 </div>
 
 <script src="../shared.js"></script>
@@ -91,97 +188,155 @@
   document.addEventListener('DOMContentLoaded', () => {
     const user = db.getCurrentUser();
     if (!user || user.role_id !== 1) {
-      alert('Vui lòng đăng nhập với tài khoản Super Admin!');
-      window.location.href = 'login.html';
+      showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
+      setTimeout(() => window.location.href = '../login.html', 1500);
       return;
     }
+    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
     renderCategories();
+    applyLanguage(localStorage.getItem('blog-lang') || 'vi');
   });
 
-  function renderCategories() {
+  function renderCategories(keyword = '') {
     const categories = db.get('categories');
     const translations = db.get('category_translation');
     const posts = db.get('posts');
-    const langId = localStorage.getItem('current_language_id') || '1';
 
-    let html = '';
-    categories.forEach(cat => {
-      // Tìm bản dịch tiếng anh/việt
-      let trans = translations.find(t => t.category_id === cat.id && t.language_id == langId);
-      if (!trans) trans = translations.find(t => t.category_id === cat.id); // fallback
-      
+    let rows = categories.map(cat => {
+      let tEn = translations.find(t => t.category_id === cat.id && t.language_id == 1);
+      let tVi = translations.find(t => t.category_id === cat.id && t.language_id == 2);
       const count = posts.filter(p => p.category_id === cat.id).length;
-      const catName = trans ? trans.name : 'Chưa có tên';
+      return { cat, tEn, tVi, count };
+    });
 
-      html += `
+    if (keyword) {
+      const kw = keyword.toLowerCase();
+      rows = rows.filter(r =>
+        (r.tEn?.name || '').toLowerCase().includes(kw) ||
+        (r.tVi?.name || '').toLowerCase().includes(kw)
+      );
+    }
+
+    if (!rows.length) {
+      document.getElementById('cat-tbody').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy danh mục.</td></tr>`;
+      return;
+    }
+
+    document.getElementById('cat-tbody').innerHTML = rows.map(({ cat, tEn, tVi, count }) => {
+      const nameEn = tEn ? tEn.name : '<span style="color:var(--text-muted);font-style:italic;">Chưa có</span>';
+      const nameVi = tVi ? tVi.name : '<span style="color:var(--text-muted);font-style:italic;">Chưa có</span>';
+      const safeName = (tEn?.name || tVi?.name || 'Danh mục').replace(/'/g, "\\'");
+      return `
         <tr>
-          <td class="cat-name-cell">${catName}</td>
+          <td class="cat-name-cell">${nameEn}</td>
+          <td class="cat-name-cell">${nameVi}</td>
           <td>${count}</td>
           <td>
-            <div class="action-icons" style="display:flex; gap:12px;">
-              <button onclick="renameCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#9998;</button>
-              <button onclick="deleteCategory(${cat.id}, '${catName}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);">&#128465;</button>
+            <div class="action-icons">
+              <button class="edit-btn" onclick="openEditCatModal(${cat.id})" title="Sửa"><iconify-icon icon="solar:pen-new-square-bold-duotone"></iconify-icon></button>
+              <button class="delete-btn" onclick="confirmDeleteCat(${cat.id}, '${safeName}')" title="Xóa"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></button>
             </div>
           </td>
-        </tr>
-      `;
-    });
-    document.getElementById('cat-tbody').innerHTML = html;
+        </tr>`;
+    }).join('');
   }
 
-  function addCategory() {
-    const input = document.getElementById('newCatInput');
-    const name = input.value.trim();
-    if (!name) return;
-    
+  function filterTable(keyword) {
+    renderCategories(keyword);
+  }
+
+  function openAddCatModal() {
+    ['newCatNameEn','newCatDescEn','newCatNameVi','newCatDescVi'].forEach(id => document.getElementById(id).value = '');
+    openModal('addCatModal');
+  }
+
+  function submitAddCategory() {
+    const nameEn = document.getElementById('newCatNameEn').value.trim();
+    const descEn = document.getElementById('newCatDescEn').value.trim();
+    const nameVi = document.getElementById('newCatNameVi').value.trim();
+    const descVi = document.getElementById('newCatDescVi').value.trim();
+
+    if (!nameEn && !nameVi) { showToast('Vui lòng nhập tên danh mục ít nhất 1 ngôn ngữ!', 'error'); return; }
+
     const categories = db.get('categories');
     const translations = db.get('category_translation');
-    const langId = localStorage.getItem('current_language_id') || '1';
-    
+
     const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
     categories.push({ id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
-    
-    const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
-    translations.push({ id: newTransId, category_id: newId, language_id: parseInt(langId), name: name, des: '' });
-    
+
+    let maxTransId = translations.length ? Math.max(...translations.map(t => t.id)) : 0;
+    if (nameEn) { maxTransId++; translations.push({ id: maxTransId, category_id: newId, language_id: 1, name: nameEn, des: descEn }); }
+    if (nameVi) { maxTransId++; translations.push({ id: maxTransId, category_id: newId, language_id: 2, name: nameVi, des: descVi }); }
+
     db.set('categories', categories);
     db.set('category_translation', translations);
-    
-    input.value = '';
+    showToast('Đã tạo danh mục!', 'success');
+    closeModal('addCatModal');
     renderCategories();
   }
 
-  function renameCategory(id, currentName) {
-    const newName = prompt('Đổi tên danh mục:', currentName);
-    if (newName && newName.trim()) {
-      const translations = db.get('category_translation');
-      const langId = localStorage.getItem('current_language_id') || '1';
-      
-      let trans = translations.find(t => t.category_id === id && t.language_id == langId);
-      if (trans) {
-        trans.name = newName.trim();
-      } else {
-        const newTransId = translations.length ? Math.max(...translations.map(t => t.id)) + 1 : 1;
-        translations.push({ id: newTransId, category_id: id, language_id: parseInt(langId), name: newName.trim(), des: '' });
-      }
-      
-      db.set('category_translation', translations);
-      renderCategories();
-    }
+  function openEditCatModal(id) {
+    const translations = db.get('category_translation');
+    const tEn = translations.find(t => t.category_id === id && t.language_id == 1);
+    const tVi = translations.find(t => t.category_id === id && t.language_id == 2);
+    document.getElementById('editCatId').value = id;
+    document.getElementById('editCatNameEn').value = tEn?.name || '';
+    document.getElementById('editCatDescEn').value = tEn?.des || '';
+    document.getElementById('editCatNameVi').value = tVi?.name || '';
+    document.getElementById('editCatDescVi').value = tVi?.des || '';
+    openModal('editCatModal');
   }
 
-  function deleteCategory(id, name) {
-    if (confirm('Xóa danh mục "' + name + '"? Các bài viết trong danh mục này cũng có thể bị ảnh hưởng.')) {
-      let categories = db.get('categories');
-      let translations = db.get('category_translation');
-      
-      categories = categories.filter(c => c.id !== id);
-      translations = translations.filter(t => t.category_id !== id);
-      
-      db.set('categories', categories);
-      db.set('category_translation', translations);
-      renderCategories();
-    }
+  function submitEditCategory() {
+    const id = parseInt(document.getElementById('editCatId').value);
+    const nameEn = document.getElementById('editCatNameEn').value.trim();
+    const descEn = document.getElementById('editCatDescEn').value.trim();
+    const nameVi = document.getElementById('editCatNameVi').value.trim();
+    const descVi = document.getElementById('editCatDescVi').value.trim();
+
+    if (!nameEn && !nameVi) { showToast('Vui lòng nhập tên ít nhất 1 ngôn ngữ!', 'error'); return; }
+
+    let translations = db.get('category_translation');
+    let maxId = translations.length ? Math.max(...translations.map(t => t.id)) : 0;
+
+    // Update/create EN
+    let tEn = translations.find(t => t.category_id === id && t.language_id == 1);
+    if (nameEn) {
+      if (tEn) { tEn.name = nameEn; tEn.des = descEn; }
+      else { maxId++; translations.push({ id: maxId, category_id: id, language_id: 1, name: nameEn, des: descEn }); }
+    } else if (tEn) { translations = translations.filter(t => !(t.category_id === id && t.language_id == 1)); }
+
+    // Update/create VI
+    let tVi = translations.find(t => t.category_id === id && t.language_id == 2);
+    if (nameVi) {
+      if (tVi) { tVi.name = nameVi; tVi.des = descVi; }
+      else { maxId++; translations.push({ id: maxId, category_id: id, language_id: 2, name: nameVi, des: descVi }); }
+    } else if (tVi) { translations = translations.filter(t => !(t.category_id === id && t.language_id == 2)); }
+
+    db.set('category_translation', translations);
+    showToast('Đã cập nhật danh mục!', 'success');
+    closeModal('editCatModal');
+    renderCategories();
+  }
+
+  function confirmDeleteCat(id, name) {
+    showConfirm({
+      title: 'Xóa danh mục',
+      message: `Bạn có chắc muốn xóa danh mục "<strong>${name}</strong>"? Các bài viết thuộc danh mục này sẽ không còn danh mục.`,
+      confirmText: 'Xóa',
+      cancelText: 'Hủy',
+      danger: true,
+      onConfirm: () => {
+        let categories = db.get('categories');
+        let translations = db.get('category_translation');
+        categories = categories.filter(c => c.id !== id);
+        translations = translations.filter(t => t.category_id !== id);
+        db.set('categories', categories);
+        db.set('category_translation', translations);
+        showToast('Đã xóa danh mục!', 'success');
+        renderCategories();
+      }
+    });
   }
 </script>
 </body>

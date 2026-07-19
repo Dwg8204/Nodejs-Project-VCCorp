@@ -380,7 +380,7 @@
             </button>
           </div>
           <div class="preview-lang-tabs" id="previewLangTabs"></div>
-          <div id="previewPanelContent">
+          <div id="previewPanelBody">
             <span class="preview-lang-badge" id="previewLangBadge">English</span>
             <div class="preview-title-text" id="previewPanelTitle">(Chưa có tiêu đề)</div>
             <div class="preview-content-text" id="previewPanelContent"></div>
@@ -399,6 +399,10 @@
     let quill = null;
     let previewOpen = false;
     let currentPreviewLang = null;
+    let previewUpdateTimer = null;
+    let previewRequestId = 0;
+    const draftTranslationCache = new Map();
+    const browserTranslators = new Map();
 
     window.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
@@ -493,6 +497,47 @@
 
     function updatePreview() {
       if (!previewOpen) return;
+      clearTimeout(previewUpdateTimer);
+      previewUpdateTimer = setTimeout(performPreviewUpdate, 220);
+    }
+
+    async function getBrowserTranslator(sourceLanguage, targetLanguage) {
+      const key = `${sourceLanguage}:${targetLanguage}`;
+      if (browserTranslators.has(key)) return browserTranslators.get(key);
+      if (!('Translator' in window) || typeof window.Translator.create !== 'function') {
+        throw new Error('TRANSLATOR_UNAVAILABLE');
+      }
+      const translator = await window.Translator.create({ sourceLanguage, targetLanguage });
+      browserTranslators.set(key, translator);
+      return translator;
+    }
+
+    async function translateDraft(title, html, sourceLanguage, targetLanguage) {
+      const cacheKey = `${sourceLanguage}:${targetLanguage}:${title}:${html}`;
+      if (draftTranslationCache.has(cacheKey)) return draftTranslationCache.get(cacheKey);
+      const translator = await getBrowserTranslator(sourceLanguage, targetLanguage);
+      const translatedTitle = title ? await translator.translate(title) : title;
+      const container = document.createElement('div');
+      container.innerHTML = html;
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) {
+        if (walker.currentNode.nodeValue.trim()) nodes.push(walker.currentNode);
+      }
+      await Promise.all(nodes.map(async node => {
+        const raw = node.nodeValue;
+        const leading = raw.match(/^\s*/)?.[0] || '';
+        const trailing = raw.match(/\s*$/)?.[0] || '';
+        node.nodeValue = leading + await translator.translate(raw.trim()) + trailing;
+      }));
+      const result = { title: translatedTitle, content: container.innerHTML };
+      draftTranslationCache.set(cacheKey, result);
+      return result;
+    }
+
+    async function performPreviewUpdate() {
+      if (!previewOpen) return;
+      const requestId = ++previewRequestId;
       const lang = currentPreviewLang || document.getElementById('sourceLang')?.value || 'en';
       const sourceLang = document.getElementById('sourceLang')?.value || 'en';
       const title = document.getElementById('postTitle')?.value || '(Chưa có tiêu đề)';
@@ -503,8 +548,18 @@
       let previewTitle = title;
       let previewContent = content;
       if (lang !== sourceLang) {
-        previewTitle = `[${lObj ? lObj.name : lang}] ${title}`;
-        previewContent = `<p><em style="color:var(--text-muted)">(Bản xem trước — sẽ được tự động dịch sang ${lObj ? lObj.name : lang})</em></p>${content}`;
+        document.getElementById('previewPanelTitle').textContent = localStorage.getItem('blog-lang') === 'en' ? 'Translating…' : 'Đang dịch…';
+        document.getElementById('previewPanelContent').innerHTML = '<div class="preview-translating"><span></span><span></span><span></span></div>';
+        try {
+          const translated = await translateDraft(title, content, sourceLang, lang);
+          if (requestId !== previewRequestId) return;
+          previewTitle = translated.title;
+          previewContent = translated.content;
+        } catch (error) {
+          if (requestId !== previewRequestId) return;
+          previewTitle = title;
+          previewContent = `<div class="preview-translation-notice"><iconify-icon icon="solar:info-circle-bold-duotone"></iconify-icon><span>${localStorage.getItem('blog-lang') === 'en' ? 'On-device translation is not available in this browser yet.' : 'Trình duyệt này chưa hỗ trợ mô hình dịch trực tiếp trên thiết bị.'}</span></div>${content}`;
+        }
       }
       document.getElementById('previewLangBadge').innerHTML = langName;
       document.getElementById('previewPanelTitle').textContent = previewTitle || '(Chưa có tiêu đề)';

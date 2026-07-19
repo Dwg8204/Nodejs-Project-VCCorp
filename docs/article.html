@@ -199,6 +199,17 @@
       <!-- rendered by js -->
     </div>
 
+    <section class="related-articles-section" id="relatedArticlesSection" style="display:none;">
+      <div class="related-heading">
+        <div>
+          <span class="related-eyebrow" data-vi="Đọc tiếp" data-en="Keep reading">Keep reading</span>
+          <h2 data-vi="Bài viết gợi ý" data-en="Recommended for you">Recommended for you</h2>
+        </div>
+        <a href="index.html" data-vi="Xem tất cả" data-en="View all">View all</a>
+      </div>
+      <div class="related-articles-grid" id="relatedArticlesGrid"></div>
+    </section>
+
     <!-- ===== Responses ===== -->
     <div class="responses-section">
       <div class="responses-title" id="responses-count-title">Responses (0)</div>
@@ -263,7 +274,7 @@
 
     document.title = post.title;
 
-    const imgUrl = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=900`;
+    const imgUrl = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=900`;
 
     document.getElementById('article-content-container').innerHTML = `
       <div class="publication">${post.category_name}</div>
@@ -293,8 +304,36 @@
     `;
 
     applyBgFallback();
+    renderRelatedArticles(post, posts);
     renderComments();
   });
+
+  function renderRelatedArticles(currentPost, posts) {
+    const section = document.getElementById('relatedArticlesSection');
+    const grid = document.getElementById('relatedArticlesGrid');
+    const related = [...posts]
+      .filter(p => p.id !== currentPost.id)
+      .sort((a, b) => {
+        const categoryScore = Number(b.category_id === currentPost.category_id) - Number(a.category_id === currentPost.category_id);
+        return categoryScore || (b.likes + b.comments) - (a.likes + a.comments);
+      })
+      .slice(0, 3);
+    if (!related.length) return;
+    grid.innerHTML = related.map(post => {
+      const image = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=600`;
+      return `<a class="related-card" href="article.html?id=${post.id}">
+        <div class="related-card-image" data-fallback-bg="1" style="background-image:url('${image}')"></div>
+        <div class="related-card-body">
+          <span class="related-category">${post.category_name || ''}</span>
+          <h3 class="related-card-title" data-user-content>${post.title}</h3>
+          <div class="related-card-meta"><span>${post.author_name || ''}</span><span>&middot;</span><span>${post.date_formatted}</span></div>
+        </div>
+      </a>`;
+    }).join('');
+    section.style.display = 'block';
+    applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    applyBgFallback();
+  }
 
   function renderComments() {
     const allComments = db.get('comments').filter(c => c.post_id === currentPostId);

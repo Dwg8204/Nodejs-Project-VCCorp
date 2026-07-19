@@ -419,29 +419,79 @@
     </aside>
 
     <main class="admin-main">
-      <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
+      <div class="admin-dashboard-header">
+        <div>
+          <span class="admin-eyebrow" data-vi="Không gian quản trị" data-en="Admin workspace">Admin workspace</span>
+          <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
+          <p data-vi="Theo dõi nội dung, người dùng và hiệu suất tương tác trên toàn hệ thống."
+            data-en="Monitor content, users and engagement performance across the system.">Monitor content, users and engagement performance across the system.</p>
+        </div>
+        <label class="dashboard-period-control">
+          <iconify-icon icon="solar:calendar-linear"></iconify-icon>
+          <select id="dashboardPeriod" onchange="renderAdminAnalytics()">
+            <option value="7" data-vi="7 ngày qua" data-en="Last 7 days">Last 7 days</option>
+            <option value="30" selected data-vi="30 ngày qua" data-en="Last 30 days">Last 30 days</option>
+            <option value="90" data-vi="90 ngày qua" data-en="Last 90 days">Last 90 days</option>
+          </select>
+        </label>
+      </div>
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card"><span class="kpi-icon kpi-purple"><iconify-icon icon="solar:users-group-rounded-bold-duotone"></iconify-icon></span>
           <div class="num" id="stat-users">0</div>
           <div class="label" data-vi="Người dùng" data-en="Users">Users</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card"><span class="kpi-icon kpi-blue"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span>
           <div class="num" id="stat-posts">0</div>
           <div class="label" data-vi="Bài viết" data-en="Posts">Posts</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card"><span class="kpi-icon kpi-orange"><iconify-icon icon="solar:clock-circle-bold-duotone"></iconify-icon></span>
           <div class="num" id="stat-pending" style="color:var(--accent);">0</div>
           <div class="label" data-vi="Bài chờ duyệt" data-en="Pending Posts">Pending Posts</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card"><span class="kpi-icon kpi-green"><iconify-icon icon="solar:folder-with-files-bold-duotone"></iconify-icon></span>
           <div class="num" id="stat-categories">0</div>
           <div class="label" data-vi="Danh mục" data-en="Categories">Categories</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card"><span class="kpi-icon kpi-cyan"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon></span>
           <div class="num" id="stat-languages">0</div>
           <div class="label" data-vi="Ngôn ngữ" data-en="Languages">Languages</div>
         </div>
+        <div class="stat-card"><span class="kpi-icon kpi-pink"><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-likes">0</div>
+          <div class="label" data-vi="Lượt thích" data-en="Likes">Likes</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-purple"><iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-comments">0</div>
+          <div class="label" data-vi="Bình luận" data-en="Comments">Comments</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-green"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-engagement">0</div>
+          <div class="label" data-vi="Tương tác / bài" data-en="Engagement / post">Engagement / post</div>
+        </div>
       </div>
+
+      <div class="analytics-grid analytics-primary">
+        <section class="analytics-panel engagement-panel">
+          <div class="analytics-panel-head"><div><h2 data-vi="Xu hướng tương tác" data-en="Engagement trend">Engagement trend</h2><p data-vi="Lượt thích và bình luận theo thời gian" data-en="Likes and comments over time">Likes and comments over time</p></div><div class="chart-legend"><span class="legend-like" data-vi="Lượt thích" data-en="Likes">Likes</span><span class="legend-comment" data-vi="Bình luận" data-en="Comments">Comments</span></div></div>
+          <div class="engagement-chart" id="engagementChart"></div>
+        </section>
+        <section class="analytics-panel status-panel">
+          <div class="analytics-panel-head"><div><h2 data-vi="Trạng thái bài viết" data-en="Post status">Post status</h2><p data-vi="Phân bố nội dung hiện tại" data-en="Current content distribution">Current content distribution</p></div></div>
+          <div id="postStatusChart"></div>
+        </section>
+      </div>
+
+      <div class="analytics-grid analytics-secondary">
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Bài viết nổi bật" data-en="Top performing posts">Top performing posts</h2><p data-vi="Xếp hạng theo tổng lượt thích và bình luận" data-en="Ranked by likes and comments">Ranked by likes and comments</p></div></div><div class="admin-bar-list" id="topPostsChart"></div></section>
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Độ phủ bản dịch" data-en="Translation coverage">Translation coverage</h2><p data-vi="Tình trạng nội dung Việt – Anh" data-en="Vietnamese – English content availability">Vietnamese – English content availability</p></div></div><div class="coverage-list" id="translationCoverage"></div></section>
+      </div>
+
+      <div class="analytics-grid analytics-secondary">
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Nội dung theo danh mục" data-en="Content by category">Content by category</h2><p data-vi="Số lượng bài viết đã xuất bản" data-en="Published posts by category">Published posts by category</p></div></div><div class="admin-bar-list" id="categoryChart"></div></section>
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Hoạt động gần đây" data-en="Recent activity">Recent activity</h2><p data-vi="Các sự kiện mới nhất trong hệ thống" data-en="Latest events across the system">Latest events across the system</p></div></div><div class="admin-activity-list" id="recentActivity"></div></section>
+      </div>
+
+      <div class="section-heading"><div><span class="admin-eyebrow" data-vi="Truy cập nhanh" data-en="Quick actions">Quick actions</span><h2 data-vi="Công cụ quản trị" data-en="Management tools">Management tools</h2></div></div>
       <div class="quick-links">
         <div class="quick-link-card" onclick="location.href='posts.html'">
           <div class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></div>
@@ -484,11 +534,103 @@
       document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
       document.getElementById('stat-users').textContent = db.get('users').length;
       document.getElementById('stat-posts').textContent = db.get('posts').length;
-      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'DRAFT').length;
+      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'PENDING' || p.status === 'DRAFT').length;
       document.getElementById('stat-categories').textContent = db.get('categories').length;
       document.getElementById('stat-languages').textContent = db.get('languages').length;
+      document.getElementById('stat-likes').textContent = db.get('post_likes').filter(l => l.is_liked).length;
+      document.getElementById('stat-comments').textContent = db.get('comments').length;
+      const publishedCount = db.get('posts').filter(p => p.status === 'PUBLISHED').length;
+      const engagementCount = db.get('post_likes').filter(l => l.is_liked).length + db.get('comments').length;
+      document.getElementById('stat-engagement').textContent = publishedCount ? (engagementCount / publishedCount).toFixed(1) : '0';
+      renderAdminAnalytics();
       applyLanguage(localStorage.getItem('blog-lang') || 'vi');
     });
+
+    function dashboardLocale() { return localStorage.getItem('blog-lang') === 'en' ? 'en' : 'vi'; }
+    function dashboardText(vi, en) { return dashboardLocale() === 'en' ? en : vi; }
+    function escapeDashboardHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    }
+
+    function renderAdminAnalytics() {
+      if (typeof db === 'undefined') return;
+      const posts = db.get('posts');
+      const likes = db.get('post_likes').filter(l => l.is_liked);
+      const comments = db.get('comments');
+      const translations = db.get('post_translations');
+      const categories = db.get('categories');
+      const categoryTranslations = db.get('category_translation');
+      const users = db.get('users');
+      const languageId = localStorage.getItem('current_language_id') || '1';
+      renderEngagementChart(likes, comments);
+      renderPostStatus(posts);
+      renderTopPosts(posts, likes, comments, translations, languageId);
+      renderTranslationCoverage(posts, translations);
+      renderCategoryChart(posts, categories, categoryTranslations, languageId);
+      renderRecentActivity(posts, comments, users, translations, languageId);
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    }
+
+    function renderEngagementChart(likes, comments) {
+      const days = parseInt(document.getElementById('dashboardPeriod')?.value || '30');
+      const allDates = [...likes.map(x => x.updated_at), ...comments.map(x => x.created_at)].filter(Boolean).map(x => new Date(x));
+      const anchor = allDates.length ? new Date(Math.max(...allDates.map(x => x.getTime()))) : new Date();
+      anchor.setHours(0, 0, 0, 0);
+      const bucketCount = days <= 7 ? 7 : (days <= 30 ? 10 : 12);
+      const bucketDays = Math.ceil(days / bucketCount);
+      const buckets = Array.from({ length: bucketCount }, (_, index) => {
+        const end = new Date(anchor); end.setDate(anchor.getDate() - (bucketCount - 1 - index) * bucketDays);
+        const start = new Date(end); start.setDate(end.getDate() - bucketDays + 1);
+        return { start, end, likes: 0, comments: 0 };
+      });
+      likes.forEach(item => { const date = new Date(item.updated_at); const bucket = buckets.find(b => date >= b.start && date < new Date(b.end.getTime() + 86400000)); if (bucket) bucket.likes++; });
+      comments.forEach(item => { const date = new Date(item.created_at); const bucket = buckets.find(b => date >= b.start && date < new Date(b.end.getTime() + 86400000)); if (bucket) bucket.comments++; });
+      const width = 760, height = 260, padX = 42, padTop = 22, padBottom = 34;
+      const maxValue = Math.max(2, ...buckets.flatMap(b => [b.likes, b.comments]));
+      const point = (value, index) => ({ x: padX + index * (width - padX * 2) / Math.max(1, buckets.length - 1), y: padTop + (maxValue - value) * (height - padTop - padBottom) / maxValue });
+      const path = key => buckets.map((b, i) => `${i ? 'L' : 'M'} ${point(b[key], i).x.toFixed(1)} ${point(b[key], i).y.toFixed(1)}`).join(' ');
+      const grids = Array.from({ length: 5 }, (_, i) => { const y = padTop + i * (height - padTop - padBottom) / 4; const value = Math.round(maxValue * (4 - i) / 4); return `<line x1="${padX}" x2="${width - padX}" y1="${y}" y2="${y}" class="analytics-grid-line"/><text x="${padX - 10}" y="${y + 4}" text-anchor="end" class="analytics-axis-label">${value}</text>`; }).join('');
+      const labels = buckets.map((b, i) => { if (i % Math.ceil(buckets.length / 5) !== 0 && i !== buckets.length - 1) return ''; const x = point(0, i).x; return `<text x="${x}" y="${height - 7}" text-anchor="middle" class="analytics-axis-label">${b.end.toLocaleDateString(dashboardLocale() === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit' })}</text>`; }).join('');
+      const dots = (key, cls) => buckets.map((b, i) => { const p = point(b[key], i); return `<circle cx="${p.x}" cy="${p.y}" r="4" class="${cls}"><title>${b[key]}</title></circle>`; }).join('');
+      document.getElementById('engagementChart').innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Engagement chart"><defs><linearGradient id="likeArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".22"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>${grids}<path d="${path('likes')} L ${width-padX} ${height-padBottom} L ${padX} ${height-padBottom} Z" class="analytics-area"/><path d="${path('likes')}" class="analytics-line analytics-like-line"/><path d="${path('comments')}" class="analytics-line analytics-comment-line"/>${dots('likes','analytics-dot analytics-like-dot')}${dots('comments','analytics-dot analytics-comment-dot')}${labels}</svg>`;
+    }
+
+    function renderPostStatus(posts) {
+      const counts = { published: posts.filter(p => p.status === 'PUBLISHED').length, pending: posts.filter(p => p.status === 'PENDING' || p.status === 'DRAFT').length, rejected: posts.filter(p => p.status === 'REJECTED').length };
+      const total = Math.max(posts.length, 1); const published = counts.published / total * 100; const pending = counts.pending / total * 100;
+      document.getElementById('postStatusChart').innerHTML = `<div class="status-donut-wrap"><div class="status-donut" style="--published:${published}%;--pending:${published + pending}%"><div><strong>${posts.length}</strong><span>${dashboardText('Bài viết','Posts')}</span></div></div><div class="status-legend"><div><i class="status-published"></i><span>${dashboardText('Đã xuất bản','Published')}</span><strong>${counts.published}</strong></div><div><i class="status-pending"></i><span>${dashboardText('Chờ duyệt','Pending')}</span><strong>${counts.pending}</strong></div><div><i class="status-rejected"></i><span>${dashboardText('Bị từ chối','Rejected')}</span><strong>${counts.rejected}</strong></div></div></div>`;
+    }
+
+    function renderTopPosts(posts, likes, comments, translations, languageId) {
+      const rows = posts.map(post => ({ post, likes: likes.filter(x => x.post_id === post.id).length, comments: comments.filter(x => x.post_id === post.id).length, title: (translations.find(t => t.post_id === post.id && String(t.language_id) === String(languageId)) || translations.find(t => t.post_id === post.id) || {}).title || `Post #${post.id}` })).sort((a,b) => (b.likes+b.comments)-(a.likes+a.comments)).slice(0,5);
+      const max = Math.max(1, ...rows.map(x => x.likes + x.comments));
+      document.getElementById('topPostsChart').innerHTML = rows.map((row,index) => `<a href="../article.html?id=${row.post.id}" class="admin-bar-row"><span class="bar-rank">${index+1}</span><div class="bar-content"><div class="bar-label"><span data-user-content title="${escapeDashboardHtml(row.title)}">${escapeDashboardHtml(row.title)}</span><strong>${row.likes+row.comments}</strong></div><div class="bar-track"><span style="width:${(row.likes+row.comments)/max*100}%"></span></div><small><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon>${row.likes}<iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon>${row.comments}</small></div></a>`).join('');
+    }
+
+    function renderTranslationCoverage(posts, translations) {
+      const languageRows = db.get('languages'); const vi = languageRows.find(l => l.code === 'vi'); const en = languageRows.find(l => l.code === 'en');
+      const both = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===vi?.id) && translations.some(t => t.post_id===p.id && t.language_id===en?.id)).length;
+      const viOnly = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===vi?.id) && !translations.some(t => t.post_id===p.id && t.language_id===en?.id)).length;
+      const enOnly = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===en?.id) && !translations.some(t => t.post_id===p.id && t.language_id===vi?.id)).length;
+      const auto = new Set(translations.filter(t => t.is_auto_translated).map(t => t.post_id)).size; const total = Math.max(posts.length,1);
+      const rows = [[dashboardText('Đủ Việt + Anh','Vietnamese + English'),both,'coverage-both'],[dashboardText('Chỉ tiếng Việt','Vietnamese only'),viOnly,'coverage-vi'],[dashboardText('Chỉ tiếng Anh','English only'),enOnly,'coverage-en'],[dashboardText('Có bản dịch tự động','Auto-translated'),auto,'coverage-auto']];
+      document.getElementById('translationCoverage').innerHTML = rows.map(row => `<div class="coverage-row"><div><span>${row[0]}</span><strong>${row[1]}</strong></div><div class="coverage-track"><span class="${row[2]}" style="width:${row[1]/total*100}%"></span></div></div>`).join('');
+    }
+
+    function renderCategoryChart(posts, categories, translations, languageId) {
+      const rows = categories.map(category => ({ name: (translations.find(t => t.category_id===category.id && String(t.language_id)===String(languageId)) || translations.find(t => t.category_id===category.id) || {}).name || `#${category.id}`, count: posts.filter(p => p.category_id===category.id && p.status==='PUBLISHED').length })).sort((a,b)=>b.count-a.count);
+      const max = Math.max(1,...rows.map(x=>x.count));
+      document.getElementById('categoryChart').innerHTML = rows.map(row => `<div class="admin-bar-row category-bar-row"><span class="category-dot"></span><div class="bar-content"><div class="bar-label"><span>${escapeDashboardHtml(row.name)}</span><strong>${row.count}</strong></div><div class="bar-track"><span style="width:${row.count/max*100}%"></span></div></div></div>`).join('');
+    }
+
+    function renderRecentActivity(posts, comments, users, translations, languageId) {
+      const events = [
+        ...posts.map(post => ({ date: post.created_at, icon: 'solar:document-add-bold-duotone', tone: 'blue', text: `${dashboardText('Bài viết mới','New post')}: ${(translations.find(t=>t.post_id===post.id && String(t.language_id)===String(languageId)) || translations.find(t=>t.post_id===post.id) || {}).title || '#' + post.id}` })),
+        ...comments.map(comment => ({ date: comment.created_at, icon: 'solar:chat-round-dots-bold-duotone', tone: 'purple', text: `${dashboardText('Bình luận mới','New comment')}: ${comment.content}` })),
+        ...users.slice(1).map(user => ({ date: user.created_at, icon: 'solar:user-plus-bold-duotone', tone: 'green', text: `${dashboardText('Người dùng mới','New user')}: ${user.full_name || user.user_name}` }))
+      ].filter(x=>x.date).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+      document.getElementById('recentActivity').innerHTML = events.map(event => `<div class="activity-row"><span class="activity-icon activity-${event.tone}"><iconify-icon icon="${event.icon}"></iconify-icon></span><div><p data-user-content>${escapeDashboardHtml(event.text)}</p><time>${new Date(event.date).toLocaleDateString(dashboardLocale()==='en'?'en-US':'vi-VN',{day:'2-digit',month:'short',year:'numeric'})}</time></div></div>`).join('');
+    }
   </script>
 </body>
 

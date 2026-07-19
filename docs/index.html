@@ -503,7 +503,7 @@
       </div>
     </div>
     <div class="topbar-right">
-      <div class="mobile-search-icon" onclick="document.getElementById('topSearchInput').focus()" style="display:none;">
+      <div class="mobile-search-icon" onclick="toggleMobileSearch()" style="display:none;">
         <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
       </div>
       <div class="lang-dropdown">
@@ -753,7 +753,7 @@
       currentCatFilter = catId;
       const lang = localStorage.getItem('blog-lang') || 'vi';
       const langId = localStorage.getItem('current_language_id') || '1';
-      const catObj = allCatOptions.find(c => c.id === catId);
+      const catObj = allCatOptions.find(c => String(c.id) === String(catId));
       const label = catObj ? (lang === 'vi' ? (catObj.nameVi || catObj.name) : catObj.name) : 'Tất cả';
       document.getElementById('catDropdownLabel').textContent = label;
       document.getElementById('catDropdownPanel').classList.remove('open');
@@ -784,7 +784,7 @@
           <div class="article-main">
             <div class="article-source">
               <img src="${post.author_avatar}" class="author-avatar-feed" alt="avatar" />
-              <span>In ${post.category_name} by</span>
+              <span>${post.category_name} by</span>
               <div class="author-name-wrapper" style="position:relative; display:inline-block;" onmouseenter="showAuthorCard(this, ${post.author_id})" onmouseleave="hideAuthorCard(this)">
                 <a href="profile.html?id=${post.author_id}" style="color:inherit;font-weight:600;">${post.author_name}</a>
               </div>

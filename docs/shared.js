@@ -27,6 +27,7 @@ function toggleSidebar(forceClose) {
     layout.classList.remove('sidebar-collapsed');
     if (sidebar) sidebar.classList.remove('drawer-open');
     overlay.classList.remove('show');
+    document.querySelectorAll('.hamburger').forEach(el => el.setAttribute('aria-expanded', 'false'));
     return;
   }
 
@@ -34,6 +35,7 @@ function toggleSidebar(forceClose) {
     if (sidebar) {
       const isOpen = sidebar.classList.toggle('drawer-open');
       overlay.classList.toggle('show', isOpen);
+      document.querySelectorAll('.hamburger').forEach(el => el.setAttribute('aria-expanded', String(isOpen)));
     }
   } else {
     layout.classList.toggle('sidebar-collapsed');
@@ -85,6 +87,151 @@ let LANG_LABELS = {};
 let LANG_TO_ID = {};
 let ID_TO_LANG = {};
 
+// UI copy dictionary. This only translates interface chrome; article bodies,
+// comments and user-entered content are deliberately excluded.
+const UI_COPY_PAIRS = [
+  ['Tìm kiếm...', 'Search...'], ['Tìm danh mục...', 'Search categories...'],
+  ['Tìm kiếm bài viết...', 'Search posts...'], ['Tìm theo tên hoặc email...', 'Search by name or email...'],
+  ['Trang chủ', 'Home'], ['Hồ sơ', 'Profile'], ['Giới thiệu', 'About'],
+  ['Bảng điều khiển', 'Dashboard'], ['Bảng điều khiển Admin', 'Admin Dashboard'],
+  ['Quản lý bài viết', 'Manage posts'], ['Quản lý thành viên', 'Manage users'],
+  ['Quản lý người dùng', 'Manage users'], ['Quản lý danh mục', 'Manage categories'],
+  ['Quản lý ngôn ngữ', 'Manage languages'], ['Về trang Blog', 'Back to Blog'],
+  ['Tổng quan hệ thống', 'System Dashboard'], ['Người dùng', 'Users'], ['Bài viết', 'Posts'],
+  ['Bài chờ duyệt', 'Pending Posts'], ['Danh mục', 'Categories'], ['Ngôn ngữ', 'Languages'],
+  ['Thêm người dùng', 'Add User'], ['Thêm danh mục', 'Add Category'], ['Thêm ngôn ngữ', 'Add Language'],
+  ['Viết bài mới', 'New Post'], ['Hủy', 'Cancel'], ['Lưu nháp', 'Save Draft'], ['Xuất bản', 'Publish'],
+  ['Tiêu đề', 'Title'], ['Trạng thái', 'Status'], ['Ngày đăng', 'Date'], ['Ngày tham gia', 'Joined'],
+  ['Vai trò', 'Role'], ['Tất cả trạng thái', 'All statuses'], ['Tất cả vai trò', 'All roles'],
+  ['Đã xuất bản', 'Published'], ['Chờ duyệt', 'Pending'], ['Bị từ chối', 'Rejected'],
+  ['Hoạt động', 'Active'], ['Đã khóa', 'Locked'], ['Khóa', 'Lock'], ['Mở khóa', 'Unlock'],
+  ['Xem', 'View'], ['Sửa', 'Edit'], ['Xóa', 'Delete'], ['Duyệt', 'Approve'], ['Từ chối', 'Reject'],
+  ['Lưu thay đổi', 'Save changes'], ['Tạo người dùng', 'Create user'], ['Tạo danh mục', 'Create category'],
+  ['Đặt làm mặc định', 'Set as default'], ['Chỉnh sửa', 'Edit'],
+  ['Chỉnh sửa danh mục', 'Edit category'], ['Chỉnh sửa ngôn ngữ', 'Edit language'],
+  ['Tên đăng nhập', 'Username'], ['Họ và tên', 'Full name'], ['Mật khẩu', 'Password'],
+  ['Nhập mật khẩu...', 'Enter password...'], ['Tối thiểu 8 ký tự', 'At least 8 characters'],
+  ['Chào mừng trở lại', 'Welcome back'], ['Đăng nhập', 'Sign in'], ['Đăng ký', 'Sign up'],
+  ['Đăng xuất', 'Logout'], ['Quên mật khẩu?', 'Forgot password?'],
+  ['Chưa có tài khoản?', "Don't have an account?"], ['Đã có tài khoản?', 'Already have an account?'],
+  ['Đăng ký ngay', 'Sign up now'], ['Tạo tài khoản', 'Create an account'], ['hoặc', 'or'],
+  ['Đăng nhập nhanh (Bỏ qua mật khẩu)', 'Quick sign in (skip password)'],
+  ['Đăng nhập với Google', 'Sign in with Google'], ['Đăng nhập với Facebook', 'Sign in with Facebook'],
+  ['Đăng ký với Google', 'Sign up with Google'], ['Đăng ký với Facebook', 'Sign up with Facebook'],
+  ['Khôi phục mật khẩu', 'Reset password'], ['Quay lại đăng nhập', 'Back to sign in'],
+  ['Gửi liên kết khôi phục', 'Send reset link'],
+  ['Nhập email đã đăng ký, chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.', 'Enter your registered email and we will send you a password reset link.'],
+  ['Bằng việc đăng ký, bạn đồng ý với Điều khoản dịch vụ và Chính sách bảo mật của chúng tôi.', 'By signing up, you agree to our Terms of Service and Privacy Policy.'],
+  ['Thay ảnh bìa', 'Change cover'], ['bài viết', 'posts'], ['lượt thích', 'likes'],
+  ['Bài viết nổi bật', 'Featured post'], ['Chưa có bài viết', 'No posts yet'],
+  ['Tiêu đề bài viết nhiều lượt thích nhất sẽ hiển thị ở đây.', 'The most-liked post will appear here.'],
+  ['Lượt thích', 'Likes'], ['Thông tin cá nhân', 'Personal information'], ['Họ tên', 'Full name'],
+  ['Ngày sinh', 'Date of birth'], ['Xác thực', 'Verification'], ['Đã xác thực', 'Verified'],
+  ['Chưa xác thực', 'Not verified'], ['Thành viên', 'Member'], ['Reply', 'Trả lời'],
+  ['Đang trả lời', 'Replying to'], ['Viết phản hồi...', 'Write a reply...'],
+  ['Bạn cần đăng nhập để thực hiện chức năng bình luận.', 'You need to sign in to comment.'],
+  ['Không có nội dung', 'No content'], ['Bài viết không tồn tại.', 'Post not found.'],
+  ['Bài viết không tồn tại hoặc đã bị ẩn.', 'This post does not exist or has been hidden.'],
+  ['Ngôn ngữ bài viết', 'Post Language'], ['Tiêu đề bài viết', 'Post Title'],
+  ['Nội dung bài viết', 'Post Content'], ['Dịch sang ngôn ngữ khác', 'Translate to other languages'],
+  ['Nhập tiêu đề bài viết...', 'Enter post title...'], ['Viết nội dung ở đây...', 'Write your content here...'],
+  ['(Chưa có tiêu đề)', '(Untitled)'], ['Tổng bài viết', 'Total Posts'],
+  ['Không có bài viết nào.', 'No posts found.'], ['Không tìm thấy kết quả', 'No results found'],
+  ['Không tìm thấy danh mục.', 'No categories found.'], ['Chưa có', 'Missing'],
+  ['Ngôn ngữ nguồn để dịch tự động', 'Source language for automatic translation'],
+  ['Dịch tự động', 'Auto translate'], ['Đang dịch...', 'Translating...'],
+  ['Tên danh mục (EN)', 'Category name (EN)'], ['Tên danh mục (VI)', 'Category name (VI)'],
+  ['Mô tả (EN)', 'Description (EN)'], ['Mô tả (VI)', 'Description (VI)'],
+  ['Mô tả ngắn...', 'Short description...'], ['Lý do từ chối', 'Rejection reason'],
+  ['Nhập lý do từ chối...', 'Enter rejection reason...'], ['Từ chối bài viết', 'Reject post'],
+  ['Xác nhận', 'Confirm'], ['Đăng xuất', 'Logout'], ['Xóa bài viết', 'Delete post'],
+  ['Mở khóa tài khoản', 'Unlock account'], ['Khóa tài khoản', 'Lock account'],
+  ['Thay đổi vai trò', 'Change role'], ['Duyệt bài viết', 'Approve post'],
+  ['Thay đổi mặc định', 'Change default'], ['Xóa ngôn ngữ', 'Delete language'],
+  ['Xóa danh mục', 'Delete category'], ['Đồng ý', 'Agree'],
+  ['Vui lòng đăng nhập với tài khoản Admin!', 'Please sign in with an Admin account!'],
+  ['Vui lòng đăng nhập với tài khoản Super Admin!', 'Please sign in with a Super Admin account!'],
+  ['Vui lòng đăng nhập với tài khoản hợp lệ!', 'Please sign in with a valid account!'],
+  ['Đã xóa bài viết!', 'Post deleted!'], ['Đã cập nhật ảnh bìa!', 'Cover image updated!'],
+  ['Đã cập nhật ảnh đại diện!', 'Profile picture updated!'],
+  ['Vui lòng nhập tiêu đề và nội dung!', 'Please enter a title and content!'],
+  ['Đã xuất bản thành công!', 'Post published successfully!'], ['Đã lưu bản nháp!', 'Draft saved!'],
+  ['Đã mở khóa tài khoản!', 'Account unlocked!'], ['Đã khóa tài khoản!', 'Account locked!'],
+  ['Đã cập nhật vai trò!', 'Role updated!'], ['Vui lòng điền đầy đủ thông tin!', 'Please complete all required fields!'],
+  ['Mật khẩu nhập lại không khớp!', 'Passwords do not match!'], ['Email này đã tồn tại!', 'This email already exists!'],
+  ['Tên đăng nhập đã tồn tại!', 'This username already exists!'], ['Đã tạo người dùng thành công!', 'User created successfully!'],
+  ['Dịch tự động thành công! (Mock)', 'Automatic translation completed! (Mock)'],
+  ['Đã tạo danh mục!', 'Category created!'], ['Đã cập nhật danh mục!', 'Category updated!'],
+  ['Đã xóa danh mục!', 'Category deleted!'], ['Đã thay đổi ngôn ngữ mặc định', 'Default language changed'],
+  ['Vui lòng nhập mã và tên ngôn ngữ!', 'Please enter a language code and name!'],
+  ['Mã ngôn ngữ này đã tồn tại!', 'This language code already exists!'],
+  ['Đã thêm ngôn ngữ!', 'Language added!'], ['Đã cập nhật ngôn ngữ!', 'Language updated!'],
+  ['Không thể xóa ngôn ngữ mặc định!', 'The default language cannot be deleted!'],
+  ['Đã xóa ngôn ngữ!', 'Language deleted!'], ['Đã duyệt bài viết!', 'Post approved!'],
+  ['Vui lòng nhập lý do từ chối!', 'Please enter a rejection reason!'], ['Đã từ chối bài viết!', 'Post rejected!'],
+  ['Email hoặc mật khẩu không đúng!', 'Incorrect email or password!'],
+  ['Email này đã được sử dụng!', 'This email is already in use!'], ['Đăng ký thành công!', 'Registration successful!'],
+  ['Email này chưa được đăng ký trong hệ thống!', 'This email is not registered!'],
+  ['Bạn cần đăng nhập để bình luận!', 'You need to sign in to comment!']
+];
+
+const UI_COPY = { vi: new Map(), en: new Map() };
+UI_COPY_PAIRS.forEach(([vi, en]) => { UI_COPY.en.set(vi, en); UI_COPY.vi.set(en, vi); });
+
+function translateUiText(value, lang) {
+  if (value === null || value === undefined) return value;
+  const raw = String(value);
+  const trimmed = raw.trim();
+  const translated = UI_COPY[lang]?.get(trimmed);
+  return translated ? raw.replace(trimmed, translated) : raw;
+}
+
+function translateUiMessage(value, lang) {
+  let result = translateUiText(value, lang);
+  if (lang !== 'en' || result !== value) return result;
+  const replacements = [
+    ['Bạn có chắc muốn đăng xuất không?', 'Are you sure you want to log out?'],
+    ['Bạn có chắc muốn xóa bài viết', 'Are you sure you want to delete the post'],
+    ['Bạn có chắc muốn mở khóa tài khoản của', 'Are you sure you want to unlock the account of'],
+    ['Bạn có chắc muốn khóa tài khoản của', 'Are you sure you want to lock the account of'],
+    ['Bạn có chắc muốn thay đổi vai trò của người dùng này?', "Are you sure you want to change this user's role?"],
+    ['Bạn có chắc muốn duyệt và xuất bản bài viết', 'Are you sure you want to approve and publish the post'],
+    ['Bạn có chắc muốn đặt', 'Are you sure you want to set'],
+    ['làm ngôn ngữ mặc định của hệ thống?', 'as the system default language?'],
+    ['Bạn có chắc muốn xóa ngôn ngữ', 'Are you sure you want to delete the language'],
+    ['Các bản dịch liên quan cũng sẽ bị xóa.', 'Related translations will also be deleted.'],
+    ['Bạn có chắc muốn xóa danh mục', 'Are you sure you want to delete the category'],
+    ['Các bài viết thuộc danh mục này sẽ không còn danh mục.', 'Posts in this category will become uncategorized.'],
+    ['Hành động này không thể hoàn tác.', 'This action cannot be undone.'],
+    ['không?', '?']
+  ];
+  replacements.forEach(([from, to]) => { result = result.replace(from, to); });
+  return result;
+}
+
+const nativeUiAlert = window.alert.bind(window);
+window.alert = message => nativeUiAlert(translateUiMessage(String(message), localStorage.getItem('blog-lang') || 'vi'));
+
+function translateUiTree(root, lang) {
+  if (!root) return;
+  const skipSelector = '.article-body,.body-text,.comment-content,.post-content,.ql-editor,.post-title,.post-title-cell,.featured-title,.featured-desc,.search-result-title,.user-name,.comment-author,[data-user-content]';
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) textNodes.push(walker.currentNode);
+  textNodes.forEach(node => {
+    const parent = node.parentElement;
+    if (!parent || parent.closest(skipSelector) || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(parent.tagName)) return;
+    node.nodeValue = translateUiText(node.nodeValue, lang);
+  });
+  root.querySelectorAll?.('input[placeholder],textarea[placeholder],[title],[aria-label]').forEach(el => {
+    ['placeholder', 'title', 'aria-label'].forEach(attr => {
+      const explicit = el.getAttribute(`data-${lang}-${attr}`);
+      if (explicit !== null) el.setAttribute(attr, explicit);
+      else if (el.hasAttribute(attr)) el.setAttribute(attr, translateUiText(el.getAttribute(attr), lang));
+    });
+  });
+}
+
 function initDynamicLanguages() {
   if (typeof db === 'undefined') return;
   const dLanguages = db.get('languages') || [];
@@ -109,6 +256,7 @@ function applyLanguage(lang) {
   if (Object.keys(LANG_LABELS).length === 0) initDynamicLanguages();
 
   localStorage.setItem('blog-lang', lang);
+  document.documentElement.lang = lang;
 
   // Dùng innerHTML thay vì textContent để render được thẻ <img> của cờ
   document.querySelectorAll('.lang-current-label').forEach(el => {
@@ -123,6 +271,21 @@ function applyLanguage(lang) {
   document.querySelectorAll('[data-vi],[data-en]').forEach(el => {
     const val = el.dataset[lang];
     if (val !== undefined) el.textContent = val;
+  });
+
+  // Translate supported attributes and known interface-only text while keeping
+  // every existing element, id and event handler intact.
+  translateUiTree(document.body, lang);
+  const titlePairs = [
+    ['Đăng nhập – Medium', 'Sign in – Medium'], ['Đăng ký – Medium', 'Sign up – Medium'],
+    ['Khôi phục mật khẩu – Medium', 'Reset password – Medium'], ['Medium – Trang chủ', 'Medium – Home'],
+    ['Viết bài – Medium', 'Write – Medium'], ['Quản lý bài viết – Medium', 'Manage posts – Medium'],
+    ['Quản lý người dùng – Medium', 'Manage users – Medium'], ['Quản lý danh mục – Medium', 'Manage categories – Medium'],
+    ['Quản lý ngôn ngữ – Medium', 'Manage languages – Medium']
+  ];
+  titlePairs.forEach(([vi, en]) => {
+    if (lang === 'en' && document.title === vi) document.title = en;
+    if (lang === 'vi' && document.title === en) document.title = vi;
   });
 }
 
@@ -143,10 +306,16 @@ function selectLanguage(lang) {
 }
 
 function toggleLangMenu() {
-  document.querySelectorAll('.lang-menu').forEach(m => m.classList.toggle('open'));
+  document.querySelectorAll('.lang-menu').forEach(m => {
+    const open = m.classList.toggle('open');
+    m.closest('.lang-dropdown')?.querySelector('.lang-btn')?.setAttribute('aria-expanded', String(open));
+  });
 }
 function closeLangMenu() {
-  document.querySelectorAll('.lang-menu').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.lang-menu').forEach(m => {
+    m.classList.remove('open');
+    m.closest('.lang-dropdown')?.querySelector('.lang-btn')?.setAttribute('aria-expanded', 'false');
+  });
 }
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.lang-dropdown')) closeLangMenu();
@@ -162,6 +331,7 @@ document.addEventListener('click', (e) => {
 function showConfirm({ title = 'Xác nhận', message = '', confirmText = 'Xác nhận', cancelText = 'Hủy', danger = false, onConfirm, onCancel }) {
   const existing = document.getElementById('confirmDialogOverlay');
   if (existing) existing.remove();
+  const returnFocusTo = document.activeElement;
 
   const overlay = document.createElement('div');
   overlay.id = 'confirmDialogOverlay';
@@ -171,35 +341,43 @@ function showConfirm({ title = 'Xác nhận', message = '', confirmText = 'Xác 
       <div class="confirm-icon ${danger ? 'danger' : 'info'}">
         <iconify-icon icon="${danger ? 'weui:delete-outlined' : 'solar:question-circle-bold-duotone'}"></iconify-icon>
       </div>
-      <h3 class="confirm-title">${title}</h3>
-      <p class="confirm-message">${message}</p>
+      <h3 class="confirm-title">${translateUiText(title, localStorage.getItem('blog-lang') || 'vi')}</h3>
+      <p class="confirm-message">${translateUiMessage(message, localStorage.getItem('blog-lang') || 'vi')}</p>
       <div class="confirm-actions">
-        <button class="btn btn-outline confirm-cancel-btn">${cancelText}</button>
-        <button class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} confirm-ok-btn">${confirmText}</button>
+        <button class="btn btn-outline confirm-cancel-btn">${translateUiText(cancelText, localStorage.getItem('blog-lang') || 'vi')}</button>
+        <button class="btn ${danger ? 'btn-danger-solid' : 'btn-primary'} confirm-ok-btn">${translateUiText(confirmText, localStorage.getItem('blog-lang') || 'vi')}</button>
       </div>
     </div>
   `;
 
-  overlay.querySelector('.confirm-cancel-btn').onclick = () => {
+  const closeConfirm = (confirmed) => {
     overlay.classList.remove('open');
     setTimeout(() => overlay.remove(), 200);
-    if (onCancel) onCancel();
+    document.removeEventListener('keydown', handleConfirmKeydown);
+    returnFocusTo?.focus?.();
+    if (confirmed ? onConfirm : onCancel) (confirmed ? onConfirm : onCancel)();
   };
-  overlay.querySelector('.confirm-ok-btn').onclick = () => {
-    overlay.classList.remove('open');
-    setTimeout(() => overlay.remove(), 200);
-    if (onConfirm) onConfirm();
+  const handleConfirmKeydown = event => {
+    if (event.key === 'Escape') closeConfirm(false);
+    if (event.key === 'Tab') {
+      const controls = [...overlay.querySelectorAll('button')];
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
   };
+  overlay.querySelector('.confirm-cancel-btn').onclick = () => closeConfirm(false);
+  overlay.querySelector('.confirm-ok-btn').onclick = () => closeConfirm(true);
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
-      overlay.classList.remove('open');
-      setTimeout(() => overlay.remove(), 200);
-      if (onCancel) onCancel();
+      closeConfirm(false);
     }
   });
 
   document.body.appendChild(overlay);
+  document.addEventListener('keydown', handleConfirmKeydown);
   requestAnimationFrame(() => overlay.classList.add('open'));
+  requestAnimationFrame(() => overlay.querySelector('.confirm-cancel-btn')?.focus());
 }
 
 // ============ Toast Notification ============
@@ -213,7 +391,7 @@ function showToast(message, type = 'success', duration = 3000) {
     document.body.appendChild(toast);
   }
   const icons = { success: 'solar:check-circle-bold-duotone', error: 'solar:close-circle-bold-duotone', info: 'solar:info-circle-bold-duotone' };
-  toast.innerHTML = `<iconify-icon icon="${icons[type] || icons.info}"></iconify-icon> ${message}`;
+  toast.innerHTML = `<iconify-icon icon="${icons[type] || icons.info}"></iconify-icon> ${translateUiText(message, localStorage.getItem('blog-lang') || 'vi')}`;
   toast.className = `global-toast ${type} show`;
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => { toast.classList.remove('show'); }, duration);
@@ -222,12 +400,36 @@ function showToast(message, type = 'success', duration = 3000) {
 // ============ Modal form helper ============
 function openModal(modalId) {
   const m = document.getElementById(modalId);
-  if (m) { m.classList.add('open'); }
+  if (m) {
+    m._returnFocusTo = document.activeElement;
+    m.classList.add('open');
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    document.body.classList.add('modal-open');
+    requestAnimationFrame(() => m.querySelector('input:not([type="hidden"]),select,textarea,button,[href]')?.focus());
+  }
 }
 function closeModal(modalId) {
   const m = document.getElementById(modalId);
-  if (m) { m.classList.remove('open'); }
+  if (m) {
+    m.classList.remove('open');
+    if (!document.querySelector('.modal-overlay.open')) document.body.classList.remove('modal-open');
+    m._returnFocusTo?.focus?.();
+  }
 }
+
+document.addEventListener('keydown', event => {
+  const modal = document.querySelector('.modal-overlay.open');
+  if (!modal || document.getElementById('confirmDialogOverlay')) return;
+  if (event.key === 'Escape' && modal.id) closeModal(modal.id);
+  if (event.key !== 'Tab') return;
+  const controls = [...modal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.offsetParent !== null);
+  if (!controls.length) return;
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+});
 
 // ============ Search (topbar) ============
 function initSearch(getPostsFn) {
@@ -260,7 +462,7 @@ function initSearch(getPostsFn) {
     });
 
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); }
+      if (e.key === 'Escape') { dropdown.classList.remove('open'); input.blur(); if (box.classList.contains('mobile-open')) toggleMobileSearch(true); }
       if (e.key === 'Enter') {
         const kw = input.value.trim();
         if (kw) { dropdown.classList.remove('open'); window.location.href = (window.location.pathname.includes('/admin/') ? '../' : '') + 'index.html?q=' + encodeURIComponent(kw); }
@@ -326,6 +528,76 @@ function applyBgFallback() {
     const test = new Image();
     test.onerror = () => { el.style.backgroundImage = `url('${FALLBACK_COVER}')`; };
     test.src = url;
+  });
+}
+
+function toggleMobileSearch(forceClose = false) {
+  const wrap = document.getElementById('topSearchWrap') || document.querySelector('.topbar .search-box-wrap');
+  if (!wrap) return;
+  let closeBtn = wrap.querySelector('.mobile-search-close');
+  if (!closeBtn) {
+    closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'mobile-search-close';
+    closeBtn.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Close search' : 'Đóng tìm kiếm');
+    closeBtn.innerHTML = '<iconify-icon icon="solar:close-circle-linear"></iconify-icon>';
+    closeBtn.onclick = () => toggleMobileSearch(true);
+    wrap.appendChild(closeBtn);
+  }
+  const shouldOpen = !forceClose && !wrap.classList.contains('mobile-open');
+  wrap.classList.toggle('mobile-open', shouldOpen);
+  if (shouldOpen) {
+    const input = wrap.querySelector('.search-input');
+    requestAnimationFrame(() => input?.focus());
+  } else {
+    wrap.querySelector('.search-results-dropdown')?.classList.remove('open');
+  }
+}
+
+function hydrateAccountAvatar(element, user) {
+  if (!element || !user || element.querySelector('img')) return;
+  const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.full_name || user.user_name || 'User')}`;
+  element.innerHTML = `<img src="${avatarUrl}" alt="${user.full_name || user.user_name || 'User'}">`;
+  element.title = user.full_name || user.user_name || '';
+  element.classList.add('account-avatar');
+  element.setAttribute('role', 'link');
+  element.setAttribute('tabindex', '0');
+  element.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Open profile' : 'Mở hồ sơ');
+  const profileUrl = window.location.pathname.includes('/admin/') ? '../profile.html' : 'profile.html';
+  element.onclick = () => { window.location.href = profileUrl; };
+  element.onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.location.href = profileUrl; } };
+}
+
+function enhanceUiAccessibility(root = document) {
+  const collect = selector => {
+    const nodes = [...(root.querySelectorAll?.(selector) || [])];
+    if (root.matches?.(selector)) nodes.unshift(root);
+    return nodes;
+  };
+
+  collect('.hamburger,.mobile-search-icon,.quick-link-card,[onclick].topic-pill').forEach(el => {
+    if (el.dataset.a11yReady) return;
+    el.dataset.a11yReady = 'true';
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', el.classList.contains('quick-link-card') ? 'link' : 'button');
+    if (el.classList.contains('hamburger')) {
+      el.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Toggle navigation' : 'Mở hoặc đóng menu');
+      el.setAttribute('aria-expanded', 'false');
+    }
+    if (el.classList.contains('mobile-search-icon')) el.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Open search' : 'Mở tìm kiếm');
+    el.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); el.click(); }
+    });
+  });
+
+  collect('.lang-btn').forEach(el => { el.setAttribute('aria-haspopup', 'menu'); el.setAttribute('aria-expanded', el.getAttribute('aria-expanded') || 'false'); el.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Change language' : 'Thay đổi ngôn ngữ'); });
+  collect('.theme-toggle').forEach(el => { el.setAttribute('aria-label', localStorage.getItem('blog-theme') === 'dark' ? (localStorage.getItem('blog-lang') === 'en' ? 'Use light mode' : 'Dùng giao diện sáng') : (localStorage.getItem('blog-lang') === 'en' ? 'Use dark mode' : 'Dùng giao diện tối')); });
+  collect('.sidebar').forEach(el => el.setAttribute('aria-label', localStorage.getItem('blog-lang') === 'en' ? 'Main navigation' : 'Điều hướng chính'));
+  collect('button[title],a[title]').forEach(el => { if (!el.getAttribute('aria-label')) el.setAttribute('aria-label', el.title); });
+  collect('img').forEach(img => {
+    img.decoding = 'async';
+    if (!img.closest('.topbar,.byline') && !img.classList.contains('author-avatar-feed')) img.loading = 'lazy';
+    if (!img.hasAttribute('alt')) img.alt = '';
   });
 }
 
@@ -439,9 +711,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const user = db.getCurrentUser();
     if (user) {
       document.querySelectorAll('.avatar').forEach(av => {
-        if (av.textContent.trim() === 'N' || av.textContent.trim() === 'A') {
-          av.textContent = (user.full_name || user.user_name || '?').charAt(0).toUpperCase();
-        }
+        hydrateAccountAvatar(av, user);
       });
 
       const topbarRight = document.querySelector('.topbar-right');
@@ -449,10 +719,9 @@ window.addEventListener('DOMContentLoaded', () => {
         const logoutBtn = document.createElement('a');
         logoutBtn.href = '#';
         logoutBtn.className = 'logout-link';
-        logoutBtn.setAttribute('data-vi', 'Đăng xuất');
-        logoutBtn.setAttribute('data-en', 'Logout');
-        logoutBtn.textContent = 'Logout';
-        logoutBtn.style.cssText = 'margin-left:4px; color:var(--danger); text-decoration:none; font-size:14px; font-weight:600;';
+        logoutBtn.title = localStorage.getItem('blog-lang') === 'en' ? 'Logout' : 'Đăng xuất';
+        logoutBtn.setAttribute('aria-label', logoutBtn.title);
+        logoutBtn.innerHTML = `<iconify-icon icon="solar:logout-2-linear"></iconify-icon><span data-vi="Đăng xuất" data-en="Logout">${logoutBtn.title}</span>`;
         logoutBtn.onclick = (e) => {
           e.preventDefault();
           showConfirm({
@@ -471,6 +740,29 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
+
+  enhanceUiAccessibility(document);
+
+  // Lists, badges and modal content are rendered after page load on several
+  // screens. Observe only added UI nodes so their labels follow the selected
+  // language without changing any rendering or business function.
+  const uiObserver = new MutationObserver(records => {
+    const lang = localStorage.getItem('blog-lang') || 'vi';
+    const user = typeof db !== 'undefined' ? db.getCurrentUser() : null;
+    records.forEach(record => {
+      if (record.target?.matches?.('.avatar') && user) hydrateAccountAvatar(record.target, user);
+      record.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          translateUiTree(node, lang);
+          enhanceUiAccessibility(node);
+        }
+        if (node.nodeType === Node.TEXT_NODE && node.parentElement && !node.parentElement.closest('.article-body,.body-text,.comment-content,.post-content,.ql-editor,.post-title,.post-title-cell,.featured-title,.featured-desc,.search-result-title,.user-name,.comment-author,[data-user-content]')) {
+          node.nodeValue = translateUiText(node.nodeValue, lang);
+        }
+      });
+    });
+  });
+  uiObserver.observe(document.body, { childList: true, subtree: true });
 });
 
 window.addEventListener('resize', () => {

@@ -225,6 +225,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id === 3) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'owner-posts.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản hợp lệ!', 'error');
         setTimeout(() => window.location.href = 'login.html', 1500);
         return;
@@ -341,9 +342,11 @@
         danger: true,
         onConfirm: () => {
           const posts = db.get('posts');
+          const deletedPost = posts.find(p => p.id === id);
           db.set('posts', posts.filter(p => p.id !== id));
           const trans = db.get('post_translations');
           db.set('post_translations', trans.filter(t => t.post_id !== id));
+          recordAuditLog({ action: 'POST_DELETED', entityType: 'POST', entityId: id, entityLabel: title, beforeData: deletedPost });
           showToast('Đã xóa bài viết!', 'success');
           setTimeout(() => location.reload(), 900);
         }

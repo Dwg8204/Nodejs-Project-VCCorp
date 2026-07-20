@@ -1,6 +1,7 @@
 -- =========================================================================
 -- PHẦN 1: XÓA SẠCH TOÀN BỘ CÁC BẢNG CŨ (THEO THỨ TỰ AN TOÀN TRÁNH LỖI KHÓA NGOẠ)
 -- =========================================================================
+DROP TABLE IF EXISTS `audit_logs`;
 DROP TABLE IF EXISTS `post_likes`;
 DROP TABLE IF EXISTS `comments`;
 DROP TABLE IF EXISTS `post_translations`;
@@ -48,6 +49,33 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_user_name` (`user_name`),
   UNIQUE KEY `uq_email` (`email`),
   CONSTRAINT `fk_users_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Audit log is append-only. entity_id is intentionally not a foreign key
+-- because one log table records multiple entity types and must retain history
+-- after the source row is deleted.
+CREATE TABLE `audit_logs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `actor_id` INT DEFAULT NULL,
+  `actor_name` VARCHAR(255) DEFAULT NULL,
+  `actor_role` VARCHAR(50) DEFAULT NULL,
+  `action` VARCHAR(80) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` BIGINT UNSIGNED DEFAULT NULL,
+  `entity_label` VARCHAR(500) DEFAULT NULL,
+  `before_data` JSON DEFAULT NULL,
+  `after_data` JSON DEFAULT NULL,
+  `metadata` JSON DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `user_agent` VARCHAR(500) DEFAULT NULL,
+  `created_at` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_actor` (`actor_id`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_entity` (`entity_type`, `entity_id`),
+  KEY `idx_audit_created_at` (`created_at`),
+  CONSTRAINT `fk_audit_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

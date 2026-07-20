@@ -163,7 +163,6 @@
       position: sticky;
       top: 60px;
       height: calc(100vh - 60px);
-      overflow-y: auto;
       flex-shrink: 0;
     }
 
@@ -173,8 +172,18 @@
     }
 
     .preview-panel-inner {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      height: 100%;
+      min-height: 0;
       padding: 24px 28px;
       min-width: 320px;
+    }
+
+    #previewPanelBody {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .preview-panel-header {
@@ -408,6 +417,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id === 3) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'post-form.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản hợp lệ!', 'error');
         setTimeout(() => window.location.href = 'login.html', 1500);
         return;
@@ -680,6 +690,9 @@
       const transDB = db.get('post_translations');
       const user = db.getCurrentUser();
       const existingPost = currentPostId ? posts.find(post => post.id === currentPostId) : null;
+      const wasNewPost = !existingPost;
+      const previousStatus = existingPost?.status || null;
+      const beforePost = existingPost ? JSON.parse(JSON.stringify(existingPost)) : null;
       if (!user || (existingPost && user.role_id !== 1 && existingPost.author_id !== user.id)) {
         showToast(localStorage.getItem('blog-lang') === 'en' ? 'You do not have permission to save this post.' : 'Bạn không có quyền lưu bài viết này!', 'error');
         return;
@@ -722,6 +735,19 @@
       });
 
       db.set('post_translations', transDB);
+      const savedPost = posts.find(post => post.id === postId);
+      recordAuditLog({
+        action: wasNewPost ? 'POST_CREATED' : 'POST_UPDATED',
+        entityType: 'POST',
+        entityId: postId,
+        entityLabel: title,
+        beforeData: beforePost,
+        afterData: savedPost,
+        metadata: { source_language: sourceLangCode, requested_status: requestedStatus }
+      });
+      if (status === 'PENDING' && previousStatus !== 'PENDING') {
+        recordAuditLog({ action: 'POST_SUBMITTED', entityType: 'POST', entityId: postId, entityLabel: title, beforeData: { status: previousStatus }, afterData: { status } });
+      }
       const english = localStorage.getItem('blog-lang') === 'en';
       const message = status === 'PUBLISHED'
         ? (english ? 'Post published successfully.' : 'Đã xuất bản bài viết thành công!')

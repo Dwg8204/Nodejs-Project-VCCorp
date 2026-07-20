@@ -265,7 +265,7 @@
           <label>Mật khẩu <span class="required-star">*</span></label>
           <div class="input-password-wrap">
             <input type="password" id="newUserPassword" class="form-control" placeholder="Nhập mật khẩu...">
-            <button class="toggle-password" type="button" onclick="togglePasswordVisibility('newUserPassword', this)">
+            <button class="toggle-password" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" data-vi-aria-label="Hiện mật khẩu" data-en-aria-label="Show password" onclick="togglePasswordVisibility('newUserPassword', this)">
               <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>
             </button>
           </div>
@@ -274,7 +274,7 @@
           <label>Nhập lại mật khẩu <span class="required-star">*</span></label>
           <div class="input-password-wrap">
             <input type="password" id="newUserConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu...">
-            <button class="toggle-password" type="button"
+            <button class="toggle-password" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" data-vi-aria-label="Hiện mật khẩu" data-en-aria-label="Show password"
               onclick="togglePasswordVisibility('newUserConfirmPassword', this)">
               <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>
             </button>
@@ -304,6 +304,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/users.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
         setTimeout(() => window.location.href = '../login.html', 1500);
         return;
@@ -404,7 +405,13 @@
         onConfirm: () => {
           const users = db.get('users');
           const idx = users.findIndex(u => u.id === userId);
-          if (idx > -1) { users[idx].is_active = isActive; db.set('users', users); }
+          if (idx > -1) {
+            const beforeUser = JSON.parse(JSON.stringify(users[idx]));
+            users[idx].is_active = isActive;
+            users[idx].updated_at = new Date().toISOString();
+            db.set('users', users);
+            recordAuditLog({ action: isActive ? 'USER_UNLOCKED' : 'USER_LOCKED', entityType: 'USER', entityId: userId, entityLabel: name, beforeData: beforeUser, afterData: users[idx] });
+          }
           showToast(isActive ? 'Đã mở khóa tài khoản!' : 'Đã khóa tài khoản!', 'success');
           loadUsers();
         }
@@ -421,7 +428,13 @@
         onConfirm: () => {
           const users = db.get('users');
           const idx = users.findIndex(u => u.id === userId);
-          if (idx > -1) { users[idx].role_id = parseInt(newRoleId); db.set('users', users); }
+          if (idx > -1) {
+            const beforeUser = JSON.parse(JSON.stringify(users[idx]));
+            users[idx].role_id = parseInt(newRoleId);
+            users[idx].updated_at = new Date().toISOString();
+            db.set('users', users);
+            recordAuditLog({ action: 'USER_ROLE_CHANGED', entityType: 'USER', entityId: userId, entityLabel: users[idx].full_name || users[idx].user_name, beforeData: beforeUser, afterData: users[idx] });
+          }
           showToast('Đã cập nhật vai trò!', 'success');
           loadUsers();
         },
@@ -455,6 +468,8 @@
         created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       });
       db.set('users', users);
+      const createdUser = users.find(user => user.id === newId);
+      recordAuditLog({ action: 'USER_CREATED', entityType: 'USER', entityId: newId, entityLabel: fullName || userName, afterData: createdUser });
       showToast('Đã tạo người dùng thành công!', 'success');
       closeModal('addUserModal');
       ['newUserFullName', 'newUserName', 'newUserEmail', 'newUserPassword', 'newUserConfirmPassword'].forEach(id => document.getElementById(id).value = '');

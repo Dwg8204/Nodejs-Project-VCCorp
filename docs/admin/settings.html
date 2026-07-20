@@ -85,9 +85,12 @@
   <script src="../shared.js"></script>
   <script src="../js/mockData.js"></script>
   <script>
+    let settingsRestorePending = false;
+
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/settings.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
         setTimeout(() => location.href = '../login.html', 1500);
         return;
@@ -114,8 +117,9 @@
     }
 
     function saveSettings() {
+      const beforeSettings = getSystemSettings();
       const settings = {
-        ...getSystemSettings(),
+        ...beforeSettings,
         posts_per_page: Number(document.getElementById('postsPerPage').value),
         default_language_id: Number(document.getElementById('defaultLanguage').value),
         auto_translate_categories: document.getElementById('autoTranslateCategories').checked,
@@ -125,6 +129,8 @@
         reduce_motion: document.getElementById('reduceMotion').checked
       };
       db.set('settings', settings);
+      recordAuditLog({ action: settingsRestorePending ? 'SETTINGS_RESTORED' : 'SETTINGS_UPDATED', entityType: 'SETTINGS', entityLabel: 'System settings', beforeData: beforeSettings, afterData: settings });
+      settingsRestorePending = false;
       document.documentElement.classList.toggle('system-reduce-motion', settings.reduce_motion);
       showToast(localStorage.getItem('blog-lang') === 'en' ? 'System settings saved.' : 'Đã lưu cài đặt hệ thống!', 'success');
     }
@@ -136,7 +142,7 @@
         message: english ? 'Restore all system settings to their default values?' : 'Bạn có chắc muốn khôi phục toàn bộ cài đặt hệ thống?',
         confirmText: english ? 'Restore' : 'Khôi phục',
         cancelText: english ? 'Cancel' : 'Hủy',
-        onConfirm: () => { fillSettings({ ...DEFAULT_SYSTEM_SETTINGS }); showToast(localStorage.getItem('blog-lang') === 'en' ? 'Default values restored. Save to apply.' : 'Đã khôi phục giá trị mặc định. Hãy lưu để áp dụng.', 'info'); }
+        onConfirm: () => { settingsRestorePending = true; fillSettings({ ...DEFAULT_SYSTEM_SETTINGS }); showToast(localStorage.getItem('blog-lang') === 'en' ? 'Default values restored. Save to apply.' : 'Đã khôi phục giá trị mặc định. Hãy lưu để áp dụng.', 'info'); }
       });
     }
   </script>

@@ -558,7 +558,15 @@ body {
 
     <!-- ===== Main feed ===== -->
     <main class="feed-wrapper">
-      <div class="mobile-categories-chips" id="mobileCatChips"></div>
+      <div class="mobile-category-slider" id="mobileCategorySlider">
+        <button type="button" class="mobile-category-arrow" id="mobileCatPrev" onclick="scrollMobileCategories(-1)" aria-label="Danh mục trước" data-vi-aria-label="Danh mục trước" data-en-aria-label="Previous categories">
+          <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+        </button>
+        <div class="mobile-categories-chips" id="mobileCatChips" onscroll="updateMobileCategorySlider()"></div>
+        <button type="button" class="mobile-category-arrow" id="mobileCatNext" onclick="scrollMobileCategories(1)" aria-label="Danh mục tiếp theo" data-vi-aria-label="Danh mục tiếp theo" data-en-aria-label="Next categories">
+          <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+        </button>
+      </div>
 
       <!-- Category filter bar -->
       <div class="feed-header">
@@ -746,9 +754,34 @@ body {
 
       container.innerHTML = allCatOptions.map(c => {
         const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
-        return `<div class="mobile-cat-chip ${c.id === currentCatFilter ? 'active' : ''}" onclick="filterByCat('${c.id}')">${label}</div>`;
+        const active = String(c.id) === String(currentCatFilter);
+        return `<button type="button" class="mobile-cat-chip ${active ? 'active' : ''}" aria-pressed="${active}" onclick="filterByCat('${c.id}')">${label}</button>`;
       }).join('');
+      requestAnimationFrame(() => {
+        container.querySelector('.mobile-cat-chip.active')?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        updateMobileCategorySlider();
+      });
     }
+
+    function scrollMobileCategories(direction) {
+      const container = document.getElementById('mobileCatChips');
+      if (!container) return;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('system-reduce-motion');
+      container.scrollBy({ left: direction * Math.max(180, container.clientWidth * 0.72), behavior: reduceMotion ? 'auto' : 'smooth' });
+      window.setTimeout(updateMobileCategorySlider, reduceMotion ? 0 : 260);
+    }
+
+    function updateMobileCategorySlider() {
+      const container = document.getElementById('mobileCatChips');
+      const previous = document.getElementById('mobileCatPrev');
+      const next = document.getElementById('mobileCatNext');
+      if (!container || !previous || !next) return;
+      const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+      previous.disabled = container.scrollLeft <= 2;
+      next.disabled = container.scrollLeft >= maxScroll - 2;
+    }
+
+    window.addEventListener('resize', updateMobileCategorySlider);
 
     function toggleCatDropdown() {
       const panel = document.getElementById('catDropdownPanel');

@@ -240,6 +240,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/posts.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
         setTimeout(() => window.location.href = '../login.html', 1500);
         return;
@@ -362,6 +363,7 @@
           const p = posts.find(x => x.id === id);
           const reviewer = db.getCurrentUser();
           if (p && reviewer?.role_id === 1 && p.status === 'PENDING') {
+            const beforePost = JSON.parse(JSON.stringify(p));
             p.status = 'PUBLISHED';
             p.rejection_reason = null;
             p.reviewed_by = reviewer.id;
@@ -369,6 +371,7 @@
             p.published_at = p.reviewed_at;
             p.updated_at = p.reviewed_at;
             db.set('posts', posts);
+            recordAuditLog({ action: 'POST_APPROVED', entityType: 'POST', entityId: p.id, entityLabel: title, beforeData: beforePost, afterData: p });
             showToast('Đã duyệt bài viết!', 'success');
             loadPosts();
           } else {
@@ -397,12 +400,15 @@
       const p = posts.find(x => x.id === id);
       const reviewer = db.getCurrentUser();
       if (p && reviewer?.role_id === 1 && p.status === 'PENDING') {
+        const beforePost = JSON.parse(JSON.stringify(p));
         p.status = 'REJECTED';
         p.rejection_reason = reason;
         p.reviewed_by = reviewer.id;
         p.reviewed_at = new Date().toISOString();
         p.updated_at = p.reviewed_at;
         db.set('posts', posts);
+        const translation = db.get('post_translations').find(item => item.post_id === p.id);
+        recordAuditLog({ action: 'POST_REJECTED', entityType: 'POST', entityId: p.id, entityLabel: translation?.title || `Post #${p.id}`, beforeData: beforePost, afterData: p, metadata: { rejection_reason: reason } });
         showToast('Đã từ chối bài viết!', 'success');
         closeModal('rejectModal');
         loadPosts();

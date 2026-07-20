@@ -270,6 +270,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/languages.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
         setTimeout(() => window.location.href = '../login.html', 1500);
         return;
@@ -329,8 +330,10 @@
         danger: false,
         onConfirm: () => {
           let settings = getSystemSettings();
+          const beforeSettings = { ...settings };
           settings.default_language_id = id;
           db.set('settings', settings);
+          recordAuditLog({ action: 'LANGUAGE_DEFAULT_CHANGED', entityType: 'LANGUAGE', entityId: id, entityLabel: name, beforeData: beforeSettings, afterData: settings });
           defaultLangId = id;
           renderLanguages();
           showToast('Đã thay đổi ngôn ngữ mặc định', 'success');
@@ -357,6 +360,7 @@
       const newId = languages.length ? Math.max(...languages.map(l => l.id)) + 1 : 1;
       languages.push({ id: newId, code, name, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
       db.set('languages', languages);
+      recordAuditLog({ action: 'LANGUAGE_CREATED', entityType: 'LANGUAGE', entityId: newId, entityLabel: name, afterData: languages.find(language => language.id === newId) });
       showToast('Đã thêm ngôn ngữ!', 'success');
       closeModal('addLangModal');
       renderLanguages();
@@ -383,8 +387,10 @@
       const languages = db.get('languages');
       const idx = languages.findIndex(l => l.id === id);
       if (idx > -1) {
+        const beforeLanguage = JSON.parse(JSON.stringify(languages[idx]));
         languages[idx] = { ...languages[idx], code, name, updated_at: new Date().toISOString() };
         db.set('languages', languages);
+        recordAuditLog({ action: 'LANGUAGE_UPDATED', entityType: 'LANGUAGE', entityId: id, entityLabel: name, beforeData: beforeLanguage, afterData: languages[idx] });
         showToast('Đã cập nhật ngôn ngữ!', 'success');
         closeModal('editLangModal');
         renderLanguages();
@@ -401,11 +407,13 @@
         danger: true,
         onConfirm: () => {
           let languages = db.get('languages');
+          const deletedLanguage = languages.find(l => l.id === id);
           languages = languages.filter(l => l.id !== id);
           db.set('languages', languages);
           let catTrans = db.get('category_translation');
           catTrans = catTrans.filter(t => t.language_id !== id);
           db.set('category_translation', catTrans);
+          recordAuditLog({ action: 'LANGUAGE_DELETED', entityType: 'LANGUAGE', entityId: id, entityLabel: name, beforeData: deletedLanguage, metadata: { code } });
           showToast('Đã xóa ngôn ngữ!', 'success');
           renderLanguages();
         }

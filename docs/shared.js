@@ -256,6 +256,45 @@ function getSystemPageSize() {
   return Number.isInteger(configured) && configured > 0 && configured <= 100 ? configured : 5;
 }
 
+const AUDIT_SENSITIVE_KEYS = new Set(['password', 'password_hash', 'token', 'access_token', 'refresh_token', 'otp_code']);
+
+function sanitizeAuditData(value) {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value.map(sanitizeAuditData);
+  if (typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value)
+    .filter(([key]) => !AUDIT_SENSITIVE_KEYS.has(String(key).toLowerCase()))
+    .map(([key, item]) => [key, sanitizeAuditData(item)]));
+}
+
+function recordAuditLog({ action, entityType, entityId = null, entityLabel = '', beforeData = null, afterData = null, metadata = null, actor = undefined }) {
+  if (typeof db === 'undefined' || !action || !entityType) return null;
+  const currentActor = actor === undefined ? db.getCurrentUser() : actor;
+  const actorRole = currentActor ? (db.get('roles').find(role => role.id === currentActor.role_id)?.name_role || String(currentActor.role_id || '')) : null;
+  const logs = db.get('audit_logs');
+  const safeLogs = Array.isArray(logs) ? logs : [];
+  const nextId = safeLogs.length ? Math.max(...safeLogs.map(log => Number(log.id) || 0)) + 1 : 1;
+  const entry = {
+    id: nextId,
+    actor_id: currentActor?.id ?? null,
+    actor_name: currentActor ? (currentActor.full_name || currentActor.user_name || currentActor.email || '') : null,
+    actor_role: actorRole,
+    action: String(action),
+    entity_type: String(entityType),
+    entity_id: entityId === undefined ? null : entityId,
+    entity_label: String(entityLabel || ''),
+    before_data: sanitizeAuditData(beforeData),
+    after_data: sanitizeAuditData(afterData),
+    metadata: sanitizeAuditData(metadata),
+    ip_address: null,
+    user_agent: navigator.userAgent || null,
+    created_at: new Date().toISOString()
+  };
+  safeLogs.push(entry);
+  db.set('audit_logs', safeLogs);
+  return entry;
+}
+
 function getPageFromQuery(key = 'page') {
   const page = Number(new URLSearchParams(window.location.search).get(key));
   return Number.isInteger(page) && page > 0 ? page : 1;
@@ -552,6 +591,20 @@ function closeModal(modalId) {
   }
 }
 
+function togglePasswordVisibility(inputId, button) {
+  const input = document.getElementById(inputId);
+  if (!input || !button) return;
+  const reveal = input.type === 'password';
+  const lang = localStorage.getItem('blog-lang') || 'vi';
+  input.type = reveal ? 'text' : 'password';
+  button.setAttribute('aria-pressed', String(reveal));
+  button.setAttribute('aria-label', reveal
+    ? (lang === 'en' ? 'Hide password' : 'Ẩn mật khẩu')
+    : (lang === 'en' ? 'Show password' : 'Hiện mật khẩu'));
+  const icon = button.querySelector('iconify-icon');
+  if (icon) icon.setAttribute('icon', reveal ? 'solar:eye-closed-bold-duotone' : 'solar:eye-bold-duotone');
+}
+
 document.addEventListener('keydown', event => {
   const openDrawer = document.querySelector('.sidebar.drawer-open');
   if (event.key === 'Escape' && openDrawer) {
@@ -622,7 +675,19 @@ function injectRoleSidebarLinks() {
 
   // Tránh inject duplicate
   const hasOwnerLink = !!sidebar.querySelector('a[href$="owner-posts.html"]');
-  const hasAdminLink = !!sidebar.querySelector('a[href*="admin/index.html"], a[href="index.html"][data-admin]');
+  const hasAdminLink = inAdminFolder
+    ? !!sidebar.querySelector('a[href="index.html"], a[href*="admin/index.html"]')
+    : !!sidebar.querySelector('a[href*="admin/index.html"], a[href="index.html"][data-admin]');
+
+  if (user.role_id === 1 && inAdminFolder && !sidebar.querySelector('a[href="logs.html"]')) {
+    const logsLink = document.createElement('a');
+    logsLink.href = 'logs.html';
+    logsLink.classList.toggle('active', window.location.pathname.endsWith('/logs.html'));
+    logsLink.innerHTML = '<span class="icon"><iconify-icon icon="solar:history-bold-duotone"></iconify-icon></span><span data-vi="Nhật ký hoạt động" data-en="Activity logs">Activity logs</span>';
+    const backToBlog = sidebar.querySelector('a[href="../index.html"]');
+    if (backToBlog) sidebar.insertBefore(logsLink, backToBlog);
+    else sidebar.appendChild(logsLink);
+  }
 
   if (user.role_id === 1 && inAdminFolder && !sidebar.querySelector('a[href="settings.html"]')) {
     const settingsLink = document.createElement('a');
@@ -746,6 +811,33 @@ function enhanceUiAccessibility(root = document) {
     img.decoding = 'async';
     if (!img.closest('.topbar,.byline') && !img.classList.contains('author-avatar-feed')) img.loading = 'lazy';
     if (!img.hasAttribute('alt')) img.alt = '';
+  });
+  enhanceResponsiveAdminTables(root);
+}
+
+function enhanceResponsiveAdminTables(root = document) {
+  const tables = new Set();
+  if (root.matches?.('body:has(.admin-main) table.data-table')) tables.add(root);
+  root.querySelectorAll?.('body:has(.admin-main) table.data-table, table.data-table').forEach(table => {
+    if (table.closest('body')?.querySelector('.admin-main')) tables.add(table);
+  });
+  const ownerTable = root.closest?.('table.data-table');
+  if (ownerTable && ownerTable.closest('body')?.querySelector('.admin-main')) tables.add(ownerTable);
+
+  const lang = localStorage.getItem('blog-lang') || 'vi';
+  tables.forEach(table => {
+    const headers = [...table.querySelectorAll('thead th')].map((header, index, list) =>
+      header.textContent.trim() || (index === list.length - 1 ? (lang === 'en' ? 'Actions' : 'Thao tác') : '')
+    );
+    table.querySelectorAll('tbody tr').forEach(row => {
+      const cells = [...row.children].filter(cell => cell.tagName === 'TD');
+      const isEmpty = cells.length === 1 && cells[0].hasAttribute('colspan');
+      row.classList.toggle('responsive-empty-row', isEmpty);
+      cells.forEach((cell, index) => {
+        if (isEmpty) cell.removeAttribute('data-label');
+        else cell.dataset.label = headers[index] || (lang === 'en' ? 'Details' : 'Thông tin');
+      });
+    });
   });
 }
 
@@ -949,6 +1041,7 @@ function injectPreviewPanel() {
       <!-- Loading or content -->
     </div>
     <div class="preview-footer">
+      <span class="preview-access-notice" id="previewAccessNotice" hidden></span>
       <a href="#" id="previewFullLink" class="btn btn-primary" data-vi="Đọc đầy đủ" data-en="Read Full Article">Đọc đầy đủ</a>
     </div>
   `;
@@ -961,6 +1054,7 @@ function openPreview(postId) {
   const overlay = document.getElementById('previewOverlay');
   const body = document.getElementById('previewPanelBody');
   const fullLink = document.getElementById('previewFullLink');
+  const accessNotice = document.getElementById('previewAccessNotice');
 
   if (typeof db === 'undefined') return;
 
@@ -995,7 +1089,22 @@ function openPreview(postId) {
   `;
 
   const isSubFolder = window.location.pathname.includes('/admin/');
-  fullLink.href = (isSubFolder ? '../' : '') + `article.html?id=${post.id}`;
+  const isPublished = post.status === 'PUBLISHED';
+  const statusCopy = {
+    PENDING: { vi: 'Đang chờ duyệt', en: 'Pending review', icon: 'solar:clock-circle-bold-duotone' },
+    DRAFT: { vi: 'Bản nháp', en: 'Draft', icon: 'solar:document-text-bold-duotone' },
+    REJECTED: { vi: 'Đã bị từ chối', en: 'Rejected', icon: 'solar:close-circle-bold-duotone' }
+  };
+  fullLink.hidden = !isPublished;
+  fullLink.removeAttribute('href');
+  if (isPublished) fullLink.href = (isSubFolder ? '../' : '') + `article.html?id=${post.id}`;
+  if (accessNotice) {
+    const config = statusCopy[post.status];
+    const lang = localStorage.getItem('blog-lang') || 'vi';
+    accessNotice.hidden = isPublished || !config;
+    accessNotice.className = `preview-access-notice status-${String(post.status || '').toLowerCase()}`;
+    accessNotice.innerHTML = config ? `<iconify-icon icon="${config.icon}"></iconify-icon><span>${config[lang]}</span>` : '';
+  }
 
   // Re-apply translation on panel if any data-vi exists
   if (typeof applyLanguage === 'function') {

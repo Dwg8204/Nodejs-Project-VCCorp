@@ -253,6 +253,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/categories.html', metadata: { path: location.pathname }, actor: user || null });
         showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
         setTimeout(() => window.location.href = '../login.html', 1500);
         return;
@@ -415,6 +416,7 @@
         generated.forEach(item => translations.push({ id: ++maxId, category_id: newId, ...item }));
         db.set('categories', categories);
         db.set('category_translation', translations);
+        recordAuditLog({ action: 'CATEGORY_CREATED', entityType: 'CATEGORY', entityId: newId, entityLabel: name, afterData: categories.find(item => item.id === newId), metadata: { source_language: sourceCode, translations_created: generated.length } });
         showToast(localStorage.getItem('blog-lang') === 'en' ? 'Category and translations created.' : 'Đã tạo danh mục và các bản dịch!', 'success');
         closeModal('addCatModal');
         renderCategories();
@@ -457,6 +459,8 @@
       if (!name || !sourceLanguage) { showToast(localStorage.getItem('blog-lang') === 'en' ? 'Enter a category name.' : 'Vui lòng nhập tên danh mục!', 'error'); return; }
       setCategoryModalBusy('editCatModal', true);
       try {
+        const beforeCategory = db.get('categories').find(item => item.id === id);
+        const beforeTranslations = db.get('category_translation').filter(item => item.category_id === id);
         const languages = shouldRetranslate ? db.get('languages') : [sourceLanguage];
         const generated = shouldRetranslate ? await buildCategoryTranslations(name, description, sourceLanguage, languages, progress) : [{ language_id: sourceLanguage.id, name, des: description, is_auto_translated: false }];
         const translations = db.get('category_translation');
@@ -471,6 +475,8 @@
         if (category) { category.source_language_id = sourceLanguage.id; category.updated_at = new Date().toISOString(); }
         db.set('categories', categories);
         db.set('category_translation', translations);
+        recordAuditLog({ action: 'CATEGORY_UPDATED', entityType: 'CATEGORY', entityId: id, entityLabel: name, beforeData: { category: beforeCategory, translations: beforeTranslations }, afterData: { category, translations: translations.filter(item => item.category_id === id) }, metadata: { source_language: sourceLanguage.code, retranslated: shouldRetranslate } });
+        if (shouldRetranslate) recordAuditLog({ action: 'CATEGORY_TRANSLATED', entityType: 'CATEGORY', entityId: id, entityLabel: name, metadata: { source_language: sourceLanguage.code, translations_created: generated.length } });
         showToast(localStorage.getItem('blog-lang') === 'en' ? 'Category updated.' : 'Đã cập nhật danh mục!', 'success');
         closeModal('editCatModal');
         renderCategories();
@@ -490,10 +496,13 @@
         onConfirm: () => {
           let categories = db.get('categories');
           let translations = db.get('category_translation');
+          const deletedCategory = categories.find(c => c.id === id);
+          const deletedTranslations = translations.filter(t => t.category_id === id);
           categories = categories.filter(c => c.id !== id);
           translations = translations.filter(t => t.category_id !== id);
           db.set('categories', categories);
           db.set('category_translation', translations);
+          recordAuditLog({ action: 'CATEGORY_DELETED', entityType: 'CATEGORY', entityId: id, entityLabel: name, beforeData: { category: deletedCategory, translations: deletedTranslations } });
           showToast('Đã xóa danh mục!', 'success');
           renderCategories();
         }

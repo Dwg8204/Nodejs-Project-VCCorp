@@ -157,7 +157,8 @@ const MOCK_DATA = {
     { id: 1, post_id: 1, user_id: 4, is_liked: true, updated_at: '2026-07-05T09:15:00Z' },
     { id: 2, post_id: 1, user_id: 3, is_liked: true, updated_at: '2026-07-05T11:00:00Z' },
     { id: 3, post_id: 2, user_id: 4, is_liked: true, updated_at: '2026-07-06T16:00:00Z' }
-  ]
+  ],
+  audit_logs: []
 };
 
 // Hàm khởi tạo Mock Data
@@ -181,6 +182,11 @@ function initMockData() {
 
 // Chạy khởi tạo
 initMockData();
+
+// Forward-compatible migration for workspaces initialized before audit logs.
+if (localStorage.getItem('db_audit_logs') === null) {
+  localStorage.setItem('db_audit_logs', '[]');
+}
 
 // Hotfix: vá lỗi dữ liệu bài viết bị thiếu source_language_id
 (function fixLegacyPosts() {
@@ -266,12 +272,78 @@ const db = {
     const user = users.find(u => u.email === email && u.password_hash === password && u.is_active);
     if (user) {
       localStorage.setItem('current_user', JSON.stringify(user));
+      if (typeof recordAuditLog === 'function') recordAuditLog({ action: 'AUTH_LOGIN_SUCCEEDED', entityType: 'AUTH', entityId: user.id, entityLabel: user.email });
       return true;
     }
+    if (typeof recordAuditLog === 'function') recordAuditLog({ action: 'AUTH_LOGIN_FAILED', entityType: 'AUTH', entityLabel: email, metadata: { email }, actor: null });
     return false;
   },
 
   logout: () => {
+    const currentUser = db.getCurrentUser();
+    if (currentUser && typeof recordAuditLog === 'function') recordAuditLog({ action: 'AUTH_LOGOUT', entityType: 'AUTH', entityId: currentUser.id, entityLabel: currentUser.email });
     localStorage.removeItem('current_user');
   }
 };
+
+// Build an initial audit history for browsers that already had project data
+// before the audit-log feature was introduced. This runs once and never
+// overwrites real logs created by subsequent actions.
+(function seedLegacyAuditHistory() {
+  if (localStorage.getItem('vccorp_audit_seed_v1')) return;
+  const existingLogs = db.get('audit_logs');
+  if (existingLogs.length) {
+    localStorage.setItem('vccorp_audit_seed_v1', 'true');
+    return;
+  }
+
+  const users = db.get('users');
+  const roles = db.get('roles');
+  const posts = db.get('posts');
+  const postTranslations = db.get('post_translations');
+  const categories = db.get('categories');
+  const categoryTranslations = db.get('category_translation');
+  const languages = db.get('languages');
+  const admin = users.find(user => user.role_id === 1) || null;
+  const logs = [];
+  let id = 0;
+
+  const append = ({ actor, action, entityType, entityId, entityLabel, createdAt, afterData = null, metadata = null }) => {
+    const role = actor ? roles.find(item => item.id === actor.role_id) : null;
+    logs.push({
+      id: ++id,
+      actor_id: actor?.id ?? null,
+      actor_name: actor ? (actor.full_name || actor.user_name || actor.email) : null,
+      actor_role: role?.name_role || null,
+      action,
+      entity_type: entityType,
+      entity_id: entityId ?? null,
+      entity_label: entityLabel || '',
+      before_data: null,
+      after_data: afterData,
+      metadata: { imported_from_existing_data: true, ...(metadata || {}) },
+      ip_address: null,
+      user_agent: null,
+      created_at: createdAt || new Date().toISOString()
+    });
+  };
+
+  languages.forEach(language => append({ actor: admin, action: 'LANGUAGE_CREATED', entityType: 'LANGUAGE', entityId: language.id, entityLabel: language.name, createdAt: language.created_at, afterData: language }));
+  categories.forEach(category => {
+    const label = categoryTranslations.find(item => item.category_id === category.id)?.name || `Category #${category.id}`;
+    append({ actor: admin, action: 'CATEGORY_CREATED', entityType: 'CATEGORY', entityId: category.id, entityLabel: label, createdAt: category.created_at, afterData: category });
+  });
+  users.filter(user => user.id !== admin?.id).forEach(user => append({ actor: admin, action: 'USER_CREATED', entityType: 'USER', entityId: user.id, entityLabel: user.full_name || user.user_name, createdAt: user.created_at, afterData: sanitizeAuditData(user) }));
+  posts.forEach(post => {
+    const actor = users.find(user => user.id === post.author_id) || null;
+    const label = postTranslations.find(item => item.post_id === post.id && item.language_id === post.source_language_id)?.title || postTranslations.find(item => item.post_id === post.id)?.title || `Post #${post.id}`;
+    append({ actor, action: 'POST_CREATED', entityType: 'POST', entityId: post.id, entityLabel: label, createdAt: post.created_at, afterData: post });
+    if (post.status === 'PENDING') append({ actor, action: 'POST_SUBMITTED', entityType: 'POST', entityId: post.id, entityLabel: label, createdAt: post.submitted_at || post.updated_at || post.created_at, metadata: { status: post.status } });
+    if (post.status === 'PUBLISHED') append({ actor: admin, action: 'POST_APPROVED', entityType: 'POST', entityId: post.id, entityLabel: label, createdAt: post.published_at || post.updated_at || post.created_at, metadata: { status: post.status } });
+    if (post.status === 'REJECTED') append({ actor: admin, action: 'POST_REJECTED', entityType: 'POST', entityId: post.id, entityLabel: label, createdAt: post.reviewed_at || post.updated_at || post.created_at, metadata: { rejection_reason: post.rejection_reason } });
+  });
+
+  logs.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).forEach((log, index) => { log.id = index + 1; });
+  db.set('audit_logs', logs);
+  localStorage.setItem('vccorp_audit_seed_v1', 'true');
+})();

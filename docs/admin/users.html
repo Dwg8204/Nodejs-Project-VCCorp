@@ -236,6 +236,7 @@
           <tbody id="users-tbody"></tbody>
         </table>
       </div>
+      <div id="adminUsersPagination"></div>
     </main>
   </div>
 
@@ -298,6 +299,7 @@
   <script src="../js/mockData.js"></script>
   <script>
     let allUsers = [];
+    let adminUsersPage = getPageFromQuery();
 
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
@@ -313,10 +315,10 @@
 
     function loadUsers() {
       allUsers = db.get('users');
-      applyFilters();
+      applyFilters(false);
     }
 
-    function applyFilters() {
+    function applyFilters(resetPage = true) {
       const kw = (document.getElementById('searchUsers').value || '').trim().toLowerCase();
       const roleFilter = document.getElementById('filterRole').value;
       const statusFilter = document.getElementById('filterStatus').value;
@@ -327,6 +329,7 @@
         const matchStatus = !statusFilter || (statusFilter === 'active' ? u.is_active : !u.is_active);
         return matchKw && matchRole && matchStatus;
       });
+      if (resetPage) { adminUsersPage = 1; setPageInQuery(1); }
       renderUsers(filtered);
     }
 
@@ -335,12 +338,18 @@
 
     function renderUsers(users) {
       const roles = db.get('roles');
+      const paginationEl = document.getElementById('adminUsersPagination');
       if (!users.length) {
         document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy người dùng.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
-      document.getElementById('users-tbody').innerHTML = users.map(u => {
-        const dateStr = new Date(u.created_at).toLocaleDateString('vi-VN');
+      const pageData = paginateItems(users, adminUsersPage);
+      adminUsersPage = pageData.currentPage;
+      setPageInQuery(adminUsersPage);
+      document.getElementById('users-tbody').innerHTML = pageData.items.map(u => {
+        const dateStr = new Date(u.created_at).toLocaleDateString(getUiLocale());
         const statusBadge = u.is_active
           ? '<span class="badge badge-green"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon> Hoạt động</span>'
           : '<span class="badge badge-red"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon> Đã khóa</span>';
@@ -382,6 +391,7 @@
           <td><div class="action-col">${actionBtn}</div></td>
         </tr>`;
       }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.filter-row', onPageChange: page => { adminUsersPage = page; renderUsers(users); } });
     }
 
     function confirmToggleStatus(userId, isActive, name) {

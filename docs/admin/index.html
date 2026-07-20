@@ -534,7 +534,7 @@
       document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
       document.getElementById('stat-users').textContent = db.get('users').length;
       document.getElementById('stat-posts').textContent = db.get('posts').length;
-      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'PENDING' || p.status === 'DRAFT').length;
+      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'PENDING').length;
       document.getElementById('stat-categories').textContent = db.get('categories').length;
       document.getElementById('stat-languages').textContent = db.get('languages').length;
       document.getElementById('stat-likes').textContent = db.get('post_likes').filter(l => l.is_liked).length;
@@ -596,9 +596,9 @@
     }
 
     function renderPostStatus(posts) {
-      const counts = { published: posts.filter(p => p.status === 'PUBLISHED').length, pending: posts.filter(p => p.status === 'PENDING' || p.status === 'DRAFT').length, rejected: posts.filter(p => p.status === 'REJECTED').length };
-      const total = Math.max(posts.length, 1); const published = counts.published / total * 100; const pending = counts.pending / total * 100;
-      document.getElementById('postStatusChart').innerHTML = `<div class="status-donut-wrap"><div class="status-donut" style="--published:${published}%;--pending:${published + pending}%"><div><strong>${posts.length}</strong><span>${dashboardText('Bài viết','Posts')}</span></div></div><div class="status-legend"><div><i class="status-published"></i><span>${dashboardText('Đã xuất bản','Published')}</span><strong>${counts.published}</strong></div><div><i class="status-pending"></i><span>${dashboardText('Chờ duyệt','Pending')}</span><strong>${counts.pending}</strong></div><div><i class="status-rejected"></i><span>${dashboardText('Bị từ chối','Rejected')}</span><strong>${counts.rejected}</strong></div></div></div>`;
+      const counts = { published: posts.filter(p => p.status === 'PUBLISHED').length, draft: posts.filter(p => p.status === 'DRAFT').length, pending: posts.filter(p => p.status === 'PENDING').length, rejected: posts.filter(p => p.status === 'REJECTED').length };
+      const total = Math.max(posts.length, 1); const published = counts.published / total * 100; const draft = counts.draft / total * 100; const pending = counts.pending / total * 100;
+      document.getElementById('postStatusChart').innerHTML = `<div class="status-donut-wrap"><div class="status-donut" style="--published:${published}%;--draft:${published + draft}%;--pending:${published + draft + pending}%"><div><strong>${posts.length}</strong><span>${dashboardText('Bài viết','Posts')}</span></div></div><div class="status-legend"><div><i class="status-published"></i><span>${dashboardText('Đã xuất bản','Published')}</span><strong>${counts.published}</strong></div><div><i class="status-draft"></i><span>${dashboardText('Bản nháp','Draft')}</span><strong>${counts.draft}</strong></div><div><i class="status-pending"></i><span>${dashboardText('Chờ duyệt','Pending')}</span><strong>${counts.pending}</strong></div><div><i class="status-rejected"></i><span>${dashboardText('Bị từ chối','Rejected')}</span><strong>${counts.rejected}</strong></div></div></div>`;
     }
 
     function renderTopPosts(posts, likes, comments, translations, languageId) {

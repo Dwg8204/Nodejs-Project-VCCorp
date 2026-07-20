@@ -5,6 +5,15 @@
  */
 
 const MOCK_DATA = {
+  settings: {
+    default_language_id: 2,
+    posts_per_page: 5,
+    require_post_approval: true,
+    auto_translate_categories: true,
+    auto_translate_posts: true,
+    default_theme: 'system',
+    reduce_motion: false
+  },
   roles: [
     { id: 1, name_role: 'SUPER_ADMIN', created_at: '2026-07-01T00:00:00Z' },
     { id: 2, name_role: 'BLOG_OWNER', created_at: '2026-07-01T00:00:00Z' },

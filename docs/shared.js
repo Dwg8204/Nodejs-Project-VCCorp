@@ -27,6 +27,7 @@ function toggleSidebar(forceClose) {
     layout.classList.remove('sidebar-collapsed');
     if (sidebar) sidebar.classList.remove('drawer-open');
     overlay.classList.remove('show');
+    document.body.classList.remove('drawer-scroll-lock');
     document.querySelectorAll('.hamburger').forEach(el => el.setAttribute('aria-expanded', 'false'));
     return;
   }
@@ -35,6 +36,7 @@ function toggleSidebar(forceClose) {
     if (sidebar) {
       const isOpen = sidebar.classList.toggle('drawer-open');
       overlay.classList.toggle('show', isOpen);
+      document.body.classList.toggle('drawer-scroll-lock', isOpen);
       document.querySelectorAll('.hamburger').forEach(el => el.setAttribute('aria-expanded', String(isOpen)));
     }
   } else {
@@ -43,17 +45,20 @@ function toggleSidebar(forceClose) {
 }
 
 // ============ Theme (sáng / tối) ============
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
+function applyTheme(theme, persist = true) {
+  const resolvedTheme = theme === 'system'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+  document.documentElement.setAttribute('data-theme', resolvedTheme);
   document.querySelectorAll('.theme-toggle .knob iconify-icon').forEach(el => {
-    el.setAttribute('icon', theme === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold');
+    el.setAttribute('icon', resolvedTheme === 'dark' ? 'solar:moon-bold' : 'solar:sun-bold');
   });
   document.querySelectorAll('.theme-toggle .knob').forEach(el => {
     if (!el.querySelector('iconify-icon')) {
-      el.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}';
+      el.textContent = resolvedTheme === 'dark' ? '\u{1F319}' : '\u{2600}';
     }
   });
-  localStorage.setItem('blog-theme', theme);
+  if (persist) localStorage.setItem('blog-theme', resolvedTheme);
 }
 
 function toggleTheme() {
@@ -175,6 +180,27 @@ const UI_COPY_PAIRS = [
   ['Bạn cần đăng nhập để bình luận!', 'You need to sign in to comment!']
 ];
 
+UI_COPY_PAIRS.push(
+  ['Không tìm thấy người dùng.', 'No users found.'],
+  ['Không tìm thấy bài viết.', 'No posts found.'],
+  ['Không có bài viết nào.', 'No posts yet.'],
+  ['Chưa có ngôn ngữ nào.', 'No languages yet.'],
+  ['Người dùng không tồn tại.', 'User not found.'],
+  ['Không rõ lý do', 'No reason provided'],
+  ['Không rõ', 'Unknown'],
+  ['Bản nháp', 'Draft'],
+  ['Quản trị viên', 'Administrator'],
+  ['Chủ blog', 'Blog Owner'],
+  ['Người dùng thường', 'User'],
+  ['Phản hồi', 'Responses'],
+  ['Tác giả:', 'Author:'],
+  ['Không thể khóa Super Admin', 'Super Admin cannot be locked'],
+  ['Không thể xóa ngôn ngữ mặc định', 'The default language cannot be deleted'],
+  ['Ngôn ngữ mặc định', 'Default language'],
+  ['Chỉ bài viết đang chờ duyệt mới có thể được xuất bản.', 'Only pending posts can be published.'],
+  ['Chỉ bài viết đang chờ duyệt mới có thể bị từ chối.', 'Only pending posts can be rejected.']
+);
+
 const UI_COPY = { vi: new Map(), en: new Map() };
 UI_COPY_PAIRS.forEach(([vi, en]) => { UI_COPY.en.set(vi, en); UI_COPY.vi.set(en, vi); });
 
@@ -183,7 +209,115 @@ function translateUiText(value, lang) {
   const raw = String(value);
   const trimmed = raw.trim();
   const translated = UI_COPY[lang]?.get(trimmed);
-  return translated ? raw.replace(trimmed, translated) : raw;
+  if (translated) return raw.replace(trimmed, translated);
+
+  // UI labels containing live values cannot be represented by the exact-match
+  // dictionary above. Keep these patterns here so dynamically rendered screens
+  // switch language without touching article titles or user-entered content.
+  const dynamicPairs = lang === 'en'
+    ? [
+        [/^Phản hồi \((\d+)\)$/u, 'Responses ($1)'],
+        [/^Tác giả:\s*/u, 'Author: '],
+        [/^Hiển thị (\d+)[–-](\d+) trong tổng số (\d+)$/u, 'Showing $1–$2 of $3']
+      ]
+    : [
+        [/^Responses \((\d+)\)$/u, 'Phản hồi ($1)'],
+        [/^Author:\s*/u, 'Tác giả: '],
+        [/^Showing (\d+)[–-](\d+) of (\d+)$/u, 'Hiển thị $1–$2 trong tổng số $3']
+      ];
+  const pair = dynamicPairs.find(([pattern]) => pattern.test(trimmed));
+  return pair ? raw.replace(trimmed, trimmed.replace(pair[0], pair[1])) : raw;
+}
+
+function getUiLocale() {
+  return (localStorage.getItem('blog-lang') || 'vi') === 'en' ? 'en-US' : 'vi-VN';
+}
+
+// ============ Shared pagination ============
+const DEFAULT_SYSTEM_SETTINGS = Object.freeze({
+  default_language_id: 2,
+  posts_per_page: 5,
+  require_post_approval: true,
+  auto_translate_categories: true,
+  auto_translate_posts: true,
+  default_theme: 'system',
+  reduce_motion: false
+});
+
+function getSystemSettings() {
+  if (typeof db === 'undefined') return { ...DEFAULT_SYSTEM_SETTINGS };
+  const stored = db.get('settings');
+  const validStored = stored && !Array.isArray(stored) && typeof stored === 'object' ? stored : {};
+  return { ...DEFAULT_SYSTEM_SETTINGS, ...validStored };
+}
+
+function getSystemPageSize() {
+  const configured = Number(getSystemSettings().posts_per_page);
+  return Number.isInteger(configured) && configured > 0 && configured <= 100 ? configured : 5;
+}
+
+function getPageFromQuery(key = 'page') {
+  const page = Number(new URLSearchParams(window.location.search).get(key));
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function setPageInQuery(page, key = 'page') {
+  const url = new URL(window.location.href);
+  if (page > 1) url.searchParams.set(key, String(page));
+  else url.searchParams.delete(key);
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
+}
+
+function paginateItems(items, requestedPage = 1, pageSize = getSystemPageSize()) {
+  const safeItems = Array.isArray(items) ? items : [];
+  const totalPages = Math.max(1, Math.ceil(safeItems.length / pageSize));
+  const currentPage = Math.min(Math.max(1, Number(requestedPage) || 1), totalPages);
+  const startIndex = (currentPage - 1) * pageSize;
+  return {
+    items: safeItems.slice(startIndex, startIndex + pageSize),
+    currentPage,
+    totalPages,
+    totalItems: safeItems.length,
+    pageSize,
+    startIndex
+  };
+}
+
+function renderPagination({ container, pageData, onPageChange, queryKey = 'page', scrollTarget }) {
+  const host = typeof container === 'string' ? document.getElementById(container) : container;
+  if (!host || !pageData) return;
+  const { currentPage, totalPages, totalItems, pageSize, startIndex } = pageData;
+  if (!totalItems || totalPages <= 1) { host.innerHTML = ''; host.hidden = true; return; }
+
+  const lang = localStorage.getItem('blog-lang') || 'vi';
+  const from = startIndex + 1;
+  const to = Math.min(startIndex + pageSize, totalItems);
+  const labels = lang === 'en'
+    ? { previous: 'Previous', next: 'Next', page: 'Page', of: 'of', summary: `Showing ${from}–${to} of ${totalItems}` }
+    : { previous: 'Trước', next: 'Sau', page: 'Trang', of: '/', summary: `Hiển thị ${from}–${to} trong tổng số ${totalItems}` };
+
+  const pageNumbers = [];
+  for (let page = 1; page <= totalPages; page++) {
+    if (page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1) pageNumbers.push(page);
+  }
+  const controls = [];
+  pageNumbers.forEach((page, index) => {
+    if (index && page - pageNumbers[index - 1] > 1) controls.push('<span class="pagination-ellipsis" aria-hidden="true">…</span>');
+    controls.push(`<button type="button" class="pagination-page${page === currentPage ? ' active' : ''}" data-page="${page}" ${page === currentPage ? 'aria-current="page"' : ''} aria-label="${labels.page} ${page}">${page}</button>`);
+  });
+
+  host.hidden = false;
+  host.className = 'pagination-wrap';
+  host.innerHTML = `<p class="pagination-summary">${labels.summary}</p><nav class="pagination-nav" aria-label="${lang === 'en' ? 'Pagination' : 'Phân trang'}"><button type="button" class="pagination-direction" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon><span>${labels.previous}</span></button><div class="pagination-pages">${controls.join('')}</div><span class="pagination-mobile-status">${labels.page} ${currentPage} ${labels.of} ${totalPages}</span><button type="button" class="pagination-direction" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}><span>${labels.next}</span><iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></button></nav>`;
+
+  host.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
+    const nextPage = Number(button.dataset.page);
+    if (button.disabled || nextPage === currentPage || nextPage < 1 || nextPage > totalPages) return;
+    setPageInQuery(nextPage, queryKey);
+    onPageChange(nextPage);
+    const target = typeof scrollTarget === 'string' ? document.querySelector(scrollTarget) : scrollTarget;
+    target?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }));
 }
 
 function translateUiMessage(value, lang) {
@@ -419,9 +553,14 @@ function closeModal(modalId) {
 }
 
 document.addEventListener('keydown', event => {
+  const openDrawer = document.querySelector('.sidebar.drawer-open');
+  if (event.key === 'Escape' && openDrawer) {
+    toggleSidebar(true);
+    return;
+  }
   const modal = document.querySelector('.modal-overlay.open');
   if (!modal || document.getElementById('confirmDialogOverlay')) return;
-  if (event.key === 'Escape' && modal.id) closeModal(modal.id);
+  if (event.key === 'Escape' && modal.id && modal.getAttribute('aria-busy') !== 'true') closeModal(modal.id);
   if (event.key !== 'Tab') return;
   const controls = [...modal.querySelectorAll('button:not([disabled]),[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
     .filter(el => el.offsetParent !== null);
@@ -484,6 +623,15 @@ function injectRoleSidebarLinks() {
   // Tránh inject duplicate
   const hasOwnerLink = !!sidebar.querySelector('a[href$="owner-posts.html"]');
   const hasAdminLink = !!sidebar.querySelector('a[href*="admin/index.html"], a[href="index.html"][data-admin]');
+
+  if (user.role_id === 1 && inAdminFolder && !sidebar.querySelector('a[href="settings.html"]')) {
+    const settingsLink = document.createElement('a');
+    settingsLink.href = 'settings.html';
+    settingsLink.innerHTML = '<span class="icon"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon></span><span data-vi="Cài đặt hệ thống" data-en="System settings">System settings</span>';
+    const backToBlog = sidebar.querySelector('a[href="../index.html"]');
+    if (backToBlog) sidebar.insertBefore(settingsLink, backToBlog);
+    else sidebar.appendChild(settingsLink);
+  }
 
   let extraHtml = '';
   if (user.role_id === 2 && !hasOwnerLink) {
@@ -679,8 +827,10 @@ function focusCommentBox() {
 
 // ============ Khởi tạo khi tải trang ============
 window.addEventListener('DOMContentLoaded', () => {
-  const savedTheme = localStorage.getItem('blog-theme') || 'light';
-  applyTheme(savedTheme);
+  const systemSettings = getSystemSettings();
+  const savedTheme = localStorage.getItem('blog-theme') || systemSettings.default_theme || 'system';
+  applyTheme(savedTheme, false);
+  document.documentElement.classList.toggle('system-reduce-motion', Boolean(systemSettings.reduce_motion));
 
   // Đưa hàm injectRoleSidebarLinks lên TRƯỚC applyLanguage để đảm bảo DOM sidebar hoàn chỉnh
   ensureOverlay();
@@ -692,7 +842,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   let savedLang = localStorage.getItem('blog-lang');
   if (!savedLang) {
-    const dLangId = typeof db !== 'undefined' ? (db.get('settings')?.default_language_id || 2) : 2;
+    const dLangId = getSystemSettings().default_language_id;
     savedLang = ID_TO_LANG[dLangId.toString()] || 'vi';
   }
 
@@ -742,6 +892,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   enhanceUiAccessibility(document);
+  document.querySelectorAll('#mainSidebar a').forEach(link => link.addEventListener('click', () => {
+    if (window.innerWidth <= 768) toggleSidebar(true);
+  }));
 
   // Lists, badges and modal content are rendered after page load on several
   // screens. Observe only added UI nodes so their labels follow the selected
@@ -766,8 +919,11 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 window.addEventListener('resize', () => {
-  if (window.innerWidth > 760) {
+  if (window.innerWidth > 768) {
     ensureOverlay().classList.remove('show');
+    document.getElementById('mainSidebar')?.classList.remove('drawer-open');
+    document.body.classList.remove('drawer-scroll-lock');
+    document.querySelectorAll('.hamburger').forEach(el => el.setAttribute('aria-expanded', 'false'));
   }
 });
 
@@ -825,7 +981,7 @@ function openPreview(postId) {
   const content = pt.content || '';
   const catName = ct.name || 'Uncategorized';
   const authorName = author.full_name || author.user_name || 'Anonymous';
-  const dateFormatted = new Date(post.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const dateFormatted = new Date(post.created_at).toLocaleDateString(getUiLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
   const imgUrl = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=600`;
 
   body.innerHTML = `

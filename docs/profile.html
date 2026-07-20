@@ -361,6 +361,7 @@
         <div id="profile-posts-container">
           <!-- Rendered by JS -->
         </div>
+        <div id="profilePostsPagination"></div>
       </div>
 
       <!-- TAB ABOUT -->
@@ -416,10 +417,12 @@
   </div>
 </div>
 
+<script src="shared.js"></script>
 <script src="js/mockData.js"></script>
 <script>
   let targetUser = null;
   let isOwnProfile = false;
+  let profilePostsPage = getPageFromQuery();
 
   document.addEventListener('DOMContentLoaded', () => {
     const currentUser = db.getCurrentUser();
@@ -521,7 +524,7 @@
     // Update Header stats
     document.querySelector('#stat-posts strong').textContent = enrichedPosts.length;
     document.querySelector('#stat-likes strong').textContent = totalLikes;
-    document.querySelector('#stat-date strong').textContent = new Date(targetUser.created_at).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
+    document.querySelector('#stat-date strong').textContent = new Date(targetUser.created_at).toLocaleDateString(getUiLocale(), { month: '2-digit', year: 'numeric' });
 
     // Show Bento grid for Blogger
     if (targetUser.role_id === 2 && enrichedPosts.length > 0) {
@@ -551,23 +554,34 @@
 
     // Render list
     const container = document.getElementById('profile-posts-container');
+    const paginationEl = document.getElementById('profilePostsPagination');
     if (!enrichedPosts.length) {
       container.innerHTML = '<p style="color:var(--text-muted); margin-top:24px;">Chưa có bài viết nào.</p>';
+      paginationEl.innerHTML = '';
+      paginationEl.hidden = true;
       return;
     }
 
-    container.innerHTML = enrichedPosts.map(post => {
+    const pageData = paginateItems(enrichedPosts, profilePostsPage);
+    profilePostsPage = pageData.currentPage;
+    setPageInQuery(profilePostsPage);
+
+    container.innerHTML = pageData.items.map(post => {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = post.content;
       const snippet = tempDiv.textContent || tempDiv.innerText || "";
       const shortDesc = snippet.length > 120 ? snippet.substring(0, 120) + '...' : snippet;
       const imgUrl = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
+      const english = localStorage.getItem('blog-lang') === 'en';
+      const privateStatus = isOwnProfile && post.status !== 'PUBLISHED'
+        ? `<span class="profile-post-status badge ${post.status === 'REJECTED' ? 'badge-red' : post.status === 'PENDING' ? 'badge-yellow' : 'badge-neutral'}">${post.status === 'REJECTED' ? (english ? 'Rejected' : 'Bị từ chối') : post.status === 'PENDING' ? (english ? 'Pending' : 'Chờ duyệt') : (english ? 'Draft' : 'Bản nháp')}</span>`
+        : '';
 
       return `
         <div class="post-item reveal-on-scroll">
           <div class="post-author-row">
             <span class="mini-avatar" style="background-image:url('${targetUser.avatar}');"></span>
-            ${targetUser.full_name || targetUser.user_name} &nbsp;&middot;&nbsp; ${post.date_formatted}
+            ${targetUser.full_name || targetUser.user_name} &nbsp;&middot;&nbsp; ${post.date_formatted} ${privateStatus}
           </div>
           <div class="post-body">
             <div class="post-text">
@@ -589,6 +603,7 @@
     if (typeof initRevealOnScroll === 'function') {
       initRevealOnScroll();
     }
+    renderPagination({ container: paginationEl, pageData, scrollTarget: '.profile-tabs', onPageChange: page => { profilePostsPage = page; renderBentoAndFeed(); } });
   }
 
   function renderInfoCard() {
@@ -609,7 +624,7 @@
 
       if (targetUser.date_of_birth) {
         document.getElementById('info-dob-row').style.display = 'flex';
-        document.getElementById('info-dob').textContent = new Date(targetUser.date_of_birth).toLocaleDateString('vi-VN');
+        document.getElementById('info-dob').textContent = new Date(targetUser.date_of_birth).toLocaleDateString(getUiLocale());
       }
     } else {
       document.getElementById('info-email-row').style.display = 'none';
@@ -668,6 +683,5 @@
     }
   }
 </script>
-<script src="shared.js"></script>
 </body>
 </html>

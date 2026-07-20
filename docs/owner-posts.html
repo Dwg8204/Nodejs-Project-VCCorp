@@ -71,7 +71,8 @@
     }
 
     .stats-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -180,6 +181,7 @@
           oninput="applyFilters()" style="max-width:280px;">
         <select id="filterStatus" class="form-control" onchange="applyFilters()" style="max-width:180px;">
           <option value="">Tất cả trạng thái</option>
+          <option value="DRAFT" data-vi="Bản nháp" data-en="Draft">Draft</option>
           <option value="PUBLISHED">Đã xuất bản</option>
           <option value="PENDING">Chờ duyệt</option>
           <option value="REJECTED">Bị từ chối</option>
@@ -209,6 +211,7 @@
           <tbody id="posts-tbody"></tbody>
         </table>
       </div>
+      <div id="ownerPostsPagination"></div>
     </main>
   </div>
 
@@ -217,6 +220,7 @@
   <script>
     let ownerPosts = [];
     let rawPostsGlobal = [];
+    let ownerPostsPage = getPageFromQuery();
 
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
@@ -232,12 +236,14 @@
       // Stats
       const total = rawPostsGlobal.length;
       const published = rawPostsGlobal.filter(p => p.status === 'PUBLISHED').length;
-      const drafts = rawPostsGlobal.filter(p => p.status === 'PENDING').length;
+      const drafts = rawPostsGlobal.filter(p => p.status === 'DRAFT').length;
+      const pending = rawPostsGlobal.filter(p => p.status === 'PENDING').length;
       const rejected = rawPostsGlobal.filter(p => p.status === 'REJECTED').length;
       document.getElementById('stats-container').innerHTML = `
         <div class="stat-card"><div class="num">${total}</div><div class="label" data-vi="Tổng bài viết" data-en="Total Posts">Total Posts</div></div>
+        <div class="stat-card"><div class="num">${drafts}</div><div class="label" data-vi="Bản nháp" data-en="Drafts">Drafts</div></div>
         <div class="stat-card"><div class="num">${published}</div><div class="label" data-vi="Đã xuất bản" data-en="Published">Published</div></div>
-        <div class="stat-card"><div class="num">${drafts}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
+        <div class="stat-card"><div class="num">${pending}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
         <div class="stat-card"><div class="num" style="color:var(--danger);">${rejected}</div><div class="label" data-vi="Bị từ chối" data-en="Rejected">Rejected</div></div>
       `;
 
@@ -279,21 +285,32 @@
         const matchStatus = !status || p.status === status;
         return matchKw && matchStatus;
       });
+      ownerPostsPage = 1;
+      setPageInQuery(1);
       renderTable(filtered);
     }
 
     function renderTable(posts) {
+      const paginationEl = document.getElementById('ownerPostsPagination');
       if (!posts.length) {
         document.getElementById('posts-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Không có bài viết nào.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
-      document.getElementById('posts-tbody').innerHTML = posts.map(p => {
-        const dateStr = new Date(p.created_at).toLocaleDateString('vi-VN');
+      const pageData = paginateItems(posts, ownerPostsPage);
+      ownerPostsPage = pageData.currentPage;
+      setPageInQuery(ownerPostsPage);
+      document.getElementById('posts-tbody').innerHTML = pageData.items.map(p => {
+        const dateStr = new Date(p.created_at).toLocaleDateString(getUiLocale());
+        const english = localStorage.getItem('blog-lang') === 'en';
         const statusBadge = p.status === 'PUBLISHED'
-          ? '<span class="badge badge-green">Đã xuất bản</span>'
+          ? `<span class="badge badge-green">${english ? 'Published' : 'Đã xuất bản'}</span>`
           : p.status === 'REJECTED'
-            ? `<span class="badge badge-red" title="${p.rejection_reason || 'Không rõ lý do'}">Bị từ chối <iconify-icon icon="solar:info-circle-bold-duotone" style="margin-left:4px;vertical-align:middle;"></iconify-icon></span>`
-            : '<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> Chờ duyệt</span>';
+            ? `<span class="badge badge-red" title="${p.rejection_reason || (english ? 'No reason provided' : 'Không rõ lý do')}">${english ? 'Rejected' : 'Bị từ chối'} <iconify-icon icon="solar:info-circle-bold-duotone" style="margin-left:4px;vertical-align:middle;"></iconify-icon></span>`
+            : p.status === 'DRAFT'
+              ? `<span class="badge badge-neutral"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon> ${english ? 'Draft' : 'Bản nháp'}</span>`
+              : `<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> ${english ? 'Pending' : 'Chờ duyệt'}</span>`;
         const langBadges = (p.langs || []).map(l => `<span class="lang-badge-sm">${l}</span>`).join('');
         const safeTitle = (p.title || 'Untitled').replace(/'/g, "\\'");
         return `
@@ -312,6 +329,7 @@
           </td>
         </tr>`;
       }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.filter-bar', onPageChange: page => { ownerPostsPage = page; renderTable(posts); } });
     }
 
     function confirmDeletePost(id, title) {

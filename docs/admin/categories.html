@@ -172,6 +172,7 @@
           <tbody id="cat-tbody"></tbody>
         </table>
       </div>
+      <div id="adminCategoriesPagination"></div>
     </main>
   </div>
 
@@ -184,45 +185,33 @@
             icon="solar:close-circle-bold-duotone"></iconify-icon></button>
       </div>
       <div class="modal-body">
-        <div class="form-group"
-          style="display:flex; gap:12px; align-items:flex-end; background:var(--bg-soft); padding:16px; border-radius:8px; margin-bottom:16px; border:1px solid var(--border);">
-          <div style="flex:1;">
-            <label>Ngôn ngữ nguồn để dịch tự động</label>
-            <select id="autoTransSource" class="form-control">
-              <option value="vi">Tiếng Việt</option>
-              <option value="en">English</option>
-            </select>
+        <div class="category-source-banner">
+          <span class="category-source-icon"><iconify-icon icon="solar:translation-2-bold-duotone"></iconify-icon></span>
+          <div>
+            <strong data-vi="Nhập một lần, tự động dịch" data-en="Enter once, translate automatically">Enter once, translate automatically</strong>
+            <p data-vi="Hệ thống sẽ tạo và lưu bản dịch cho tất cả ngôn ngữ còn lại." data-en="The system will create and save versions for every other language.">The system will create and save versions for every other language.</p>
           </div>
-          <button class="btn btn-primary" onclick="mockTranslate()">
-            <iconify-icon icon="solar:magic-stick-3-bold-duotone"></iconify-icon> Dịch tự động
-          </button>
         </div>
-        <div class="trans-group">
-          <div class="lang-label">🇬🇧 English</div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>Tên danh mục (EN)</label>
-            <input type="text" id="newCatNameEn" class="form-control" placeholder="e.g. Technology">
+        <div class="form-group">
+          <label for="catSourceLanguage" data-vi="Ngôn ngữ nguồn" data-en="Source language">Source language</label>
+          <select id="catSourceLanguage" class="form-control" onchange="updateCategorySourceForm('new')"></select>
+        </div>
+        <div class="category-single-form">
+          <div class="category-form-language" id="newCatLanguageBadge"></div>
+          <div class="form-group">
+            <label for="newCatName" id="newCatNameLabel">Category name</label>
+            <input type="text" id="newCatName" class="form-control" maxlength="100">
           </div>
           <div class="form-group" style="margin-bottom:0;">
-            <label>Mô tả (EN)</label>
-            <input type="text" id="newCatDescEn" class="form-control" placeholder="Short description...">
+            <label for="newCatDesc" id="newCatDescLabel">Description</label>
+            <textarea id="newCatDesc" class="form-control" rows="3" maxlength="300"></textarea>
           </div>
         </div>
-        <div class="trans-group">
-          <div class="lang-label">🇻🇳 Tiếng Việt</div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>Tên danh mục (VI)</label>
-            <input type="text" id="newCatNameVi" class="form-control" placeholder="VD: Công nghệ">
-          </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label>Mô tả (VI)</label>
-            <input type="text" id="newCatDescVi" class="form-control" placeholder="Mô tả ngắn...">
-          </div>
-        </div>
+        <div class="category-translation-progress" id="categoryTranslationProgress" hidden aria-live="polite"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('addCatModal')">Hủy</button>
-        <button class="btn btn-primary" onclick="submitAddCategory()">Tạo danh mục</button>
+        <button class="btn btn-outline" onclick="closeModal('addCatModal')" data-vi="Hủy" data-en="Cancel">Cancel</button>
+        <button class="btn btn-primary" id="createCategoryBtn" onclick="submitAddCategory()"><iconify-icon icon="solar:magic-stick-3-bold-duotone"></iconify-icon><span data-vi="Tạo và dịch" data-en="Create & translate">Create & translate</span></button>
       </div>
     </div>
   </div>
@@ -237,32 +226,21 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="editCatId">
-        <div class="trans-group">
-          <div class="lang-label">🇬🇧 English</div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>Tên danh mục (EN)</label>
-            <input type="text" id="editCatNameEn" class="form-control">
-          </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label>Mô tả (EN)</label>
-            <input type="text" id="editCatDescEn" class="form-control">
-          </div>
+        <div class="form-group">
+          <label for="editCatLanguage" data-vi="Bản ngôn ngữ đang chỉnh sửa" data-en="Language version being edited">Language version being edited</label>
+          <select id="editCatLanguage" class="form-control" onchange="loadEditCategoryTranslation()"></select>
         </div>
-        <div class="trans-group">
-          <div class="lang-label">🇻🇳 Tiếng Việt</div>
-          <div class="form-group" style="margin-bottom:10px;">
-            <label>Tên danh mục (VI)</label>
-            <input type="text" id="editCatNameVi" class="form-control">
-          </div>
-          <div class="form-group" style="margin-bottom:0;">
-            <label>Mô tả (VI)</label>
-            <input type="text" id="editCatDescVi" class="form-control">
-          </div>
+        <div class="category-single-form">
+          <div class="category-form-language" id="editCatLanguageBadge"></div>
+          <div class="form-group"><label for="editCatName" id="editCatNameLabel">Category name</label><input type="text" id="editCatName" class="form-control" maxlength="100"></div>
+          <div class="form-group" style="margin-bottom:0;"><label for="editCatDesc" id="editCatDescLabel">Description</label><textarea id="editCatDesc" class="form-control" rows="3" maxlength="300"></textarea></div>
         </div>
+        <label class="category-retranslate-option"><input type="checkbox" id="editCatRetranslate"><span><strong data-vi="Dịch lại các ngôn ngữ khác" data-en="Retranslate other languages">Retranslate other languages</strong><small data-vi="Các bản dịch hiện tại sẽ được ghi đè sau khi bạn xác nhận." data-en="Existing translations will be overwritten after confirmation.">Existing translations will be overwritten after confirmation.</small></span></label>
+        <div class="category-translation-progress" id="editCategoryTranslationProgress" hidden aria-live="polite"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal('editCatModal')">Hủy</button>
-        <button class="btn btn-primary" onclick="submitEditCategory()">Lưu thay đổi</button>
+        <button class="btn btn-outline" onclick="closeModal('editCatModal')" data-vi="Hủy" data-en="Cancel">Cancel</button>
+        <button class="btn btn-primary" id="saveCategoryBtn" onclick="submitEditCategory()" data-vi="Lưu thay đổi" data-en="Save changes">Save changes</button>
       </div>
     </div>
   </div>
@@ -270,6 +248,8 @@
   <script src="../shared.js"></script>
   <script src="../js/mockData.js"></script>
   <script>
+    let adminCategoriesPage = getPageFromQuery();
+
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
       if (!user || user.role_id !== 1) {
@@ -302,12 +282,17 @@
         );
       }
 
+      const paginationEl = document.getElementById('adminCategoriesPagination');
       if (!rows.length) {
         document.getElementById('cat-tbody').innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy danh mục.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
-
-      document.getElementById('cat-tbody').innerHTML = rows.map(({ cat, tEn, tVi, count }) => {
+      const pageData = paginateItems(rows, adminCategoriesPage);
+      adminCategoriesPage = pageData.currentPage;
+      setPageInQuery(adminCategoriesPage);
+      document.getElementById('cat-tbody').innerHTML = pageData.items.map(({ cat, tEn, tVi, count }) => {
         const nameEn = tEn ? tEn.name : '<span style="color:var(--text-muted);font-style:italic;">Chưa có</span>';
         const nameVi = tVi ? tVi.name : '<span style="color:var(--text-muted);font-style:italic;">Chưa có</span>';
         const safeName = (tEn?.name || tVi?.name || 'Danh mục').replace(/'/g, "\\'");
@@ -324,140 +309,175 @@
           </td>
         </tr>`;
       }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.admin-header', onPageChange: page => { adminCategoriesPage = page; renderCategories(keyword); } });
     }
 
     function filterTable(keyword) {
+      adminCategoriesPage = 1;
+      setPageInQuery(1);
       renderCategories(keyword);
     }
 
+    const categoryTranslators = new Map();
+    const categoryFallbackDictionary = {
+      'vi:en': { 'công nghệ': 'Technology', 'đời sống': 'Lifestyle', 'thể thao': 'Sports', 'giải trí': 'Entertainment', 'kinh doanh': 'Business', 'sức khỏe': 'Health', 'giáo dục': 'Education', 'du lịch': 'Travel' },
+      'en:vi': { 'technology': 'Công nghệ', 'lifestyle': 'Đời sống', 'sports': 'Thể thao', 'entertainment': 'Giải trí', 'business': 'Kinh doanh', 'health': 'Sức khỏe', 'education': 'Giáo dục', 'travel': 'Du lịch' }
+    };
+
+    function categoryLanguageOptions(selectedCode) {
+      return db.get('languages').map(lang => `<option value="${lang.code}" ${lang.code === selectedCode ? 'selected' : ''}>${lang.name} (${lang.code.toUpperCase()})</option>`).join('');
+    }
+
+    function getCategoryLanguage(code) { return db.get('languages').find(lang => lang.code === code); }
+
+    function setCategoryModalBusy(modalId, busy) {
+      const modal = document.getElementById(modalId);
+      modal.setAttribute('aria-busy', String(busy));
+      modal.querySelectorAll('button,select,input,textarea').forEach(control => { control.disabled = busy; });
+    }
+
+    function updateCategorySourceForm(mode) {
+      const prefix = mode === 'edit' ? 'editCat' : 'newCat';
+      const code = document.getElementById(mode === 'edit' ? 'editCatLanguage' : 'catSourceLanguage').value;
+      const language = getCategoryLanguage(code) || { code, name: code.toUpperCase() };
+      document.getElementById(`${prefix}LanguageBadge`).innerHTML = `${flagImgFor(code, 22)} <strong>${language.name}</strong>`;
+      document.getElementById(`${prefix}NameLabel`).textContent = code === 'vi' ? 'Tên danh mục' : 'Category name';
+      document.getElementById(`${prefix}DescLabel`).textContent = code === 'vi' ? 'Mô tả' : 'Description';
+      document.getElementById(`${prefix}Name`).placeholder = code === 'vi' ? 'VD: Công nghệ' : 'e.g. Technology';
+      document.getElementById(`${prefix}Desc`).placeholder = code === 'vi' ? 'Mô tả ngắn...' : 'Short description...';
+    }
+
     function openAddCatModal() {
-      ['newCatNameEn', 'newCatDescEn', 'newCatNameVi', 'newCatDescVi'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('autoTransSource').value = 'vi';
+      const defaultLanguage = db.get('languages').find(lang => lang.id === getSystemSettings().default_language_id) || db.get('languages')[0];
+      document.getElementById('catSourceLanguage').innerHTML = categoryLanguageOptions(defaultLanguage?.code);
+      document.getElementById('newCatName').value = '';
+      document.getElementById('newCatDesc').value = '';
+      document.getElementById('categoryTranslationProgress').hidden = true;
+      updateCategorySourceForm('new');
       openModal('addCatModal');
     }
 
-    function mockTranslate() {
-      const source = document.getElementById('autoTransSource').value;
-      const btn = document.querySelector('button[onclick="mockTranslate()"]');
-
-      let nameSrc, descSrc;
-      if (source === 'vi') {
-        nameSrc = document.getElementById('newCatNameVi').value.trim();
-        descSrc = document.getElementById('newCatDescVi').value.trim();
-      } else {
-        nameSrc = document.getElementById('newCatNameEn').value.trim();
-        descSrc = document.getElementById('newCatDescEn').value.trim();
-      }
-
-      if (!nameSrc) {
-        showToast('Vui lòng nhập tên danh mục ngôn ngữ nguồn!', 'error');
-        return;
-      }
-
-      btn.innerHTML = '<iconify-icon icon="solar:hourglass-bold-duotone" class="spin"></iconify-icon> Đang dịch...';
-      btn.disabled = true;
-
-      // Simulate API delay
-      setTimeout(() => {
-        // Mock dictionary
-        const dict = {
-          'công nghệ': 'Technology',
-          'đời sống': 'Lifestyle',
-          'thể thao': 'Sports',
-          'giải trí': 'Entertainment',
-          'kinh doanh': 'Business',
-          'technology': 'Công nghệ',
-          'lifestyle': 'Đời sống',
-          'sports': 'Thể thao',
-          'entertainment': 'Giải trí',
-          'business': 'Kinh doanh'
-        };
-
-        const lowerName = nameSrc.toLowerCase();
-        let translatedName = dict[lowerName] || (source === 'vi' ? nameSrc + ' (EN)' : nameSrc + ' (VI)');
-        let translatedDesc = descSrc ? (source === 'vi' ? descSrc + ' (translated to EN)' : descSrc + ' (được dịch sang VI)') : '';
-
-        if (source === 'vi') {
-          document.getElementById('newCatNameEn').value = translatedName;
-          document.getElementById('newCatDescEn').value = translatedDesc;
+    async function translateCategoryText(text, sourceCode, targetCode) {
+      if (!text || sourceCode === targetCode) return text;
+      const fallback = categoryFallbackDictionary[`${sourceCode}:${targetCode}`]?.[text.trim().toLowerCase()];
+      if (fallback) return fallback;
+      const key = `${sourceCode}:${targetCode}`;
+      let translator = categoryTranslators.get(key);
+      if (!translator) {
+        if ('Translator' in window && typeof window.Translator.create === 'function') {
+          translator = await window.Translator.create({ sourceLanguage: sourceCode, targetLanguage: targetCode });
+        } else if (window.ai?.translator && typeof window.ai.translator.create === 'function') {
+          translator = await window.ai.translator.create({ sourceLanguage: sourceCode, targetLanguage: targetCode });
         } else {
-          document.getElementById('newCatNameVi').value = translatedName;
-          document.getElementById('newCatDescVi').value = translatedDesc;
+          throw new Error('TRANSLATOR_UNAVAILABLE');
         }
-
-        btn.innerHTML = '<iconify-icon icon="solar:magic-stick-3-bold-duotone"></iconify-icon> Dịch tự động';
-        btn.disabled = false;
-        showToast('Dịch tự động thành công! (Mock)', 'success');
-      }, 800);
+        categoryTranslators.set(key, translator);
+      }
+      return translator.translate(text);
     }
 
-    function submitAddCategory() {
-      const nameEn = document.getElementById('newCatNameEn').value.trim();
-      const descEn = document.getElementById('newCatDescEn').value.trim();
-      const nameVi = document.getElementById('newCatNameVi').value.trim();
-      const descVi = document.getElementById('newCatDescVi').value.trim();
+    async function buildCategoryTranslations(name, description, sourceLanguage, targetLanguages, progressEl) {
+      const results = [];
+      for (let index = 0; index < targetLanguages.length; index++) {
+        const target = targetLanguages[index];
+        progressEl.hidden = false;
+        progressEl.innerHTML = `<span class="category-progress-spinner"></span><span>${localStorage.getItem('blog-lang') === 'en' ? 'Translating' : 'Đang dịch'} ${index + 1}/${targetLanguages.length}: ${target.name}</span>`;
+        results.push({
+          language_id: target.id,
+          name: await translateCategoryText(name, sourceLanguage.code, target.code),
+          des: description ? await translateCategoryText(description, sourceLanguage.code, target.code) : '',
+          is_auto_translated: target.id !== sourceLanguage.id
+        });
+      }
+      return results;
+    }
 
-      if (!nameEn && !nameVi) { showToast('Vui lòng nhập tên danh mục ít nhất 1 ngôn ngữ!', 'error'); return; }
+    async function submitAddCategory() {
+      const name = document.getElementById('newCatName').value.trim();
+      const description = document.getElementById('newCatDesc').value.trim();
+      const sourceCode = document.getElementById('catSourceLanguage').value;
+      const languages = db.get('languages');
+      const sourceLanguage = languages.find(lang => lang.code === sourceCode);
+      const progress = document.getElementById('categoryTranslationProgress');
+      if (!name || !sourceLanguage) { showToast(localStorage.getItem('blog-lang') === 'en' ? 'Enter a category name.' : 'Vui lòng nhập tên danh mục!', 'error'); return; }
 
-      const categories = db.get('categories');
-      const translations = db.get('category_translation');
-
-      const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-      categories.push({ id: newId, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
-
-      let maxTransId = translations.length ? Math.max(...translations.map(t => t.id)) : 0;
-      if (nameEn) { maxTransId++; translations.push({ id: maxTransId, category_id: newId, language_id: 1, name: nameEn, des: descEn }); }
-      if (nameVi) { maxTransId++; translations.push({ id: maxTransId, category_id: newId, language_id: 2, name: nameVi, des: descVi }); }
-
-      db.set('categories', categories);
-      db.set('category_translation', translations);
-      showToast('Đã tạo danh mục!', 'success');
-      closeModal('addCatModal');
-      renderCategories();
+      setCategoryModalBusy('addCatModal', true);
+      try {
+        const generated = getSystemSettings().auto_translate_categories
+          ? await buildCategoryTranslations(name, description, sourceLanguage, languages, progress)
+          : [{ language_id: sourceLanguage.id, name, des: description, is_auto_translated: false }];
+        const categories = db.get('categories');
+        const translations = db.get('category_translation');
+        const newId = categories.length ? Math.max(...categories.map(c => c.id)) + 1 : 1;
+        const now = new Date().toISOString();
+        let maxId = translations.length ? Math.max(...translations.map(t => t.id)) : 0;
+        categories.push({ id: newId, source_language_id: sourceLanguage.id, created_at: now, updated_at: now });
+        generated.forEach(item => translations.push({ id: ++maxId, category_id: newId, ...item }));
+        db.set('categories', categories);
+        db.set('category_translation', translations);
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Category and translations created.' : 'Đã tạo danh mục và các bản dịch!', 'success');
+        closeModal('addCatModal');
+        renderCategories();
+      } catch (error) {
+        progress.hidden = true;
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Automatic translation is unavailable. No data was saved.' : 'Không thể dịch tự động. Chưa có dữ liệu nào được lưu.', 'error', 5000);
+      } finally { setCategoryModalBusy('addCatModal', false); }
     }
 
     function openEditCatModal(id) {
-      const translations = db.get('category_translation');
-      const tEn = translations.find(t => t.category_id === id && t.language_id == 1);
-      const tVi = translations.find(t => t.category_id === id && t.language_id == 2);
+      const category = db.get('categories').find(cat => cat.id === id);
+      const translations = db.get('category_translation').filter(item => item.category_id === id);
+      const preferred = translations.find(item => item.language_id === category?.source_language_id) || translations[0];
+      const preferredLang = db.get('languages').find(lang => lang.id === preferred?.language_id) || db.get('languages')[0];
       document.getElementById('editCatId').value = id;
-      document.getElementById('editCatNameEn').value = tEn?.name || '';
-      document.getElementById('editCatDescEn').value = tEn?.des || '';
-      document.getElementById('editCatNameVi').value = tVi?.name || '';
-      document.getElementById('editCatDescVi').value = tVi?.des || '';
+      document.getElementById('editCatLanguage').innerHTML = categoryLanguageOptions(preferredLang?.code);
+      document.getElementById('editCatRetranslate').checked = false;
+      document.getElementById('editCategoryTranslationProgress').hidden = true;
+      loadEditCategoryTranslation();
       openModal('editCatModal');
     }
 
-    function submitEditCategory() {
-      const id = parseInt(document.getElementById('editCatId').value);
-      const nameEn = document.getElementById('editCatNameEn').value.trim();
-      const descEn = document.getElementById('editCatDescEn').value.trim();
-      const nameVi = document.getElementById('editCatNameVi').value.trim();
-      const descVi = document.getElementById('editCatDescVi').value.trim();
+    function loadEditCategoryTranslation() {
+      const id = Number(document.getElementById('editCatId').value);
+      const code = document.getElementById('editCatLanguage').value;
+      const language = getCategoryLanguage(code);
+      const translation = db.get('category_translation').find(item => item.category_id === id && item.language_id === language?.id);
+      document.getElementById('editCatName').value = translation?.name || '';
+      document.getElementById('editCatDesc').value = translation?.des || '';
+      updateCategorySourceForm('edit');
+    }
 
-      if (!nameEn && !nameVi) { showToast('Vui lòng nhập tên ít nhất 1 ngôn ngữ!', 'error'); return; }
-
-      let translations = db.get('category_translation');
-      let maxId = translations.length ? Math.max(...translations.map(t => t.id)) : 0;
-
-      // Update/create EN
-      let tEn = translations.find(t => t.category_id === id && t.language_id == 1);
-      if (nameEn) {
-        if (tEn) { tEn.name = nameEn; tEn.des = descEn; }
-        else { maxId++; translations.push({ id: maxId, category_id: id, language_id: 1, name: nameEn, des: descEn }); }
-      } else if (tEn) { translations = translations.filter(t => !(t.category_id === id && t.language_id == 1)); }
-
-      // Update/create VI
-      let tVi = translations.find(t => t.category_id === id && t.language_id == 2);
-      if (nameVi) {
-        if (tVi) { tVi.name = nameVi; tVi.des = descVi; }
-        else { maxId++; translations.push({ id: maxId, category_id: id, language_id: 2, name: nameVi, des: descVi }); }
-      } else if (tVi) { translations = translations.filter(t => !(t.category_id === id && t.language_id == 2)); }
-
-      db.set('category_translation', translations);
-      showToast('Đã cập nhật danh mục!', 'success');
-      closeModal('editCatModal');
-      renderCategories();
+    async function submitEditCategory() {
+      const id = Number(document.getElementById('editCatId').value);
+      const name = document.getElementById('editCatName').value.trim();
+      const description = document.getElementById('editCatDesc').value.trim();
+      const sourceLanguage = getCategoryLanguage(document.getElementById('editCatLanguage').value);
+      const shouldRetranslate = document.getElementById('editCatRetranslate').checked;
+      const progress = document.getElementById('editCategoryTranslationProgress');
+      if (!name || !sourceLanguage) { showToast(localStorage.getItem('blog-lang') === 'en' ? 'Enter a category name.' : 'Vui lòng nhập tên danh mục!', 'error'); return; }
+      setCategoryModalBusy('editCatModal', true);
+      try {
+        const languages = shouldRetranslate ? db.get('languages') : [sourceLanguage];
+        const generated = shouldRetranslate ? await buildCategoryTranslations(name, description, sourceLanguage, languages, progress) : [{ language_id: sourceLanguage.id, name, des: description, is_auto_translated: false }];
+        const translations = db.get('category_translation');
+        let maxId = translations.length ? Math.max(...translations.map(item => item.id)) : 0;
+        generated.forEach(item => {
+          const existing = translations.find(entry => entry.category_id === id && entry.language_id === item.language_id);
+          if (existing) Object.assign(existing, item);
+          else translations.push({ id: ++maxId, category_id: id, ...item });
+        });
+        const categories = db.get('categories');
+        const category = categories.find(item => item.id === id);
+        if (category) { category.source_language_id = sourceLanguage.id; category.updated_at = new Date().toISOString(); }
+        db.set('categories', categories);
+        db.set('category_translation', translations);
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Category updated.' : 'Đã cập nhật danh mục!', 'success');
+        closeModal('editCatModal');
+        renderCategories();
+      } catch (error) {
+        progress.hidden = true;
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Translation failed. Existing data was not changed.' : 'Dịch thất bại. Dữ liệu hiện tại chưa bị thay đổi.', 'error', 5000);
+      } finally { setCategoryModalBusy('editCatModal', false); }
     }
 
     function confirmDeleteCat(id, name) {

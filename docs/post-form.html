@@ -327,10 +327,11 @@
             <button class="btn-preview-toggle" id="previewToggleBtn" onclick="togglePreviewPanel()">
               <iconify-icon icon="iconamoon:eye"></iconify-icon> Preview
             </button>
-            <button class="btn btn-primary" onclick="savePost('PUBLISHED')" data-vi="Xuất bản"
-              data-en="Publish">Publish</button>
+            <button class="btn btn-primary" id="submitPostBtn" onclick="submitPostForWorkflow()" data-vi="Gửi duyệt"
+              data-en="Submit for review">Submit for review</button>
           </div>
         </div>
+        <div class="post-workflow-notice" id="postWorkflowNotice" hidden></div>
 
         <form onsubmit="return false;">
           <div class="lang-row">
@@ -411,6 +412,7 @@
         setTimeout(() => window.location.href = 'login.html', 1500);
         return;
       }
+      configurePostWorkflow(user);
 
       quill = new Quill('#postContentEditor', {
         theme: 'snow',
@@ -463,8 +465,15 @@
 
       const params = new URLSearchParams(window.location.search);
       if (params.get('id')) {
-        document.getElementById('formTitle').textContent = 'Chỉnh sửa bài viết';
+        document.getElementById('formTitle').dataset.vi = 'Chỉnh sửa bài viết';
+        document.getElementById('formTitle').dataset.en = 'Edit Post';
         currentPostId = parseInt(params.get('id'));
+        const editingPost = db.get('posts').find(post => post.id === currentPostId);
+        if (!editingPost || (user.role_id !== 1 && editingPost.author_id !== user.id)) {
+          showToast(localStorage.getItem('blog-lang') === 'en' ? 'You cannot edit this post.' : 'Bạn không có quyền chỉnh sửa bài viết này!', 'error');
+          setTimeout(() => window.location.href = 'owner-posts.html', 1200);
+          return;
+        }
         loadPostData(currentPostId);
       }
 
@@ -473,6 +482,18 @@
       applyLanguage(localStorage.getItem('blog-lang') || 'vi');
       initSearch(() => db.getPostsWithDetails(langId));
     });
+
+    function configurePostWorkflow(user) {
+      const button = document.getElementById('submitPostBtn');
+      const requiresReview = user.role_id !== 1 && getSystemSettings().require_post_approval;
+      button.dataset.vi = requiresReview ? 'Gửi duyệt' : 'Xuất bản';
+      button.dataset.en = requiresReview ? 'Submit for review' : 'Publish';
+      button.textContent = localStorage.getItem('blog-lang') === 'en' ? button.dataset.en : button.dataset.vi;
+    }
+
+    function submitPostForWorkflow() {
+      savePost('SUBMIT');
+    }
 
     function renderPreviewTabs() {
       const sourceLang = document.getElementById('sourceLang') ? document.getElementById('sourceLang').value : 'en';
@@ -601,6 +622,7 @@
       const languages = db.get('languages');
       const post = posts.find(p => p.id === postId);
       if (!post) return;
+      renderPostWorkflowNotice(post);
 
       document.getElementById('categoryId').value = post.category_id;
       const sourceLangObj = languages.find(l => l.id === post.source_language_id);
@@ -625,7 +647,24 @@
       });
     }
 
-    function savePost(status) {
+    function renderPostWorkflowNotice(post) {
+      const notice = document.getElementById('postWorkflowNotice');
+      const english = localStorage.getItem('blog-lang') === 'en';
+      const config = {
+        DRAFT: { icon: 'solar:document-text-bold-duotone', cls: 'draft', vi: 'Bản nháp – bài viết chưa được gửi duyệt.', en: 'Draft – this post has not been submitted for review.' },
+        PENDING: { icon: 'solar:clock-circle-bold-duotone', cls: 'pending', vi: 'Bài viết đang chờ Super Admin duyệt.', en: 'This post is awaiting Super Admin review.' },
+        REJECTED: { icon: 'solar:close-circle-bold-duotone', cls: 'rejected', vi: 'Bài viết bị từ chối. Hãy chỉnh sửa và gửi duyệt lại.', en: 'This post was rejected. Edit it and submit it for review again.' },
+        PUBLISHED: { icon: 'solar:check-circle-bold-duotone', cls: 'published', vi: 'Bài viết đang được xuất bản.', en: 'This post is currently published.' }
+      }[post.status];
+      if (!config) { notice.hidden = true; return; }
+      const safeReason = String(post.rejection_reason || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+      const reason = post.status === 'REJECTED' && safeReason ? `<small><strong>${english ? 'Reason:' : 'Lý do:'}</strong> ${safeReason}</small>` : '';
+      notice.className = `post-workflow-notice ${config.cls}`;
+      notice.innerHTML = `<iconify-icon icon="${config.icon}"></iconify-icon><div><span>${english ? config.en : config.vi}</span>${reason}</div>`;
+      notice.hidden = false;
+    }
+
+    function savePost(requestedStatus) {
       const title = document.getElementById('postTitle').value.trim();
       const content = quill ? quill.root.innerHTML : '';
       const isEmpty = !quill || quill.getText().trim().length === 0;
@@ -640,15 +679,29 @@
       const posts = db.get('posts');
       const transDB = db.get('post_translations');
       const user = db.getCurrentUser();
+      const existingPost = currentPostId ? posts.find(post => post.id === currentPostId) : null;
+      if (!user || (existingPost && user.role_id !== 1 && existingPost.author_id !== user.id)) {
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'You do not have permission to save this post.' : 'Bạn không có quyền lưu bài viết này!', 'error');
+        return;
+      }
+      const requiresReview = user.role_id !== 1 && getSystemSettings().require_post_approval;
+      const status = requestedStatus === 'DRAFT' ? 'DRAFT' : (requiresReview ? 'PENDING' : 'PUBLISHED');
+      const now = new Date().toISOString();
 
       let postId = currentPostId;
       if (!postId) {
         postId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
         const sourceLangObj = languages.find(l => l.code === sourceLangCode);
-        posts.push({ id: postId, author_id: user.id, category_id: catId, status, source_language_id: sourceLangObj.id, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        posts.push({ id: postId, author_id: user.id, category_id: catId, status, source_language_id: sourceLangObj.id, submitted_at: status === 'PENDING' ? now : null, published_at: status === 'PUBLISHED' ? now : null, created_at: now, updated_at: now });
       } else {
         const p = posts.find(x => x.id === postId);
-        if (p) { p.category_id = catId; p.status = status; p.updated_at = new Date().toISOString(); }
+        if (p) {
+          p.category_id = catId;
+          p.status = status;
+          p.updated_at = now;
+          if (status === 'PENDING') { p.submitted_at = now; p.rejection_reason = null; p.reviewed_at = null; p.reviewed_by = null; }
+          if (status === 'PUBLISHED') { p.published_at = p.published_at || now; p.rejection_reason = null; }
+        }
       }
       db.set('posts', posts);
 
@@ -669,7 +722,13 @@
       });
 
       db.set('post_translations', transDB);
-      showToast(status === 'PUBLISHED' ? 'Đã xuất bản thành công!' : 'Đã lưu bản nháp!', 'success');
+      const english = localStorage.getItem('blog-lang') === 'en';
+      const message = status === 'PUBLISHED'
+        ? (english ? 'Post published successfully.' : 'Đã xuất bản bài viết thành công!')
+        : status === 'PENDING'
+          ? (english ? 'Post submitted for review.' : 'Bài viết đã được gửi và đang chờ duyệt.')
+          : (english ? 'Draft saved.' : 'Đã lưu bản nháp!');
+      showToast(message, 'success');
       setTimeout(() => window.location.href = 'owner-posts.html', 1200);
     }
   </script>

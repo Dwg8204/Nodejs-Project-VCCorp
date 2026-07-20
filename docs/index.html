@@ -205,7 +205,7 @@
       background: var(--accent-soft);
       font-weight: 600;
     }
-  
+
 /* ===== Responsive Breakpoints ===== */
 
 /* --- Tablet (max-width: 1080px) --- */
@@ -485,6 +485,30 @@
   }
 }
 
+/* Homepage persistent navigation */
+html,
+body {
+  overflow-x: clip !important;
+}
+
+.topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900;
+}
+
+@media (min-width: 769px) {
+  .layout > .sidebar,
+  .layout > .right-rail {
+    position: sticky !important;
+    top: 60px !important;
+    align-self: start;
+    height: calc(100vh - 60px) !important;
+    max-height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+  }
+}
+
   </style>
 </head>
 
@@ -561,6 +585,7 @@
       </div>
       <div class="empty-feed" id="feedEmpty" style="display:none;" data-vi="Không có bài viết nào."
         data-en="No articles found.">No articles found.</div>
+      <div id="feedPagination"></div>
     </main>
 
     <!-- ===== Right rail ===== -->
@@ -582,6 +607,7 @@
     let allPosts = [];
     let allCatOptions = [];
     let currentCatFilter = 'all';
+    let currentFeedPage = getPageFromQuery();
 
     document.addEventListener('DOMContentLoaded', () => {
       // 1. Setup header based on login status
@@ -760,6 +786,8 @@
       renderCatDropdown();
       renderMobileChips();
       const filtered = catId === 'all' ? allPosts : allPosts.filter(p => String(p.category_id) === String(catId));
+      currentFeedPage = 1;
+      setPageInQuery(1);
       renderPosts(filtered);
       document.getElementById('feedEmpty').style.display = filtered.length === 0 ? 'block' : 'none';
     }
@@ -767,13 +795,19 @@
     function renderPosts(posts) {
       const container = document.getElementById('feed-articles');
       const emptyEl = document.getElementById('feedEmpty');
+      const paginationEl = document.getElementById('feedPagination');
       if (!posts.length) {
         container.innerHTML = '';
         emptyEl.style.display = 'block';
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
+      const pageData = paginateItems(posts, currentFeedPage);
+      currentFeedPage = pageData.currentPage;
+      setPageInQuery(currentFeedPage);
       emptyEl.style.display = 'none';
-      container.innerHTML = posts.map(post => {
+      container.innerHTML = pageData.items.map(post => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = post.content;
         const snippet = (tempDiv.textContent || tempDiv.innerText || '');
@@ -813,6 +847,7 @@
         </div>`;
       }).join('');
       applyBgFallback();
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.feed-header', onPageChange: page => { currentFeedPage = page; renderPosts(posts); } });
     }
   </script>
 </body>

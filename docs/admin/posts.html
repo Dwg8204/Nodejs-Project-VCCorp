@@ -174,6 +174,7 @@
           oninput="applyFilters()" style="max-width:280px;">
         <select id="filterStatus" class="form-control" onchange="applyFilters()" style="max-width:180px;">
           <option value="">Tất cả trạng thái</option>
+          <option value="DRAFT" data-vi="Bản nháp" data-en="Draft">Draft</option>
           <option value="PENDING">Chờ duyệt</option>
           <option value="PUBLISHED">Đã xuất bản</option>
           <option value="REJECTED">Bị từ chối</option>
@@ -201,6 +202,7 @@
           <tbody id="posts-tbody"></tbody>
         </table>
       </div>
+      <div id="adminPostsPagination"></div>
     </main>
   </div>
 
@@ -233,6 +235,7 @@
   <script src="../js/mockData.js"></script>
   <script>
     let allPosts = [];
+    let adminPostsPage = getPageFromQuery();
 
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
@@ -278,24 +281,24 @@
       });
 
       renderStats();
-      applyFilters();
+      applyFilters(false);
     }
 
     function renderStats() {
       const total = allPosts.length;
       const published = allPosts.filter(p => p.status === 'PUBLISHED').length;
-      const drafts = allPosts.filter(p => p.status === 'PENDING').length;
+      const pending = allPosts.filter(p => p.status === 'PENDING').length;
       const rejected = allPosts.filter(p => p.status === 'REJECTED').length;
 
       document.getElementById('stats-container').innerHTML = `
       <div class="stat-card"><div class="num">${total}</div><div class="label" data-vi="Tổng số bài" data-en="Total Posts">Total Posts</div></div>
-      <div class="stat-card"><div class="num" style="color:var(--icon-star);">${drafts}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
+      <div class="stat-card"><div class="num" style="color:var(--icon-star);">${pending}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
       <div class="stat-card"><div class="num" style="color:var(--accent);">${published}</div><div class="label" data-vi="Đã duyệt" data-en="Approved">Approved</div></div>
       <div class="stat-card"><div class="num" style="color:var(--danger);">${rejected}</div><div class="label" data-vi="Bị từ chối" data-en="Rejected">Rejected</div></div>
     `;
     }
 
-    function applyFilters() {
+    function applyFilters(resetPage = true) {
       const kw = document.getElementById('searchPosts').value.trim().toLowerCase();
       const status = document.getElementById('filterStatus').value;
 
@@ -305,19 +308,26 @@
         return matchKw && matchStatus;
       });
 
+      if (resetPage) { adminPostsPage = 1; setPageInQuery(1); }
       renderTable(filtered);
     }
 
     function renderTable(posts) {
+      const paginationEl = document.getElementById('adminPostsPagination');
       if (!posts.length) {
         document.getElementById('posts-tbody').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy bài viết.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
-
-      document.getElementById('posts-tbody').innerHTML = posts.map(p => {
+      const pageData = paginateItems(posts, adminPostsPage);
+      adminPostsPage = pageData.currentPage;
+      setPageInQuery(adminPostsPage);
+      document.getElementById('posts-tbody').innerHTML = pageData.items.map(p => {
         let statusBadge = '';
         if (p.status === 'PUBLISHED') statusBadge = '<span class="badge badge-green">Đã duyệt</span>';
         else if (p.status === 'REJECTED') statusBadge = `<span class="badge badge-red" title="${p.rejection_reason || 'Không rõ'}">Bị từ chối</span>`;
+        else if (p.status === 'DRAFT') statusBadge = '<span class="badge badge-neutral"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon> Bản nháp</span>';
         else statusBadge = '<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> Chờ duyệt</span>';
 
         const safeTitle = p.title.replace(/'/g, "\\'");
@@ -331,12 +341,13 @@
         <td>
           <div class="action-icons">
             <button class="view-btn" onclick="openPreview(${p.id})" title="Xem"><iconify-icon icon="iconamoon:eye"></iconify-icon></button>
-            ${p.status !== 'PUBLISHED' ? `<button class="approve-btn" onclick="approvePost(${p.id}, '${safeTitle}')" title="Duyệt"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon></button>` : ''}
-            ${p.status !== 'REJECTED' ? `<button class="reject-btn" onclick="openRejectModal(${p.id})" title="Từ chối"><iconify-icon icon="material-symbols:cancel" style="color: var(--danger)"></iconify-icon></button>` : ''}
+            ${p.status === 'PENDING' ? `<button class="approve-btn" onclick="approvePost(${p.id}, '${safeTitle}')" title="Duyệt"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon></button>` : ''}
+            ${p.status === 'PENDING' ? `<button class="reject-btn" onclick="openRejectModal(${p.id})" title="Từ chối"><iconify-icon icon="material-symbols:cancel" style="color: var(--danger)"></iconify-icon></button>` : ''}
           </div>
         </td>
       </tr>`;
       }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.filter-bar', onPageChange: page => { adminPostsPage = page; renderTable(posts); } });
     }
 
     function approvePost(id, title) {
@@ -349,13 +360,19 @@
         onConfirm: () => {
           let posts = db.get('posts');
           const p = posts.find(x => x.id === id);
-          if (p) {
+          const reviewer = db.getCurrentUser();
+          if (p && reviewer?.role_id === 1 && p.status === 'PENDING') {
             p.status = 'PUBLISHED';
             p.rejection_reason = null;
-            p.updated_at = new Date().toISOString();
+            p.reviewed_by = reviewer.id;
+            p.reviewed_at = new Date().toISOString();
+            p.published_at = p.reviewed_at;
+            p.updated_at = p.reviewed_at;
             db.set('posts', posts);
             showToast('Đã duyệt bài viết!', 'success');
             loadPosts();
+          } else {
+            showToast('Chỉ bài viết đang chờ duyệt mới có thể được xuất bản.', 'error');
           }
         }
       });
@@ -378,14 +395,19 @@
 
       let posts = db.get('posts');
       const p = posts.find(x => x.id === id);
-      if (p) {
+      const reviewer = db.getCurrentUser();
+      if (p && reviewer?.role_id === 1 && p.status === 'PENDING') {
         p.status = 'REJECTED';
         p.rejection_reason = reason;
-        p.updated_at = new Date().toISOString();
+        p.reviewed_by = reviewer.id;
+        p.reviewed_at = new Date().toISOString();
+        p.updated_at = p.reviewed_at;
         db.set('posts', posts);
         showToast('Đã từ chối bài viết!', 'success');
         closeModal('rejectModal');
         loadPosts();
+      } else {
+        showToast('Chỉ bài viết đang chờ duyệt mới có thể bị từ chối.', 'error');
       }
     }
   </script>

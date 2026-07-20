@@ -190,6 +190,7 @@
           <tbody id="lang-tbody"></tbody>
         </table>
       </div>
+      <div id="adminLanguagesPagination"></div>
     </main>
   </div>
 
@@ -261,10 +262,9 @@
   <script src="../js/mockData.js"></script>
   <script>
     let defaultLangId = null;
+    let adminLanguagesPage = getPageFromQuery();
     function getDefaultLangId() {
-      let settings = db.get('settings');
-      if (!settings) { settings = { default_language_id: 2 }; db.set('settings', settings); }
-      return settings.default_language_id || 2;
+      return getSystemSettings().default_language_id;
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -282,11 +282,17 @@
 
     function renderLanguages() {
       const languages = db.get('languages');
+      const paginationEl = document.getElementById('adminLanguagesPagination');
       if (!languages.length) {
         document.getElementById('lang-tbody').innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">Chưa có ngôn ngữ nào.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
         return;
       }
-      document.getElementById('lang-tbody').innerHTML = languages.map(lang => {
+      const pageData = paginateItems(languages, adminLanguagesPage);
+      adminLanguagesPage = pageData.currentPage;
+      setPageInQuery(adminLanguagesPage);
+      document.getElementById('lang-tbody').innerHTML = pageData.items.map(lang => {
         const isDefault = lang.id === defaultLangId;
         const flagHtml = flagImgFor(lang.code, 22);
         const nameHtml = `<span class="lang-name-cell">${lang.name} ${isDefault ? '<span class="default-star" title="Ngôn ngữ mặc định"><iconify-icon icon="solar:star-bold" style="color:#FFC017;"></iconify-icon></span>' : ''}</span>`;
@@ -311,6 +317,7 @@
           </td>
         </tr>`;
       }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.admin-header', onPageChange: page => { adminLanguagesPage = page; renderLanguages(); } });
     }
 
     function setDefaultLang(id, name) {
@@ -321,7 +328,7 @@
         cancelText: 'Hủy',
         danger: false,
         onConfirm: () => {
-          let settings = db.get('settings') || {};
+          let settings = getSystemSettings();
           settings.default_language_id = id;
           db.set('settings', settings);
           defaultLangId = id;

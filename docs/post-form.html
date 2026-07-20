@@ -477,6 +477,7 @@
     let previewUpdateTimer = null;
     let previewRequestId = 0;
     let thumbnailData = '';
+    let postSaveInProgress = false;
     const draftTranslationCache = new Map();
     const browserTranslators = new Map();
 
@@ -774,7 +775,8 @@
       notice.hidden = false;
     }
 
-    function savePost(requestedStatus) {
+    async function savePost(requestedStatus) {
+      if (postSaveInProgress) return;
       const title = document.getElementById('postTitle').value.trim();
       const content = quill ? quill.root.innerHTML : '';
       const isEmpty = !quill || quill.getText().trim().length === 0;
@@ -797,6 +799,26 @@
         showToast(localStorage.getItem('blog-lang') === 'en' ? 'You do not have permission to save this post.' : 'Bạn không có quyền lưu bài viết này!', 'error');
         return;
       }
+
+      const translationTargets = [...document.querySelectorAll('#translatePills input:checked')]
+        .map(cb => languages.find(language => language.code === cb.value))
+        .filter(Boolean);
+      const translatedDrafts = [];
+      postSaveInProgress = true;
+      try {
+        for (const targetLanguage of translationTargets) {
+          const translated = await translateDraft(title, content, sourceLangCode, targetLanguage.code);
+          translatedDrafts.push({ language: targetLanguage, ...translated });
+        }
+      } catch (error) {
+        postSaveInProgress = false;
+        const english = localStorage.getItem('blog-lang') === 'en';
+        showToast(english
+          ? 'Translation could not be completed. The post was not saved to prevent untranslated content.'
+          : 'Không thể hoàn tất bản dịch. Bài viết chưa được lưu để tránh lưu nhầm nội dung chưa dịch.', 'error');
+        return;
+      }
+
       const requiresReview = user.role_id !== 1 && getSystemSettings().require_post_approval;
       const status = requestedStatus === 'DRAFT' ? 'DRAFT' : (requiresReview ? 'PENDING' : 'PUBLISHED');
       const now = new Date().toISOString();
@@ -826,13 +848,10 @@
         transDB.push({ id: transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1, post_id: postId, language_id: sourceLangObj.id, title, content });
       }
 
-      document.querySelectorAll('#translatePills input:checked').forEach(cb => {
-        const lObj = languages.find(l => l.code === cb.value);
-        const tTitle = `[${lObj.name}] ${title}`;
-        const tContent = `<p><em>(Nội dung được tự động dịch sang ${lObj.name})</em></p>${content}`;
-        let eTrans = transDB.find(t => t.post_id === postId && t.language_id === lObj.id);
-        if (eTrans) { eTrans.title = tTitle; eTrans.content = tContent; eTrans.is_auto_translated = true; }
-        else { transDB.push({ id: transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1, post_id: postId, language_id: lObj.id, title: tTitle, content: tContent, is_auto_translated: true }); }
+      translatedDrafts.forEach(({ language, title: translatedTitle, content: translatedContent }) => {
+        let eTrans = transDB.find(t => t.post_id === postId && t.language_id === language.id);
+        if (eTrans) { eTrans.title = translatedTitle; eTrans.content = translatedContent; eTrans.is_auto_translated = true; }
+        else { transDB.push({ id: transDB.length ? Math.max(...transDB.map(x => x.id)) + 1 : 1, post_id: postId, language_id: language.id, title: translatedTitle, content: translatedContent, is_auto_translated: true }); }
       });
 
       db.set('post_translations', transDB);

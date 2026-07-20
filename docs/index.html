@@ -657,7 +657,7 @@ body {
       allPosts = db.getPostsWithDetails(langId).filter(post => {
         const translations = db.get('post_translations');
         return translations.some(t => t.post_id === post.id && String(t.language_id) === String(langId));
-      });
+      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
       // Check for search query in URL
       const params = new URLSearchParams(window.location.search);

@@ -186,6 +186,12 @@
           <option value="PENDING">Chờ duyệt</option>
           <option value="REJECTED">Bị từ chối</option>
         </select>
+        <select id="sortPosts" class="form-control" onchange="applyFilters()" style="max-width:210px;">
+          <option value="newest" data-vi="Mới nhất trước" data-en="Newest first">Newest first</option>
+          <option value="oldest" data-vi="Cũ nhất trước" data-en="Oldest first">Oldest first</option>
+          <option value="title-asc" data-vi="Tiêu đề: A đến Z" data-en="Title: A to Z">Title: A to Z</option>
+          <option value="title-desc" data-vi="Tiêu đề: Z đến A" data-en="Title: Z to A">Title: Z to A</option>
+        </select>
       </div>
 
       <div class="card">
@@ -273,21 +279,30 @@
         return { ...rp, title: detail.title, category_name: detail.category_name, created_at: detail.created_at || rp.created_at, langs: postLangs };
       });
 
-      renderTable(ownerPosts);
+      applyFilters(false);
       initSearch(() => allDetailPosts);
       applyLanguage(localStorage.getItem('blog-lang') || 'vi');
     });
 
-    function applyFilters() {
+    function applyFilters(resetPage = true) {
       const kw = document.getElementById('searchPosts').value.trim().toLowerCase();
       const status = document.getElementById('filterStatus').value;
+      const sort = document.getElementById('sortPosts').value;
       const filtered = ownerPosts.filter(p => {
         const matchKw = !kw || (p.title || '').toLowerCase().includes(kw) || (p.category_name || '').toLowerCase().includes(kw);
         const matchStatus = !status || p.status === status;
         return matchKw && matchStatus;
       });
-      ownerPostsPage = 1;
-      setPageInQuery(1);
+      filtered.sort((a, b) => {
+        if (sort === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+        if (sort === 'title-asc') return (a.title || '').localeCompare(b.title || '', getUiLocale(), { sensitivity: 'base' });
+        if (sort === 'title-desc') return (b.title || '').localeCompare(a.title || '', getUiLocale(), { sensitivity: 'base' });
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      if (resetPage) {
+        ownerPostsPage = 1;
+        setPageInQuery(1);
+      }
       renderTable(filtered);
     }
 

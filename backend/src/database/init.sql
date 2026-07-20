@@ -119,6 +119,7 @@ CREATE TABLE `posts` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `author_id` INT NOT NULL,
   `category_id` INT NOT NULL,
+  `thumbnail` VARCHAR(1000) NOT NULL COMMENT 'URL ảnh đại diện bài viết',
   `status` VARCHAR(50) DEFAULT 'DRAFT',
   `source_language_id` INT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

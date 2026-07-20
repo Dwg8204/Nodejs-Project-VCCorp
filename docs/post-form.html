@@ -110,6 +110,58 @@
       color: var(--text-muted) !important;
     }
 
+    .ql-editor { overflow-wrap: anywhere; }
+    .ql-editor img,
+    .preview-content-text img {
+      display: block;
+      width: auto;
+      max-width: 100% !important;
+      height: auto !important;
+      margin: 16px auto;
+      object-fit: contain;
+    }
+
+    .thumbnail-upload {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 160px;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .thumbnail-dropzone {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 112px;
+      padding: 18px;
+      border: 1px dashed var(--border-strong);
+      border-radius: 10px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: center;
+    }
+    .thumbnail-dropzone:hover { border-color: var(--accent); color: var(--accent); }
+    .thumbnail-dropzone iconify-icon { flex: 0 0 auto; font-size: 24px; }
+    .thumbnail-preview {
+      min-height: 112px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg-soft) center / cover no-repeat;
+    }
+    .preview-thumbnail {
+      display: none;
+      width: 100%;
+      max-height: 240px;
+      margin: 4px 0 18px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+    @media (max-width: 600px) {
+      .thumbnail-upload { grid-template-columns: 1fr; }
+      .thumbnail-preview { min-height: 180px; }
+    }
+
     .translate-pills {
       display: flex;
       flex-wrap: wrap;
@@ -365,6 +417,18 @@
           </div>
 
           <div class="form-group">
+            <label data-vi="Ảnh đại diện bài viết" data-en="Post thumbnail">Post thumbnail</label>
+            <div class="thumbnail-upload">
+              <label class="thumbnail-dropzone" for="postThumbnail">
+                <iconify-icon icon="solar:gallery-add-bold-duotone"></iconify-icon>
+                <span data-vi="Chọn ảnh JPG, PNG hoặc WebP (tối đa 5 MB)" data-en="Choose a JPG, PNG or WebP image (max 5 MB)">Choose a JPG, PNG or WebP image (max 5 MB)</span>
+              </label>
+              <div class="thumbnail-preview" id="thumbnailPreview" role="img" aria-label="Post thumbnail preview"></div>
+            </div>
+            <input type="file" id="postThumbnail" accept="image/jpeg,image/png,image/webp,image/gif" hidden onchange="handleThumbnailChange(this)">
+          </div>
+
+          <div class="form-group">
             <label data-vi="Nội dung bài viết" data-en="Post Content">Post Content</label>
             <div id="postContentEditor"></div>
           </div>
@@ -393,6 +457,7 @@
           <div id="previewPanelBody">
             <span class="preview-lang-badge" id="previewLangBadge">English</span>
             <div class="preview-title-text" id="previewPanelTitle">(Chưa có tiêu đề)</div>
+            <img class="preview-thumbnail" id="previewThumbnail" alt="Post thumbnail preview">
             <div class="preview-content-text" id="previewPanelContent"></div>
           </div>
         </div>
@@ -411,6 +476,7 @@
     let currentPreviewLang = null;
     let previewUpdateTimer = null;
     let previewRequestId = 0;
+    let thumbnailData = '';
     const draftTranslationCache = new Map();
     const browserTranslators = new Map();
 
@@ -594,7 +660,38 @@
       }
       document.getElementById('previewLangBadge').innerHTML = langName;
       document.getElementById('previewPanelTitle').textContent = previewTitle || '(Chưa có tiêu đề)';
+      const previewThumbnail = document.getElementById('previewThumbnail');
+      previewThumbnail.src = thumbnailData || '';
+      previewThumbnail.style.display = thumbnailData ? 'block' : 'none';
       document.getElementById('previewPanelContent').innerHTML = previewContent;
+    }
+
+    function handleThumbnailChange(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const english = localStorage.getItem('blog-lang') === 'en';
+      if (!file.type.startsWith('image/')) {
+        showToast(english ? 'Please choose a valid image.' : 'Vui lòng chọn tệp ảnh hợp lệ.', 'error');
+        input.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showToast(english ? 'The image must not exceed 5 MB.' : 'Ảnh không được vượt quá 5 MB.', 'error');
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        thumbnailData = String(reader.result || '');
+        renderThumbnailPreview();
+        updatePreview();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderThumbnailPreview() {
+      const preview = document.getElementById('thumbnailPreview');
+      preview.style.backgroundImage = thumbnailData ? `url("${thumbnailData.replace(/"/g, '%22')}")` : '';
     }
 
     function togglePreviewPanel() {
@@ -633,6 +730,9 @@
       const post = posts.find(p => p.id === postId);
       if (!post) return;
       renderPostWorkflowNotice(post);
+
+      thumbnailData = post.thumbnail || '';
+      renderThumbnailPreview();
 
       document.getElementById('categoryId').value = post.category_id;
       const sourceLangObj = languages.find(l => l.id === post.source_language_id);
@@ -682,8 +782,8 @@
       const sourceLangCode = document.getElementById('sourceLang').value;
       const languages = db.get('languages');
 
-      if (!title || isEmpty) {
-        showToast('Vui lòng nhập tiêu đề và nội dung!', 'error'); return;
+      if (!title || isEmpty || !thumbnailData) {
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Please enter a title, content and post thumbnail.' : 'Vui lòng nhập tiêu đề, nội dung và chọn ảnh đại diện!', 'error'); return;
       }
 
       const posts = db.get('posts');
@@ -705,11 +805,12 @@
       if (!postId) {
         postId = posts.length ? Math.max(...posts.map(p => p.id)) + 1 : 1;
         const sourceLangObj = languages.find(l => l.code === sourceLangCode);
-        posts.push({ id: postId, author_id: user.id, category_id: catId, status, source_language_id: sourceLangObj.id, submitted_at: status === 'PENDING' ? now : null, published_at: status === 'PUBLISHED' ? now : null, created_at: now, updated_at: now });
+        posts.push({ id: postId, author_id: user.id, category_id: catId, thumbnail: thumbnailData, status, source_language_id: sourceLangObj.id, submitted_at: status === 'PENDING' ? now : null, published_at: status === 'PUBLISHED' ? now : null, created_at: now, updated_at: now });
       } else {
         const p = posts.find(x => x.id === postId);
         if (p) {
           p.category_id = catId;
+          p.thumbnail = thumbnailData;
           p.status = status;
           p.updated_at = now;
           if (status === 'PENDING') { p.submitted_at = now; p.rejection_reason = null; p.reviewed_at = null; p.reviewed_by = null; }

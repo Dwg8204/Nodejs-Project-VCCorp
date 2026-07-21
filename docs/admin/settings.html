@@ -53,8 +53,8 @@
             <div class="settings-card-head"><span class="settings-card-icon"><iconify-icon icon="solar:list-bold-duotone"></iconify-icon></span><div><h2 data-vi="Hiển thị nội dung" data-en="Content display">Content display</h2><p data-vi="Thiết lập kích thước danh sách trên toàn hệ thống." data-en="Configure list sizes across the system.">Configure list sizes across the system.</p></div></div>
             <div class="settings-field">
               <label for="postsPerPage" data-vi="Số mục trên mỗi trang" data-en="Items per page">Items per page</label>
-              <select id="postsPerPage" class="form-control"><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option></select>
-              <p class="settings-hint" data-vi="Áp dụng cho danh sách bài viết, người dùng, danh mục và ngôn ngữ." data-en="Applies to post, user, category, and language lists.">Applies to post, user, category, and language lists.</p>
+              <input id="postsPerPage" class="form-control" type="number" min="1" max="100" step="1" inputmode="numeric">
+              <p class="settings-hint" data-vi="Giá trị mặc định từ 1 đến 100, áp dụng khi người dùng chưa chọn số mục riêng trên thanh phân trang." data-en="Default value from 1 to 100, used until a user chooses a personal page size in the pagination controls.">Default value from 1 to 100, used until a user chooses a personal page size in the pagination controls.</p>
             </div>
           </section>
 
@@ -118,9 +118,14 @@
 
     function saveSettings() {
       const beforeSettings = getSystemSettings();
+      const pageSize = Number(document.getElementById('postsPerPage').value);
+      if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Items per page must be between 1 and 100.' : 'Số mục trên mỗi trang phải từ 1 đến 100.', 'error');
+        return;
+      }
       const settings = {
         ...beforeSettings,
-        posts_per_page: Number(document.getElementById('postsPerPage').value),
+        posts_per_page: pageSize,
         default_language_id: Number(document.getElementById('defaultLanguage').value),
         auto_translate_categories: document.getElementById('autoTranslateCategories').checked,
         auto_translate_posts: document.getElementById('autoTranslatePosts').checked,

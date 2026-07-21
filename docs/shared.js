@@ -252,8 +252,20 @@ function getSystemSettings() {
 }
 
 function getSystemPageSize() {
+  const user = typeof db !== 'undefined' ? db.getCurrentUser() : null;
+  const preferenceKey = `vccorp_page_size_${user?.id || 'guest'}`;
+  const preferred = Number(localStorage.getItem(preferenceKey));
+  if (Number.isInteger(preferred) && preferred > 0 && preferred <= 100) return preferred;
   const configured = Number(getSystemSettings().posts_per_page);
   return Number.isInteger(configured) && configured > 0 && configured <= 100 ? configured : 5;
+}
+
+function setUserPageSize(value) {
+  const size = Number(value);
+  if (!Number.isInteger(size) || size < 1 || size > 100) return false;
+  const user = typeof db !== 'undefined' ? db.getCurrentUser() : null;
+  localStorage.setItem(`vccorp_page_size_${user?.id || 'guest'}`, String(size));
+  return true;
 }
 
 const AUDIT_SENSITIVE_KEYS = new Set(['password', 'password_hash', 'token', 'access_token', 'refresh_token', 'otp_code']);
@@ -326,14 +338,14 @@ function renderPagination({ container, pageData, onPageChange, queryKey = 'page'
   const host = typeof container === 'string' ? document.getElementById(container) : container;
   if (!host || !pageData) return;
   const { currentPage, totalPages, totalItems, pageSize, startIndex } = pageData;
-  if (!totalItems || totalPages <= 1) { host.innerHTML = ''; host.hidden = true; return; }
+  if (!totalItems) { host.innerHTML = ''; host.hidden = true; return; }
 
   const lang = localStorage.getItem('blog-lang') || 'vi';
   const from = startIndex + 1;
   const to = Math.min(startIndex + pageSize, totalItems);
   const labels = lang === 'en'
-    ? { previous: 'Previous', next: 'Next', page: 'Page', of: 'of', summary: `Showing ${from}–${to} of ${totalItems}` }
-    : { previous: 'Trước', next: 'Sau', page: 'Trang', of: '/', summary: `Hiển thị ${from}–${to} trong tổng số ${totalItems}` };
+    ? { previous: 'Previous', next: 'Next', page: 'Page', of: 'of', go: 'Go', items: 'Items/page', apply: 'Apply', summary: `Showing ${from}–${to} of ${totalItems}` }
+    : { previous: 'Trước', next: 'Sau', page: 'Trang', of: '/', go: 'Đi', items: 'Mục/trang', apply: 'Áp dụng', summary: `Hiển thị ${from}–${to} trong tổng số ${totalItems}` };
 
   const pageNumbers = [];
   for (let page = 1; page <= totalPages; page++) {
@@ -347,16 +359,38 @@ function renderPagination({ container, pageData, onPageChange, queryKey = 'page'
 
   host.hidden = false;
   host.className = 'pagination-wrap';
-  host.innerHTML = `<p class="pagination-summary">${labels.summary}</p><nav class="pagination-nav" aria-label="${lang === 'en' ? 'Pagination' : 'Phân trang'}"><button type="button" class="pagination-direction" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon><span>${labels.previous}</span></button><div class="pagination-pages">${controls.join('')}</div><span class="pagination-mobile-status">${labels.page} ${currentPage} ${labels.of} ${totalPages}</span><button type="button" class="pagination-direction" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}><span>${labels.next}</span><iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></button></nav>`;
+  host.innerHTML = `<p class="pagination-summary">${labels.summary}</p><div class="pagination-actions"><nav class="pagination-nav" aria-label="${lang === 'en' ? 'Pagination' : 'Phân trang'}"><button type="button" class="pagination-direction" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}><iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon><span>${labels.previous}</span></button><div class="pagination-pages">${controls.join('')}</div><span class="pagination-mobile-status">${labels.page} ${currentPage} ${labels.of} ${totalPages}</span><button type="button" class="pagination-direction" data-page="${currentPage + 1}" ${currentPage === totalPages ? 'disabled' : ''}><span>${labels.next}</span><iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></button></nav><div class="pagination-tools"><div class="pagination-jump"><span>${labels.page}</span><input type="number" min="1" max="${totalPages}" value="${currentPage}" inputmode="numeric" aria-label="${labels.page}"><button type="button" class="pagination-go">${labels.go}</button></div><div class="pagination-size"><span>${labels.items}</span><input type="number" min="1" max="100" value="${pageSize}" inputmode="numeric" aria-label="${labels.items}"><button type="button" class="pagination-size-apply" title="${labels.apply}" aria-label="${labels.apply}"><iconify-icon icon="solar:check-circle-linear"></iconify-icon></button></div></div></div>`;
 
-  host.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
-    const nextPage = Number(button.dataset.page);
-    if (button.disabled || nextPage === currentPage || nextPage < 1 || nextPage > totalPages) return;
-    setPageInQuery(nextPage, queryKey);
-    onPageChange(nextPage);
+  const navigate = nextPage => {
+    const page = Number(nextPage);
+    if (!Number.isInteger(page) || page < 1 || page > totalPages || page === currentPage) return;
+    setPageInQuery(page, queryKey);
+    onPageChange(page);
     const target = typeof scrollTarget === 'string' ? document.querySelector(scrollTarget) : scrollTarget;
     target?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  };
+
+  host.querySelectorAll('button[data-page]').forEach(button => button.addEventListener('click', () => {
+    if (!button.disabled) navigate(button.dataset.page);
   }));
+
+  const jumpInput = host.querySelector('.pagination-jump input');
+  const applyJump = () => navigate(jumpInput.value);
+  host.querySelector('.pagination-go').addEventListener('click', applyJump);
+  jumpInput.addEventListener('keydown', event => { if (event.key === 'Enter') applyJump(); });
+
+  const sizeInput = host.querySelector('.pagination-size input');
+  const applySize = () => {
+    if (!setUserPageSize(sizeInput.value)) {
+      showToast(lang === 'en' ? 'Items per page must be between 1 and 100.' : 'Số mục trên mỗi trang phải từ 1 đến 100.', 'error');
+      sizeInput.value = String(pageSize);
+      return;
+    }
+    setPageInQuery(1, queryKey);
+    onPageChange(1);
+  };
+  host.querySelector('.pagination-size-apply').addEventListener('click', applySize);
+  sizeInput.addEventListener('keydown', event => { if (event.key === 'Enter') applySize(); });
 }
 
 function translateUiMessage(value, lang) {

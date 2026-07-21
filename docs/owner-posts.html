@@ -3,8 +3,12 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
   <title>Quản lý bài viết – Medium</title>
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="responsive-pages.css">
   <style>
     .owner-main {
       padding: 24px 40px;
@@ -18,7 +22,6 @@
     }
 
     .owner-header h1 {
-      /* font-family: Georgia, 'Times New Roman', serif; */
       font-size: 32px;
       font-weight: 400;
     }
@@ -26,6 +29,7 @@
     .post-title-cell {
       font-weight: 600;
       cursor: pointer;
+      max-width: 280px;
     }
 
     .post-title-cell:hover {
@@ -34,28 +38,41 @@
 
     .action-icons {
       display: flex;
-      gap: 12px;
+      gap: 10px;
+      justify-content: flex-end;
     }
 
     .action-icons a,
     .action-icons button {
-      font-size: 15px;
+      font-size: 16px;
       cursor: pointer;
       background: none;
       border: none;
       color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      border-radius: 6px;
+      transition: color 0.15s, background 0.15s;
     }
 
     .action-icons .delete-icon:hover {
       color: var(--danger);
+      background: #FCEBEA;
     }
 
     .action-icons .edit-icon:hover {
       color: var(--text);
+      background: var(--bg-soft);
+    }
+
+    [data-theme="dark"] .action-icons .delete-icon:hover {
+      background: #3A1E1C;
     }
 
     .stats-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -77,6 +94,32 @@
       color: var(--text-muted);
       margin-top: 4px;
     }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar .form-control {
+      max-width: 240px;
+    }
+
+    .lang-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .lang-badge-sm {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: var(--bg-pill);
+      color: var(--text-muted);
+    }
   </style>
 </head>
 
@@ -84,102 +127,137 @@
 
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <a href="index.html" class="logo">Medium</a>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box-wrap" id="topSearchWrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" id="topSearchInput" type="text" placeholder="Search...">
+        <div class="search-results-dropdown" id="topSearchDropdown"></div>
+      </div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
-      <span class="write-link" onclick="location.href='post-form.html'">&#9998; Write</span>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()">
+          <span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+        </button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout no-rail" id="layoutRoot">
-    <aside class="sidebar">
-      <a href="index.html"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <a href="owner-posts.html" class="active"><span class="icon">&#128221;</span> Manage posts</a>
-      <a href="#"><span class="icon">&#128202;</span> Stats</a>
-      <hr>
-      <a href="#"><span class="icon">&#128101;</span> Following</a>
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Trang chủ" data-en="Home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span>
+        <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
+      <a href="owner-posts.html" class="active"><span class="icon"><iconify-icon
+            icon="fluent-mdl2:blog"></iconify-icon></span> <span data-vi="Quản lý bài viết"
+          data-en="Manage posts">Manage posts</span></a>
     </aside>
 
     <main class="owner-main">
       <div class="owner-header">
-        <h1>Quản lý bài viết</h1>
-        <a href="post-form.html" class="btn btn-primary">+ Viết bài mới</a>
+        <h1 data-vi="Quản lý bài viết" data-en="Manage Posts">Manage Posts</h1>
+        <a href="post-form.html" class="btn btn-primary">
+          <iconify-icon icon="basil:add-solid"></iconify-icon>
+          <span data-vi="Viết bài mới" data-en="New Post">New Post</span>
+        </a>
       </div>
 
-      <div class="stats-row" id="stats-container">
-        <!-- rendered by JS -->
+      <div class="stats-row" id="stats-container"><!-- rendered by JS --></div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <input type="text" id="searchPosts" class="form-control" placeholder="Tìm kiếm bài viết..."
+          oninput="applyFilters()" style="max-width:280px;">
+        <select id="filterStatus" class="form-control" onchange="applyFilters()" style="max-width:180px;">
+          <option value="">Tất cả trạng thái</option>
+          <option value="DRAFT" data-vi="Bản nháp" data-en="Draft">Draft</option>
+          <option value="PUBLISHED">Đã xuất bản</option>
+          <option value="PENDING">Chờ duyệt</option>
+          <option value="REJECTED">Bị từ chối</option>
+        </select>
+        <select id="sortPosts" class="form-control" onchange="applyFilters()" style="max-width:210px;">
+          <option value="newest" data-vi="Mới nhất trước" data-en="Newest first">Newest first</option>
+          <option value="oldest" data-vi="Cũ nhất trước" data-en="Oldest first">Oldest first</option>
+          <option value="title-asc" data-vi="Tiêu đề: A đến Z" data-en="Title: A to Z">Title: A to Z</option>
+          <option value="title-desc" data-vi="Tiêu đề: Z đến A" data-en="Title: Z to A">Title: Z to A</option>
+        </select>
       </div>
 
       <div class="card">
-        <table class="data-table">
+        <table class="data-table" style="table-layout: fixed; width: 100%;">
+          <colgroup>
+            <col class="col-title">
+            <col class="col-cat-name">
+            <col class="col-langs">
+            <col class="col-status">
+            <col class="col-date">
+            <col class="col-actions">
+          </colgroup>
           <thead>
             <tr>
-              <th>Tiêu đề</th>
-              <th>Danh mục</th>
-              <th>Ngôn ngữ</th>
-              <th>Trạng thái</th>
-              <th>Ngày đăng</th>
+              <th data-vi="Tiêu đề" data-en="Title">Title</th>
+              <th data-vi="Danh mục" data-en="Category">Category</th>
+              <th data-vi="Ngôn ngữ" data-en="Languages">Languages</th>
+              <th data-vi="Trạng thái" data-en="Status">Status</th>
+              <th data-vi="Ngày đăng" data-en="Date">Date</th>
               <th></th>
             </tr>
           </thead>
-          <tbody id="posts-tbody">
-            <!-- Rendered by js -->
-          </tbody>
+          <tbody id="posts-tbody"></tbody>
         </table>
       </div>
+      <div id="ownerPostsPagination"></div>
     </main>
   </div>
 
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
+    let ownerPosts = [];
+    let rawPostsGlobal = [];
+    let ownerPostsPage = getPageFromQuery();
+
     document.addEventListener('DOMContentLoaded', () => {
       const user = db.getCurrentUser();
-      if (!user || user.role_id !== 2) {
-        alert('Vui lòng đăng nhập với tài khoản Chủ Blog!');
-        window.location.href = 'login.html';
+      if (!user || user.role_id === 3) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'owner-posts.html', metadata: { path: location.pathname }, actor: user || null });
+        showToast('Vui lòng đăng nhập với tài khoản hợp lệ!', 'error');
+        setTimeout(() => window.location.href = 'login.html', 1500);
         return;
       }
 
-      const rawPosts = db.get('posts').filter(p => p.author_id === user.id);
       const langId = localStorage.getItem('current_language_id') || '1';
+      rawPostsGlobal = db.get('posts').filter(p => p.author_id === user.id);
 
-      // Calculate stats
-      const total = rawPosts.length;
-      const published = rawPosts.filter(p => p.status === 'PUBLISHED').length;
-      const drafts = total - published;
-
+      // Stats
+      const total = rawPostsGlobal.length;
+      const published = rawPostsGlobal.filter(p => p.status === 'PUBLISHED').length;
+      const drafts = rawPostsGlobal.filter(p => p.status === 'DRAFT').length;
+      const pending = rawPostsGlobal.filter(p => p.status === 'PENDING').length;
+      const rejected = rawPostsGlobal.filter(p => p.status === 'REJECTED').length;
       document.getElementById('stats-container').innerHTML = `
-      <div class="stat-card"><div class="num">${total}</div><div class="label">Tổng bài viết</div></div>
-      <div class="stat-card"><div class="num">${published}</div><div class="label">Đã xuất bản</div></div>
-      <div class="stat-card"><div class="num">${drafts}</div><div class="label">Bản nháp</div></div>
-    `;
+        <div class="stat-card"><div class="num">${total}</div><div class="label" data-vi="Tổng bài viết" data-en="Total Posts">Total Posts</div></div>
+        <div class="stat-card"><div class="num">${drafts}</div><div class="label" data-vi="Bản nháp" data-en="Drafts">Drafts</div></div>
+        <div class="stat-card"><div class="num">${published}</div><div class="label" data-vi="Đã xuất bản" data-en="Published">Published</div></div>
+        <div class="stat-card"><div class="num">${pending}</div><div class="label" data-vi="Chờ duyệt" data-en="Pending">Pending</div></div>
+        <div class="stat-card"><div class="num" style="color:var(--danger);">${rejected}</div><div class="label" data-vi="Bị từ chối" data-en="Rejected">Rejected</div></div>
+      `;
 
-      // Lấy bài viết chi tiết để render
       const allDetailPosts = db.getPostsWithDetails(langId);
-
-      let html = '';
-      rawPosts.forEach(rp => {
-        // Vì rawPosts không có title, ta tìm trong allDetailPosts hoặc gọi lấy lại
+      // Build enriched post list
+      ownerPosts = rawPostsGlobal.map(rp => {
         let detail = allDetailPosts.find(p => p.id === rp.id);
-
-        // Fallback nếu bài draft không có trong getPostsWithDetails (vì hàm đó lọc PUBLISHED)
         if (!detail) {
           const translations = db.get('post_translations');
           const catTrans = db.get('category_translation');
@@ -187,48 +265,107 @@
             translations.find(t => t.post_id === rp.id);
           let ct = catTrans.find(c => c.category_id === rp.category_id && c.language_id == langId) ||
             catTrans.find(c => c.category_id === rp.category_id);
-
-          detail = {
-            title: pt ? pt.title : 'Untitled',
-            category_name: ct ? ct.name : 'Unknown',
-            created_at: rp.created_at,
-            status: rp.status
-          };
+          detail = { title: pt ? pt.title : 'Untitled', category_name: ct ? ct.name : 'Unknown', created_at: rp.created_at, status: rp.status };
         }
 
-        const dateStr = new Date(detail.created_at).toLocaleDateString();
-        const statusBadge = rp.status === 'PUBLISHED'
-          ? '<span class="badge badge-green">Đã xuất bản</span>'
-          : '<span class="badge badge-gray">Bản nháp</span>';
+        // Get available language names for this post
+        const translations = db.get('post_translations');
+        const languages = db.get('languages');
+        const postLangs = translations.filter(t => t.post_id === rp.id).map(t => {
+          const l = languages.find(lg => lg.id === t.language_id);
+          return l ? l.code.toUpperCase() : t.language_id;
+        });
 
-        html += `
+        return { ...rp, title: detail.title, category_name: detail.category_name, created_at: detail.created_at || rp.created_at, langs: postLangs };
+      });
+
+      applyFilters(false);
+      initSearch(() => allDetailPosts);
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
+
+    function applyFilters(resetPage = true) {
+      const kw = document.getElementById('searchPosts').value.trim().toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+      const sort = document.getElementById('sortPosts').value;
+      const filtered = ownerPosts.filter(p => {
+        const matchKw = !kw || (p.title || '').toLowerCase().includes(kw) || (p.category_name || '').toLowerCase().includes(kw);
+        const matchStatus = !status || p.status === status;
+        return matchKw && matchStatus;
+      });
+      filtered.sort((a, b) => {
+        if (sort === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+        if (sort === 'title-asc') return (a.title || '').localeCompare(b.title || '', getUiLocale(), { sensitivity: 'base' });
+        if (sort === 'title-desc') return (b.title || '').localeCompare(a.title || '', getUiLocale(), { sensitivity: 'base' });
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      if (resetPage) {
+        ownerPostsPage = 1;
+        setPageInQuery(1);
+      }
+      renderTable(filtered);
+    }
+
+    function renderTable(posts) {
+      const paginationEl = document.getElementById('ownerPostsPagination');
+      if (!posts.length) {
+        document.getElementById('posts-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Không có bài viết nào.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
+        return;
+      }
+      const pageData = paginateItems(posts, ownerPostsPage);
+      ownerPostsPage = pageData.currentPage;
+      setPageInQuery(ownerPostsPage);
+      document.getElementById('posts-tbody').innerHTML = pageData.items.map(p => {
+        const dateStr = new Date(p.created_at).toLocaleDateString(getUiLocale());
+        const english = localStorage.getItem('blog-lang') === 'en';
+        const statusBadge = p.status === 'PUBLISHED'
+          ? `<span class="badge badge-green">${english ? 'Published' : 'Đã xuất bản'}</span>`
+          : p.status === 'REJECTED'
+            ? `<span class="badge badge-red" title="${p.rejection_reason || (english ? 'No reason provided' : 'Không rõ lý do')}">${english ? 'Rejected' : 'Bị từ chối'} <iconify-icon icon="solar:info-circle-bold-duotone" style="margin-left:4px;vertical-align:middle;"></iconify-icon></span>`
+            : p.status === 'DRAFT'
+              ? `<span class="badge badge-neutral"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon> ${english ? 'Draft' : 'Bản nháp'}</span>`
+              : `<span class="badge badge-yellow"><iconify-icon icon="streamline-pixel:interface-essential-waiting-hourglass-loading"></iconify-icon> ${english ? 'Pending' : 'Chờ duyệt'}</span>`;
+        const langBadges = (p.langs || []).map(l => `<span class="lang-badge-sm">${l}</span>`).join('');
+        const safeTitle = (p.title || 'Untitled').replace(/'/g, "\\'");
+        return `
         <tr>
-          <td class="post-title-cell" onclick="location.href='article.html?id=${rp.id}'">${detail.title}</td>
-          <td>${detail.category_name}</td>
-          <td>VI / EN</td>
+          <td class="post-title-cell" onclick="openPreview(${p.id})" title="${p.title}">${p.title}</td>
+          <td>${p.category_name}</td>
+          <td><div class="lang-badges">${langBadges || '<span class="lang-badge-sm">–</span>'}</div></td>
           <td>${statusBadge}</td>
           <td>${dateStr}</td>
           <td>
             <div class="action-icons">
-              <a href="post-form.html?id=${rp.id}" class="edit-icon" title="Sửa">&#9998;</a>
-              <button class="delete-icon" title="Xóa" onclick="deletePost(${rp.id}, '${detail.title}')">&#128465;</button>
+              <button class="view-btn" onclick="openPreview(${p.id})" title="Xem" style="background:none; border:none; cursor:pointer; padding:6px; display:inline-flex; align-items:center; color:var(--text-muted);"><iconify-icon icon="iconamoon:eye" style="font-size:19px;"></iconify-icon></button>
+              <a href="post-form.html?id=${p.id}" class="edit-icon" title="Sửa" style="padding:6px; display:inline-flex; align-items:center;"><iconify-icon icon="tabler:edit" style="font-size:19px;"></iconify-icon></a>
+              <button class="delete-icon" title="Xóa" onclick="confirmDeletePost(${p.id}, '${safeTitle}')" style="padding:6px; display:inline-flex; align-items:center;"><iconify-icon icon="weui:delete-outlined" style="font-size:19px;"></iconify-icon></button>
             </div>
           </td>
-        </tr>
-      `;
+        </tr>`;
+      }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.filter-bar', onPageChange: page => { ownerPostsPage = page; renderTable(posts); } });
+    }
+
+    function confirmDeletePost(id, title) {
+      showConfirm({
+        title: 'Xóa bài viết',
+        message: `Bạn có chắc muốn xóa bài viết "<strong>${title}</strong>" không? Hành động này không thể hoàn tác.`,
+        confirmText: 'Xóa',
+        cancelText: 'Hủy',
+        danger: true,
+        onConfirm: () => {
+          const posts = db.get('posts');
+          const deletedPost = posts.find(p => p.id === id);
+          db.set('posts', posts.filter(p => p.id !== id));
+          const trans = db.get('post_translations');
+          db.set('post_translations', trans.filter(t => t.post_id !== id));
+          recordAuditLog({ action: 'POST_DELETED', entityType: 'POST', entityId: id, entityLabel: title, beforeData: deletedPost });
+          showToast('Đã xóa bài viết!', 'success');
+          setTimeout(() => location.reload(), 900);
+        }
       });
-
-      document.getElementById('posts-tbody').innerHTML = html;
-    });
-
-    function deletePost(id, title) {
-      if (confirm('Xóa bài viết "' + title + '"?')) {
-        const posts = db.get('posts');
-        const filtered = posts.filter(p => p.id !== id);
-        db.set('posts', filtered);
-        alert('Đã xóa bài viết!');
-        location.reload();
-      }
     }
   </script>
 </body>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nhật ký hoạt động – Medium</title>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../unified_media.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <span class="logo">Medium</span>
+      <div class="search-box-wrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" type="text" placeholder="Tìm kiếm..." data-vi-placeholder="Tìm kiếm..." data-en-placeholder="Search...">
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">Tiếng Việt</span><iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu"></div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar">A</div>
+    </div>
+  </div>
+
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span><span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span></a>
+      <a href="posts.html"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span><span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>
+      <a href="users.html"><span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span><span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span></a>
+      <a href="categories.html"><span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span><span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span></a>
+      <a href="languages.html"><span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span><span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span></a>
+      <a href="logs.html" class="active"><span class="icon"><iconify-icon icon="solar:history-bold-duotone"></iconify-icon></span><span data-vi="Nhật ký hoạt động" data-en="Activity logs">Activity logs</span></a>
+      <a href="settings.html"><span class="icon"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon></span><span data-vi="Cài đặt hệ thống" data-en="System settings">System settings</span></a>
+      <a href="../index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span><span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span></a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header audit-header">
+        <div><span class="admin-eyebrow" data-vi="Kiểm soát hệ thống" data-en="System accountability">System accountability</span><h1 data-vi="Nhật ký hoạt động" data-en="Activity Logs">Activity Logs</h1><p data-vi="Theo dõi các thay đổi quản trị và sự kiện bảo mật quan trọng." data-en="Track administrative changes and important security events.">Track administrative changes and important security events.</p></div>
+        <div class="audit-readonly"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon><span data-vi="Chỉ đọc" data-en="Read only">Read only</span></div>
+      </div>
+
+      <div class="filter-row audit-filter-row">
+        <input id="logSearch" class="form-control" type="search" placeholder="Tìm người thực hiện hoặc đối tượng..." data-vi-placeholder="Tìm người thực hiện hoặc đối tượng..." data-en-placeholder="Search actor or target..." oninput="applyLogFilters()">
+        <select id="logAction" class="form-control" onchange="applyLogFilters()"><option value="" data-vi="Tất cả hành động" data-en="All actions">All actions</option></select>
+        <select id="logEntity" class="form-control" onchange="applyLogFilters()"><option value="" data-vi="Tất cả đối tượng" data-en="All entities">All entities</option></select>
+        <label class="audit-date-field"><span data-vi="Từ ngày" data-en="From">From</span><input id="logDateFrom" class="form-control" type="date" onchange="applyLogFilters()"></label>
+        <label class="audit-date-field"><span data-vi="Đến ngày" data-en="To">To</span><input id="logDateTo" class="form-control" type="date" onchange="applyLogFilters()"></label>
+        <button type="button" class="btn btn-outline audit-reset" onclick="resetLogFilters()"><iconify-icon icon="solar:restart-linear"></iconify-icon><span data-vi="Đặt lại" data-en="Reset">Reset</span></button>
+      </div>
+
+      <div class="card audit-table-card">
+        <table class="data-table audit-table">
+          <thead><tr><th data-vi="Thời gian" data-en="Time">Time</th><th data-vi="Người thực hiện" data-en="Actor">Actor</th><th data-vi="Hành động" data-en="Action">Action</th><th data-vi="Đối tượng" data-en="Target">Target</th><th></th></tr></thead>
+          <tbody id="logsTableBody"></tbody>
+        </table>
+      </div>
+      <div id="auditLogsPagination"></div>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="logDetailModal" onclick="if(event.target===this)closeModal('logDetailModal')">
+    <div class="modal-box audit-detail-modal">
+      <div class="modal-header"><h2><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon> <span data-vi="Chi tiết nhật ký" data-en="Log details">Log details</span></h2><button class="modal-close" onclick="closeModal('logDetailModal')"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon></button></div>
+      <div class="modal-body" id="logDetailBody"></div>
+      <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('logDetailModal')" data-vi="Đóng" data-en="Close">Close</button></div>
+    </div>
+  </div>
+
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    let allAuditLogs = [];
+    let auditPage = getPageFromQuery('log_page');
+
+    const AUDIT_ACTIONS = {
+      POST_CREATED: ['Tạo bài viết', 'Post created'], POST_UPDATED: ['Sửa bài viết', 'Post updated'], POST_SUBMITTED: ['Gửi bài duyệt', 'Post submitted'], POST_APPROVED: ['Duyệt bài viết', 'Post approved'], POST_REJECTED: ['Từ chối bài viết', 'Post rejected'], POST_DELETED: ['Xóa bài viết', 'Post deleted'],
+      CATEGORY_CREATED: ['Tạo danh mục', 'Category created'], CATEGORY_UPDATED: ['Sửa danh mục', 'Category updated'], CATEGORY_TRANSLATED: ['Dịch danh mục', 'Category translated'], CATEGORY_DELETED: ['Xóa danh mục', 'Category deleted'],
+      USER_CREATED: ['Tạo người dùng', 'User created'], USER_LOCKED: ['Khóa người dùng', 'User locked'], USER_UNLOCKED: ['Mở khóa người dùng', 'User unlocked'], USER_ROLE_CHANGED: ['Đổi vai trò', 'Role changed'],
+      LANGUAGE_CREATED: ['Thêm ngôn ngữ', 'Language created'], LANGUAGE_UPDATED: ['Sửa ngôn ngữ', 'Language updated'], LANGUAGE_DELETED: ['Xóa ngôn ngữ', 'Language deleted'], LANGUAGE_DEFAULT_CHANGED: ['Đổi ngôn ngữ mặc định', 'Default language changed'],
+      SETTINGS_UPDATED: ['Thay đổi cài đặt', 'Settings updated'], SETTINGS_RESTORED: ['Khôi phục cài đặt', 'Settings restored'], AUTH_LOGIN_SUCCEEDED: ['Đăng nhập thành công', 'Login succeeded'], AUTH_LOGIN_FAILED: ['Đăng nhập thất bại', 'Login failed'], AUTH_LOGOUT: ['Đăng xuất', 'Logout'], AUTH_ACCESS_DENIED: ['Truy cập bị từ chối', 'Access denied']
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/logs.html', metadata: { path: location.pathname }, actor: user || null });
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Super Admin access required.' : 'Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
+        setTimeout(() => location.href = '../login.html', 1200);
+        return;
+      }
+      hydrateAccountAvatar(document.querySelector('.avatar'), user);
+      allAuditLogs = db.get('audit_logs').sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      populateLogFilters();
+      applyLogFilters(false);
+      const requestedId = Number(new URLSearchParams(location.search).get('id'));
+      if (requestedId) openLogDetail(requestedId);
+    });
+
+    function auditText(action) {
+      const pair = AUDIT_ACTIONS[action];
+      return pair ? pair[localStorage.getItem('blog-lang') === 'en' ? 1 : 0] : action.replaceAll('_', ' ');
+    }
+    function escapeLogHtml(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c])); }
+    function populateLogFilters() {
+      const action = document.getElementById('logAction');
+      const entity = document.getElementById('logEntity');
+      const actionValues = [...new Set([...Object.keys(AUDIT_ACTIONS), ...allAuditLogs.map(log => log.action)])].sort((a, b) => auditText(a).localeCompare(auditText(b), getUiLocale()));
+      const entityValues = [...new Set(['POST', 'CATEGORY', 'USER', 'LANGUAGE', 'SETTINGS', 'AUTH', 'PAGE', ...allAuditLogs.map(log => log.entity_type)])];
+      actionValues.forEach(value => action.insertAdjacentHTML('beforeend', `<option value="${escapeLogHtml(value)}">${escapeLogHtml(auditText(value))}</option>`));
+      entityValues.forEach(value => entity.insertAdjacentHTML('beforeend', `<option value="${escapeLogHtml(value)}">${escapeLogHtml(value)}</option>`));
+    }
+    function applyLogFilters(resetPage = true) {
+      if (resetPage) auditPage = 1;
+      const keyword = document.getElementById('logSearch').value.trim().toLowerCase();
+      const action = document.getElementById('logAction').value;
+      const entity = document.getElementById('logEntity').value;
+      const from = document.getElementById('logDateFrom').value;
+      const to = document.getElementById('logDateTo').value;
+      const filtered = allAuditLogs.filter(log => {
+        const haystack = `${log.actor_name || ''} ${log.entity_label || ''} ${log.action} ${log.entity_type}`.toLowerCase();
+        const date = String(log.created_at || '').slice(0, 10);
+        return (!keyword || haystack.includes(keyword)) && (!action || log.action === action) && (!entity || log.entity_type === entity) && (!from || date >= from) && (!to || date <= to);
+      });
+      renderLogs(filtered);
+    }
+    function resetLogFilters() {
+      ['logSearch','logAction','logEntity','logDateFrom','logDateTo'].forEach(id => document.getElementById(id).value = '');
+      applyLogFilters();
+    }
+    function renderLogs(logs) {
+      const body = document.getElementById('logsTableBody');
+      const pagination = document.getElementById('auditLogsPagination');
+      if (!logs.length) {
+        body.innerHTML = `<tr><td colspan="5" class="audit-empty">${localStorage.getItem('blog-lang') === 'en' ? 'No activity logs found.' : 'Không tìm thấy nhật ký hoạt động.'}</td></tr>`;
+        pagination.innerHTML = ''; pagination.hidden = true; return;
+      }
+      const pageData = paginateItems(logs, auditPage);
+      auditPage = pageData.currentPage;
+      body.innerHTML = pageData.items.map(log => `<tr><td><time>${new Date(log.created_at).toLocaleString(getUiLocale(), { dateStyle:'short', timeStyle:'short' })}</time></td><td><strong>${escapeLogHtml(log.actor_name || (localStorage.getItem('blog-lang') === 'en' ? 'System / Guest' : 'Hệ thống / Khách'))}</strong><small class="audit-actor-role">${escapeLogHtml(log.actor_role ?? '—')}</small></td><td><span class="audit-action audit-action-${escapeLogHtml(log.entity_type.toLowerCase())}">${escapeLogHtml(auditText(log.action))}</span></td><td><strong>${escapeLogHtml(log.entity_label || `#${log.entity_id || '—'}`)}</strong><small class="audit-entity-type">${escapeLogHtml(log.entity_type)}</small></td><td><button class="view-btn" onclick="openLogDetail(${log.id})" title="Xem chi tiết" data-vi-title="Xem chi tiết" data-en-title="View details"><iconify-icon icon="solar:eye-linear"></iconify-icon></button></td></tr>`).join('');
+      renderPagination({ container: pagination, pageData, queryKey: 'log_page', scrollTarget: '.audit-filter-row', onPageChange: page => { auditPage = page; renderLogs(logs); } });
+    }
+    function formatAuditJson(value) {
+      if (value === null || value === undefined) return `<span class="audit-no-data">${localStorage.getItem('blog-lang') === 'en' ? 'No data' : 'Không có dữ liệu'}</span>`;
+      return `<pre>${escapeLogHtml(JSON.stringify(value, null, 2))}</pre>`;
+    }
+    function openLogDetail(id) {
+      const log = allAuditLogs.find(item => Number(item.id) === Number(id));
+      if (!log) return;
+      document.getElementById('logDetailBody').innerHTML = `<div class="audit-detail-summary"><div><span>ID</span><strong>#${log.id}</strong></div><div><span>${localStorage.getItem('blog-lang') === 'en' ? 'Action' : 'Hành động'}</span><strong>${escapeLogHtml(auditText(log.action))}</strong></div><div><span>${localStorage.getItem('blog-lang') === 'en' ? 'Actor' : 'Người thực hiện'}</span><strong>${escapeLogHtml(log.actor_name || 'System / Guest')}</strong></div><div><span>${localStorage.getItem('blog-lang') === 'en' ? 'Time' : 'Thời gian'}</span><strong>${new Date(log.created_at).toLocaleString(getUiLocale())}</strong></div></div><section class="audit-json-section"><h3>${localStorage.getItem('blog-lang') === 'en' ? 'Before' : 'Trước thay đổi'}</h3>${formatAuditJson(log.before_data)}</section><section class="audit-json-section"><h3>${localStorage.getItem('blog-lang') === 'en' ? 'After' : 'Sau thay đổi'}</h3>${formatAuditJson(log.after_data)}</section><section class="audit-json-section"><h3>Metadata</h3>${formatAuditJson(log.metadata)}</section>`;
+      openModal('logDetailModal');
+    }
+  </script>
+</body>
+</html>

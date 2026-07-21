@@ -1,179 +1,481 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<title>Quản lý người dùng – Medium</title>
-<link rel="stylesheet" href="../shared.css">
-<style>
-  .admin-main { padding: 24px 40px; }
-  .admin-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-  }
-  .admin-header h1 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 32px;
-    font-weight: 400;
-  }
-  .filter-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .filter-row .form-control { max-width: 220px; }
-  .user-cell { display: flex; align-items: center; gap: 10px; }
-  .user-cell .mini-avatar { width: 30px; height: 30px; border-radius: 50%; background:#999; }
-  select.role-select {
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    padding: 5px 10px;
-    font-size: 13px;
-    background: var(--card-bg);
-    color: var(--text);
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Quản lý người dùng – Medium</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
+  <style>
+    .admin-main {
+      padding: 24px 40px;
+    }
+
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .admin-header h1 {
+      font-family: inherit;
+      font-size: 32px;
+      font-weight: 400;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row .form-control {
+      max-width: 240px;
+    }
+
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .user-info .user-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .user-info .user-username {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    select.role-select {
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 13px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .role-locked {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .action-col {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .action-col button {
+      font-size: 14px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .btn-lock {
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+
+    .btn-lock:hover {
+      background: #FCEBEA;
+    }
+
+    .btn-unlock {
+      color: var(--accent);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-unlock:hover {
+      background: var(--accent-soft);
+    }
+
+    [data-theme="dark"] .btn-lock:hover {
+      background: #3A1E1C;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
-    <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
-  </div>
-  <div class="topbar-right">
-    <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
-      <div class="lang-menu">
-        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
-        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <a href="../index.html" class="logo">Medium</a>
+      <div class="search-box-wrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" id="topSearchInput" type="text" placeholder="Search..."
+          data-vi-placeholder="Tìm kiếm..." data-en-placeholder="Search...">
+        <div class="search-results-dropdown" id="topSearchDropdown"></div>
       </div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
-    <div class="avatar" style="background:#5A3FBF;">A</div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu">
+          <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+          <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar" style="background:#5A3FBF;">A</div>
+    </div>
   </div>
-</div>
 
-<div class="layout no-rail" id="layoutRoot">
-  <aside class="sidebar">
-    <a href="index.html"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="users.html" class="active"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
-    <hr>
-    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
-  </aside>
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html">
+        <span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span>
+        <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
+      </a>
+      <a href="posts.html">
+        <span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span>
+        <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span>
+      </a>
+      <a href="users.html" class="active">
+        <span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span>
+        <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
+      </a>
+      <a href="categories.html">
+        <span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span>
+        <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
+      </a>
+      <a href="languages.html">
+        <span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span>
+        <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
+      </a>
+      <a href="../index.html">
+        <span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
+      </a>
+    </aside>
 
-  <main class="admin-main">
-    <div class="admin-header">
-      <h1>Quản lý người dùng</h1>
-      <button class="btn btn-primary" onclick="alert('Mở form mời người dùng mới')">+ Thêm người dùng</button>
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1 data-vi="Quản lý người dùng" data-en="Manage Users">Manage Users</h1>
+        <button class="btn btn-primary" onclick="openModal('addUserModal')">
+          <iconify-icon icon="solar:user-plus-bold-duotone"></iconify-icon>
+          <span data-vi="Thêm người dùng" data-en="Add User">Add User</span>
+        </button>
+      </div>
+
+      <div class="filter-row">
+        <input type="text" id="searchUsers" class="form-control" placeholder="Tìm theo tên hoặc email..."
+          oninput="applyFilters()">
+        <select id="filterRole" class="form-control" onchange="applyFilters()">
+          <option value="">Tất cả vai trò</option>
+          <option value="1">Super Admin</option>
+          <option value="2">Blog Owner</option>
+          <option value="3">Authenticated User</option>
+        </select>
+        <select id="filterStatus" class="form-control" onchange="applyFilters()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="active">Hoạt động</option>
+          <option value="inactive">Đã khóa</option>
+        </select>
+      </div>
+
+      <div class="card">
+        <table class="data-table" style="table-layout:fixed; width:100%;">
+          <colgroup>
+            <col class="col-user">
+            <col class="col-email">
+            <col class="col-role">
+            <col class="col-status">
+            <col class="col-date">
+            <col class="col-actions">
+          </colgroup>
+          <thead>
+            <tr>
+              <th data-vi="Người dùng" data-en="User">User</th>
+              <th>Email</th>
+              <th data-vi="Vai trò" data-en="Role">Role</th>
+              <th data-vi="Trạng thái" data-en="Status">Status</th>
+              <th data-vi="Ngày tham gia" data-en="Joined">Joined</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+      <div id="adminUsersPagination"></div>
+    </main>
+  </div>
+
+  <!-- Add User Modal -->
+  <div class="modal-overlay" id="addUserModal" onclick="if(event.target===this)closeModal('addUserModal')">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2><iconify-icon icon="solar:user-plus-bold-duotone"></iconify-icon> Thêm người dùng</h2>
+        <button class="modal-close" onclick="closeModal('addUserModal')"><iconify-icon
+            icon="solar:close-circle-bold-duotone"></iconify-icon></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Họ và tên <span class="required-star">*</span></label>
+          <input type="text" id="newUserFullName" class="form-control" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+          <label>Tên đăng nhập <span class="required-star">*</span></label>
+          <input type="text" id="newUserName" class="form-control" placeholder="nguyenvana">
+        </div>
+        <div class="form-group">
+          <label>Email <span class="required-star">*</span></label>
+          <input type="email" id="newUserEmail" class="form-control" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>Mật khẩu <span class="required-star">*</span></label>
+          <div class="input-password-wrap">
+            <input type="password" id="newUserPassword" class="form-control" placeholder="Nhập mật khẩu...">
+            <button class="toggle-password" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" data-vi-aria-label="Hiện mật khẩu" data-en-aria-label="Show password" onclick="togglePasswordVisibility('newUserPassword', this)">
+              <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nhập lại mật khẩu <span class="required-star">*</span></label>
+          <div class="input-password-wrap">
+            <input type="password" id="newUserConfirmPassword" class="form-control" placeholder="Nhập lại mật khẩu...">
+            <button class="toggle-password" type="button" aria-label="Hiện mật khẩu" aria-pressed="false" data-vi-aria-label="Hiện mật khẩu" data-en-aria-label="Show password"
+              onclick="togglePasswordVisibility('newUserConfirmPassword', this)">
+              <iconify-icon icon="solar:eye-bold-duotone"></iconify-icon>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vai trò <span class="required-star">*</span></label>
+          <select id="newUserRole" class="form-control">
+            <option value="2">Blog Owner</option>
+            <option value="3">Authenticated User</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('addUserModal')">Hủy</button>
+        <button class="btn btn-primary" onclick="submitAddUser()">Tạo người dùng</button>
+      </div>
     </div>
+  </div>
 
-    <div class="filter-row">
-      <input type="text" class="form-control" placeholder="Tìm theo tên hoặc email..." style="max-width:280px;">
-      <select class="form-control">
-        <option>Tất cả vai trò</option>
-        <option>Super Admin</option>
-        <option>Blog Owner</option>
-        <option>Authenticated User</option>
-      </select>
-    </div>
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    let allUsers = [];
+    let adminUsersPage = getPageFromQuery();
 
-    <div class="card">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Người dùng</th>
-            <th>Email</th>
-            <th>Vai trò</th>
-            <th>Trạng thái</th>
-            <th>Ngày tham gia</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="users-tbody">
-          <!-- Rendered by js -->
-        </tbody>
-      </table>
-    </div>
-  </main>
-</div>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/users.html', metadata: { path: location.pathname }, actor: user || null });
+        showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
+        setTimeout(() => window.location.href = '../login.html', 1500);
+        return;
+      }
+      document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+      loadUsers();
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
 
-<script src="../shared.js"></script>
-<script src="../js/mockData.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const user = db.getCurrentUser();
-    if (!user || user.role_id !== 1) {
-      alert('Vui lòng đăng nhập với tài khoản Super Admin!');
-      window.location.href = 'login.html';
-      return;
+    function loadUsers() {
+      allUsers = db.get('users');
+      applyFilters(false);
     }
 
-    renderUsers();
-  });
+    function applyFilters(resetPage = true) {
+      const kw = (document.getElementById('searchUsers').value || '').trim().toLowerCase();
+      const roleFilter = document.getElementById('filterRole').value;
+      const statusFilter = document.getElementById('filterStatus').value;
 
-  function renderUsers() {
-    const users = db.get('users');
-    const roles = db.get('roles');
-    
-    let html = '';
-    users.forEach(u => {
-      const dateStr = new Date(u.created_at).toLocaleDateString();
-      const statusBadge = u.is_active 
-        ? '<span class="badge badge-green">Hoạt động</span>' 
-        : '<span class="badge badge-red">Đã khóa</span>';
-        
-      const actionBtn = u.is_active
-        ? `<button class="btn btn-sm btn-danger" onclick="toggleStatus(${u.id}, false)">Khóa</button>`
-        : `<button class="btn btn-sm btn-outline" onclick="toggleStatus(${u.id}, true)">Mở khóa</button>`;
+      const filtered = allUsers.filter(u => {
+        const matchKw = !kw || (u.full_name || '').toLowerCase().includes(kw) || (u.user_name || '').toLowerCase().includes(kw) || (u.email || '').toLowerCase().includes(kw);
+        const matchRole = !roleFilter || String(u.role_id) === roleFilter;
+        const matchStatus = !statusFilter || (statusFilter === 'active' ? u.is_active : !u.is_active);
+        return matchKw && matchRole && matchStatus;
+      });
+      if (resetPage) { adminUsersPage = 1; setPageInQuery(1); }
+      renderUsers(filtered);
+    }
 
-      const roleOptions = roles.map(r => 
-        `<option value="${r.id}" ${u.role_id === r.id ? 'selected' : ''}>${r.name_role}</option>`
-      ).join('');
+    const ROLE_NAMES = { 1: 'Super Admin', 2: 'Blog Owner', 3: 'Authenticated User' };
+    const AVATAR_COLORS = ['#7C5CE0', '#00B894', '#E17055', '#0984E3', '#6C5CE7', '#00CEC9'];
 
-      html += `
+    function renderUsers(users) {
+      const roles = db.get('roles');
+      const paginationEl = document.getElementById('adminUsersPagination');
+      if (!users.length) {
+        document.getElementById('users-tbody').innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">Không tìm thấy người dùng.</td></tr>`;
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
+        return;
+      }
+      const pageData = paginateItems(users, adminUsersPage);
+      adminUsersPage = pageData.currentPage;
+      setPageInQuery(adminUsersPage);
+      document.getElementById('users-tbody').innerHTML = pageData.items.map(u => {
+        const dateStr = new Date(u.created_at).toLocaleDateString(getUiLocale());
+        const statusBadge = u.is_active
+          ? '<span class="badge badge-green"><iconify-icon icon="solar:check-circle-bold-duotone"></iconify-icon> Hoạt động</span>'
+          : '<span class="badge badge-red"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon> Đã khóa</span>';
+
+        const isSA = u.role_id === 1;
+        const color = AVATAR_COLORS[u.id % AVATAR_COLORS.length];
+        const initials = (u.full_name || u.user_name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+        const roleCell = isSA
+          ? `<span class="role-locked"><iconify-icon icon="solar:lock-bold-duotone"></iconify-icon> Super Admin</span>`
+          : `<select class="role-select" onchange="changeRole(${u.id}, this.value)">
+            <option value="2" ${u.role_id === 2 ? 'selected' : ''}>Blog Owner</option>
+            <option value="3" ${u.role_id === 3 ? 'selected' : ''}>Authenticated User</option>
+          </select>`;
+
+        const actionBtn = isSA
+          ? `<button class="btn btn-sm btn-outline" disabled title="Không thể khóa Super Admin" style="opacity:0.4; cursor:not-allowed;">
+            <iconify-icon icon="solar:lock-bold-duotone"></iconify-icon> Khóa
+          </button>`
+          : u.is_active
+            ? `<button class="btn-lock" onclick="confirmToggleStatus(${u.id}, false, '${u.full_name || u.user_name}')"><iconify-icon icon="solar:lock-bold-duotone"></iconify-icon> Khóa</button>`
+            : `<button class="btn-unlock" onclick="confirmToggleStatus(${u.id}, true, '${u.full_name || u.user_name}')"><iconify-icon icon="solar:lock-keyhole-unlocked-bold-duotone"></iconify-icon> Mở khóa</button>`;
+
+        return `
         <tr>
-          <td class="user-cell"><span class="mini-avatar"></span> ${u.full_name || u.user_name}</td>
-          <td>${u.email}</td>
           <td>
-            <select class="role-select" onchange="changeRole(${u.id}, this.value)">
-              ${roleOptions}
-            </select>
+            <div class="user-cell">
+              <div class="mini-avatar" style="background:${color};">${initials}</div>
+              <div class="user-info">
+                <div class="user-name">${u.full_name || u.user_name}</div>
+                <div class="user-username">@${u.user_name}</div>
+              </div>
+            </div>
           </td>
+          <td style="word-break:break-all;">${u.email}</td>
+          <td>${roleCell}</td>
           <td>${statusBadge}</td>
           <td>${dateStr}</td>
-          <td>${actionBtn}</td>
-        </tr>
-      `;
-    });
-    
-    document.getElementById('users-tbody').innerHTML = html;
-  }
-
-  function toggleStatus(userId, isActive) {
-    const users = db.get('users');
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex > -1) {
-      users[userIndex].is_active = isActive;
-      db.set('users', users);
-      renderUsers();
+          <td><div class="action-col">${actionBtn}</div></td>
+        </tr>`;
+      }).join('');
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.filter-row', onPageChange: page => { adminUsersPage = page; renderUsers(users); } });
     }
-  }
 
-  function changeRole(userId, newRoleId) {
-    const users = db.get('users');
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex > -1) {
-      users[userIndex].role_id = parseInt(newRoleId);
-      db.set('users', users);
-      // alert('Đã cập nhật phân quyền!');
+    function confirmToggleStatus(userId, isActive, name) {
+      showConfirm({
+        title: isActive ? 'Mở khóa tài khoản' : 'Khóa tài khoản',
+        message: `Bạn có chắc muốn ${isActive ? 'mở khóa' : 'khóa'} tài khoản của <strong>${name}</strong>?`,
+        confirmText: isActive ? 'Mở khóa' : 'Khóa',
+        cancelText: 'Hủy',
+        danger: !isActive,
+        onConfirm: () => {
+          const users = db.get('users');
+          const idx = users.findIndex(u => u.id === userId);
+          if (idx > -1) {
+            const beforeUser = JSON.parse(JSON.stringify(users[idx]));
+            users[idx].is_active = isActive;
+            users[idx].updated_at = new Date().toISOString();
+            db.set('users', users);
+            recordAuditLog({ action: isActive ? 'USER_UNLOCKED' : 'USER_LOCKED', entityType: 'USER', entityId: userId, entityLabel: name, beforeData: beforeUser, afterData: users[idx] });
+          }
+          showToast(isActive ? 'Đã mở khóa tài khoản!' : 'Đã khóa tài khoản!', 'success');
+          loadUsers();
+        }
+      });
     }
-  }
-</script>
+
+    function changeRole(userId, newRoleId) {
+      showConfirm({
+        title: 'Thay đổi vai trò',
+        message: `Bạn có chắc muốn thay đổi vai trò của người dùng này?`,
+        confirmText: 'Xác nhận',
+        cancelText: 'Hủy',
+        danger: false,
+        onConfirm: () => {
+          const users = db.get('users');
+          const idx = users.findIndex(u => u.id === userId);
+          if (idx > -1) {
+            const beforeUser = JSON.parse(JSON.stringify(users[idx]));
+            users[idx].role_id = parseInt(newRoleId);
+            users[idx].updated_at = new Date().toISOString();
+            db.set('users', users);
+            recordAuditLog({ action: 'USER_ROLE_CHANGED', entityType: 'USER', entityId: userId, entityLabel: users[idx].full_name || users[idx].user_name, beforeData: beforeUser, afterData: users[idx] });
+          }
+          showToast('Đã cập nhật vai trò!', 'success');
+          loadUsers();
+        },
+        onCancel: () => loadUsers()
+      });
+    }
+
+    function submitAddUser() {
+      const fullName = document.getElementById('newUserFullName').value.trim();
+      const userName = document.getElementById('newUserName').value.trim().toLowerCase();
+      const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
+      const password = document.getElementById('newUserPassword').value;
+      const confirmPassword = document.getElementById('newUserConfirmPassword').value;
+      const roleId = parseInt(document.getElementById('newUserRole').value);
+
+      if (!fullName || !userName || !email || !password || !confirmPassword) {
+        showToast('Vui lòng điền đầy đủ thông tin!', 'error'); return;
+      }
+      if (password !== confirmPassword) {
+        showToast('Mật khẩu nhập lại không khớp!', 'error'); return;
+      }
+      const users = db.get('users');
+      if (users.find(u => u.email === email)) { showToast('Email này đã tồn tại!', 'error'); return; }
+      if (users.find(u => u.user_name === userName)) { showToast('Tên đăng nhập đã tồn tại!', 'error'); return; }
+
+      const newId = users.length ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      users.push({
+        id: newId, user_name: userName, email, full_name: fullName,
+        is_active: true, password_hash: password, email_verified: false,
+        role_id: roleId, otp_code: null, otp_created_at: null, otp_ttl_seconds: 180,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+      });
+      db.set('users', users);
+      const createdUser = users.find(user => user.id === newId);
+      recordAuditLog({ action: 'USER_CREATED', entityType: 'USER', entityId: newId, entityLabel: fullName || userName, afterData: createdUser });
+      showToast('Đã tạo người dùng thành công!', 'success');
+      closeModal('addUserModal');
+      ['newUserFullName', 'newUserName', 'newUserEmail', 'newUserPassword', 'newUserConfirmPassword'].forEach(id => document.getElementById(id).value = '');
+      loadUsers();
+    }
+  </script>
 </body>
+
 </html>

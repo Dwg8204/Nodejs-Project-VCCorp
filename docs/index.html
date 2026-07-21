@@ -3,31 +3,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Medium</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Medium – Trang chủ</title>
+  <meta name="description" content="Đọc các bài viết chất lượng về công nghệ, thiết kế, thể thao và đời sống.">
   <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="unified_media.css">
   <style>
     .feed-wrapper {
       padding: 24px 32px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 24px;
-      border-bottom: 1px solid #F2F2F2;
-      margin-bottom: 8px;
-    }
-
-    .tabs a {
-      padding: 12px 0;
-      font-size: 15px;
-      color: #6B6B6B;
-      border-bottom: 2px solid transparent;
-    }
-
-    .tabs a.active {
-      color: #242424;
-      font-weight: 600;
-      border-bottom: 2px solid #242424;
     }
 
     .article-card {
@@ -35,7 +19,7 @@
       justify-content: space-between;
       gap: 24px;
       padding: 28px 0;
-      border-bottom: 1px solid #F2F2F2;
+      border-bottom: 1px solid var(--border);
     }
 
     .article-main {
@@ -48,7 +32,7 @@
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 8px;
     }
 
@@ -58,10 +42,6 @@
       border-radius: 4px;
       background: linear-gradient(135deg, #7C5CE0, #4A90E2);
       display: inline-block;
-    }
-
-    .source-badge.sport {
-      background: #1E90C9;
     }
 
     .article-title {
@@ -78,7 +58,7 @@
 
     .article-desc {
       font-size: 16px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       margin-bottom: 14px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -90,7 +70,7 @@
       display: flex;
       align-items: center;
       gap: 20px;
-      color: #6B6B6B;
+      color: var(--text-muted);
       font-size: 14px;
     }
 
@@ -115,30 +95,420 @@
       cursor: pointer;
     }
 
-    .because-follow {
+    .feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .feed-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .empty-feed {
+      padding: 60px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    /* Category Dropdown Styles */
+    .cat-dropdown {
+      position: relative;
+    }
+
+    .cat-dropdown-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border-strong);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      background: var(--bg-pill);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cat-dropdown-btn:hover {
+      background: var(--bg-soft);
+    }
+
+    .cat-dropdown-panel {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      z-index: 100;
+      min-width: 200px;
+      box-shadow: var(--shadow);
+    }
+
+    .cat-dropdown-panel.open {
+      display: block;
+    }
+
+    .cat-search-wrap {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      color: #6B6B6B;
-      padding: 20px 0 8px 0;
-    }
-
-    .author-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 14px;
-      color: #6B6B6B;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      padding: 6px 10px;
       margin-bottom: 10px;
     }
 
-    .author-row .mini-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #999;
+    .cat-search-wrap input {
+      border: none;
+      background: transparent;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      width: 100%;
     }
+
+    .cat-dropdown-list {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .cat-drop-item {
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      text-align: left;
+      font-size: 14px;
+      color: var(--text);
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .cat-drop-item:hover {
+      background: var(--bg-soft);
+    }
+
+    .cat-drop-item.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+      font-weight: 600;
+    }
+
+/* ===== Responsive Breakpoints ===== */
+
+/* --- Tablet (max-width: 1080px) --- */
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 220px 1fr !important;
+  }
+  .right-rail {
+    display: none !important;
+  }
+  .feed-wrapper,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main,
+  .category-main {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .quick-links {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Mobile (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* Layout reset */
+  .layout, .layout.sidebar-collapsed, .layout.no-rail, .layout.no-rail.sidebar-collapsed {
+    display: block !important;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 0;
+  }
+
+  /* Padding adjustments for main content */
+  .feed-wrapper,
+  .category-main,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main {
+    padding: 16px !important;
+  }
+
+  /* Sidebar styling to drawer */
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px;
+    width: 260px !important;
+    height: 100vh !important;
+    background: var(--card-bg) !important;
+    z-index: 1001 !important;
+    border-right: 1px solid var(--border);
+    transition: left 0.3s ease;
+    padding: 24px 16px !important;
+    box-shadow: var(--shadow);
+  }
+  .layout.sidebar-collapsed .sidebar {
+    border-right: none;
+  }
+  .sidebar.drawer-open {
+    left: 0;
+  }
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .drawer-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Topbar / Header adjustments */
+  .topbar {
+    padding: 12px 16px;
+  }
+  .topbar-left {
+    gap: 12px;
+  }
+  .logo {
+    font-size: 21px;
+  }
+  .topbar-right {
+    gap: 12px;
+  }
+  .lang-btn {
+    padding: 4px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 24px;
+  }
+  .theme-toggle .knob {
+    width: 18px;
+    height: 18px;
+  }
+  [data-theme="dark"] .theme-toggle .knob {
+    left: 18px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .topbar-right .btn-getapp,
+  .topbar-right .write-link,
+  .topbar-right .lang-dropdown {
+    display: none !important;
+  }
+  .search-box, .search-box-wrap {
+    display: none !important;
+  }
+  .mobile-search-icon {
+    display: flex !important;
+    font-size: 22px;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  /* Card layouts (posts/articles) */
+  .article-card,
+  .post-body {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  .article-thumb,
+  .post-thumb {
+    width: 100% !important;
+    height: 200px !important;
+    margin-bottom: 16px;
+  }
+  .article-title,
+  .post-title,
+  h1.title {
+    font-size: 24px !important;
+  }
+  .article-meta,
+  .post-meta {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  
+  /* Article specific */
+  .article-wrapper,
+  .responses-section {
+    padding: 16px 12px 50px 12px !important;
+  }
+  .hero-image {
+    height: 200px !important;
+  }
+  .body-text {
+    font-size: 17px !important;
+  }
+  .toolbar, .byline {
+    flex-wrap: wrap;
+    gap: 14px !important;
+  }
+  
+  /* Form, auth, filter rows */
+  .filter-bar,
+  .filter-row,
+  .owner-header,
+  .admin-header,
+  .form-header,
+  .profile-header,
+  .lang-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .filter-bar .form-control,
+  .filter-row .form-control {
+    max-width: 100% !important;
+  }
+  .auth-wrapper {
+    margin: 32px auto !important;
+    padding: 0 16px !important;
+  }
+  .auth-topbar {
+    padding: 12px 16px !important;
+  }
+  .form-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .form-actions .btn {
+    flex: 1;
+  }
+  
+  /* Tables */
+  table.data-table {
+    font-size: 13px;
+    min-width: 600px;
+  }
+  .card:has(table.data-table) {
+    overflow-x: auto;
+  }
+  
+  /* Modals */
+  .preview-modal {
+    padding: 20px;
+    max-height: 90vh;
+  }
+  .modal,
+  .app-modal {
+    padding: 18px;
+  }
+  
+  /* Mobile category chips */
+  .mobile-categories-chips {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .mobile-categories-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-cat-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .mobile-cat-chip.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  
+  /* Category Dropdown Reset */
+  .category-dropdown {
+    max-width: 100%;
+  }
+
+  /* Stats grid */
+  .stats-row,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  /* Profile tabs */
+  .profile-tabs {
+    gap: 14px !important;
+    overflow-x: auto;
+  }
+}
+
+/* --- Small Mobile (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+  .logo {
+    font-size: 19px;
+  }
+  .stat-card .num {
+    font-size: 20px;
+  }
+}
+
+/* Homepage persistent navigation */
+html,
+body {
+  overflow-x: clip !important;
+}
+
+.topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 900;
+}
+
+@media (min-width: 769px) {
+  .layout > .sidebar,
+  .layout > .right-rail {
+    position: sticky !important;
+    top: 60px !important;
+    align-self: start;
+    height: calc(100vh - 60px) !important;
+    max-height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+  }
+}
+
   </style>
 </head>
 
@@ -147,66 +517,94 @@
   <!-- ===== Topbar ===== -->
   <div class="topbar">
     <div class="topbar-left">
-      <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
       <span class="logo">Medium</span>
-      <div class="search-box">&#128269; <span>Search</span></div>
+      <div class="search-box-wrap" id="topSearchWrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" id="topSearchInput" type="text" placeholder="Search...">
+        <div class="search-results-dropdown" id="topSearchDropdown"></div>
+      </div>
     </div>
     <div class="topbar-right">
-      <button class="btn-getapp">&#9638; Get app</button>
-      <span class="write-link">&#9998; Write</span>
+      <div class="mobile-search-icon" onclick="toggleMobileSearch()" style="display:none;">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+      </div>
       <div class="lang-dropdown">
-        <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span>
-          &#9662;</button>
+        <button class="lang-btn" onclick="toggleLangMenu()">
+          <span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+        </button>
         <div class="lang-menu">
           <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
           <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
         </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-      <span class="icon-btn">&#128276;</span>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
       <div class="avatar">N</div>
     </div>
   </div>
 
   <div class="layout" id="layoutRoot">
     <!-- ===== Sidebar ===== -->
-    <aside class="sidebar">
-      <a href="index.html" class="active"><span class="icon">&#8962;</span> Home</a>
-      <a href="category.html"><span class="icon">&#128193;</span> Category</a>
-      <a href="profile.html"><span class="icon">&#128100;</span> Profile</a>
-      <!-- <a href="#"><span class="icon">&#128221;</span> Stories</a>
-    <a href="#"><span class="icon">&#128202;</span> Stats</a> -->
-      <hr>
-      <a href="#"><span class="icon">&#128101;</span> Following</a>
-      <div class="follow-box">
-        Find writers and publications to follow.
-        <br><span class="see-suggestions">See suggestions</span>
-      </div>
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html" class="active"><span class="icon"><iconify-icon
+            icon="material-symbols:home-rounded"></iconify-icon></span> <span data-vi="Trang chủ"
+          data-en="Home">Home</span></a>
+      <a href="profile.html"><span class="icon"><iconify-icon icon="solar:user-bold"></iconify-icon></span>
+        <span data-vi="Hồ sơ" data-en="Profile">Profile</span></a>
     </aside>
 
     <!-- ===== Main feed ===== -->
     <main class="feed-wrapper">
-      <div class="tabs">
-        <a href="#" class="active">For you</a>
-        <a href="#">Featured</a>
+      <div class="mobile-category-slider" id="mobileCategorySlider">
+        <button type="button" class="mobile-category-arrow" id="mobileCatPrev" onclick="scrollMobileCategories(-1)" aria-label="Danh mục trước" data-vi-aria-label="Danh mục trước" data-en-aria-label="Previous categories">
+          <iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>
+        </button>
+        <div class="mobile-categories-chips" id="mobileCatChips" onscroll="updateMobileCategorySlider()"></div>
+        <button type="button" class="mobile-category-arrow" id="mobileCatNext" onclick="scrollMobileCategories(1)" aria-label="Danh mục tiếp theo" data-vi-aria-label="Danh mục tiếp theo" data-en-aria-label="Next categories">
+          <iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon>
+        </button>
+      </div>
+
+      <!-- Category filter bar -->
+      <div class="feed-header">
+        <div class="feed-title" data-vi="Bài viết nổi bật" data-en="Latest Posts">Latest Posts</div>
+        <!-- Category dropdown with search -->
+        <div class="cat-dropdown" id="catDropdown">
+          <button class="cat-dropdown-btn" onclick="toggleCatDropdown()" id="catDropdownBtn">
+            <span id="catDropdownLabel" data-vi="Tất cả" data-en="All">Tất cả</span>
+            <iconify-icon icon="solar:alt-arrow-down-linear" style="font-size:14px;"></iconify-icon>
+          </button>
+          <div class="cat-dropdown-panel" id="catDropdownPanel">
+            <div class="cat-search-wrap">
+              <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+              <input type="text" id="catSearchInput" placeholder="Tìm danh mục..."
+                oninput="filterCatDropdown(this.value)" autocomplete="off">
+            </div>
+            <div class="cat-dropdown-list" id="catDropdownList"></div>
+          </div>
+        </div>
       </div>
 
       <div id="feed-articles">
         <!-- Articles will be rendered here by JS -->
       </div>
+      <div class="empty-feed" id="feedEmpty" style="display:none;" data-vi="Không có bài viết nào."
+        data-en="No articles found.">No articles found.</div>
+      <div id="feedPagination"></div>
     </main>
 
     <!-- ===== Right rail ===== -->
     <aside class="right-rail">
-      <h3>Staff Picks</h3>
+      <h3 data-vi="Bài nổi bật" data-en="Staff Picks">Staff Picks</h3>
       <div id="staff-picks-container">
         <!-- Rendered by JS -->
       </div>
-      <div class="see-full-list">See the full list</div>
-
       <div class="recommended-topics">
-        <h3>Recommended topics</h3>
-        <span class="topic-pill">Programming +</span>
+        <h3 data-vi="Chủ đề gợi ý" data-en="Recommended topics">Recommended topics</h3>
+        <div id="recommended-topics-list" style="margin-top:12px;"></div>
       </div>
     </aside>
   </div>
@@ -214,82 +612,276 @@
   <script src="shared.js"></script>
   <script src="js/mockData.js"></script>
   <script>
-    function toggleSidebar() {
-      document.getElementById('layoutRoot').classList.toggle('sidebar-collapsed');
-    }
+    let allPosts = [];
+    let allCatOptions = [];
+    let currentCatFilter = 'all';
+    let currentFeedPage = getPageFromQuery();
 
-    // --- Render logic ---
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. Setup Header based on Login status
+      // 1. Setup header based on login status
       const currentUser = db.getCurrentUser();
       if (!currentUser) {
-        // Đổi Giao diện nếu chưa đăng nhập
         const topbarRight = document.querySelector('.topbar-right');
         topbarRight.innerHTML = `
-        <a href="login.html" style="margin-right:15px; color:#6B6B6B; text-decoration:none;">Sign In</a>
-        <a href="register.html" style="background:#242424; color:#fff; padding:8px 16px; border-radius:20px; text-decoration:none;">Get Started</a>
-      `;
+          <div class="lang-dropdown">
+            <button class="lang-btn" onclick="toggleLangMenu()">
+              <span class="lang-current-label">English</span>
+              <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+            </button>
+            <div class="lang-menu">
+              <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+              <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+            </div>
+          </div>
+          <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
+          <a href="login.html" style="color:var(--text-muted);text-decoration:none;font-size:14px;">Sign In</a>
+          <a href="register.html" style="background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;text-decoration:none;font-size:14px;">Get Started</a>
+        `;
       }
 
-      // 2. Render Posts
       const langId = localStorage.getItem('current_language_id') || '1';
-      const posts = db.getPostsWithDetails(langId);
 
+      // 2. Build category filter pills
+      const categories = db.get('categories');
+      const categoryTranslations = db.get('category_translation');
+      allCatOptions = [{ id: 'all', name: 'All', nameVi: 'Tất cả' }];
+      categories.forEach(c => {
+        let tEn = categoryTranslations.find(x => x.category_id === c.id && x.language_id == 1);
+        let tVi = categoryTranslations.find(x => x.category_id === c.id && x.language_id == 2);
+        if (!tEn) tEn = categoryTranslations.find(x => x.category_id === c.id);
+        if (tEn) allCatOptions.push({ id: c.id, name: tEn.name, nameVi: tVi ? tVi.name : tEn.name });
+      });
+      renderCatDropdown();
+
+      // 3. Render Posts
+      allPosts = db.getPostsWithDetails(langId).filter(post => {
+        const translations = db.get('post_translations');
+        return translations.some(t => t.post_id === post.id && String(t.language_id) === String(langId));
+      }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // Check for search query in URL
+      const params = new URLSearchParams(window.location.search);
+      const qParam = params.get('q');
+      if (qParam) {
+        const input = document.getElementById('topSearchInput');
+        if (input) input.value = qParam;
+        const filtered = allPosts.filter(p =>
+          (p.title || '').toLowerCase().includes(qParam.toLowerCase()) ||
+          (p.author_name || '').toLowerCase().includes(qParam.toLowerCase()) ||
+          (p.category_name || '').toLowerCase().includes(qParam.toLowerCase())
+        );
+        renderPosts(filtered);
+      } else {
+        renderPosts(allPosts);
+      }
+
+      // 4. Staff Picks
+      const staffPicksContainer = document.getElementById('staff-picks-container');
+      const sortedPosts = [...allPosts].sort((a, b) => b.likes - a.likes).slice(0, 3);
+      staffPicksContainer.innerHTML = sortedPosts.map(post => `
+        <div class="pick">
+          <div class="pick-source"><span class="badge" style="background:#7C5CE0;width:14px;height:14px;border-radius:3px;display:inline-block;margin-right:6px;"></span> ${post.category_name} · ${post.author_name}</div>
+          <h4 onclick="location.href='article.html?id=${post.id}'" style="cursor:pointer;margin:6px 0 4px;">${post.title}</h4>
+          <div class="pick-date"><iconify-icon icon="solar:star-bold-duotone"></iconify-icon> ${post.date_formatted}</div>
+        </div>
+      `).join('');
+
+      // 5. Recommended topics (from categories)
+      const topicsList = document.getElementById('recommended-topics-list');
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      topicsList.innerHTML = allCatOptions.filter(c => c.id !== 'all').map(c => `
+        <span class="topic-pill" onclick="filterByCat('${c.id}', '${c.id}')" style="display:inline-flex;margin-right:8px;margin-bottom:8px;">${lang === 'vi' ? c.nameVi : c.name}</span>
+      `).join('');
+
+      // 6. Init search
+      initSearch(() => allPosts);
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+
+      // Render mobile chips
+      renderMobileChips();
+    });
+
+    let hoverCardTimeout;
+    function showAuthorCard(el, authorId) {
+      clearTimeout(hoverCardTimeout);
+      const user = db.get('users').find(u => u.id === authorId);
+      if (!user) return;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+
+      // Gather author details
+      const allPosts = db.get('posts').filter(p => p.author_id === authorId && p.status === 'PUBLISHED');
+      const allLikes = db.get('post_likes');
+      const likesCount = allLikes.filter(l => allPosts.some(ap => ap.id === l.post_id) && l.is_liked).length;
+
+      let hc = document.getElementById('authorHoverCard');
+      if (!hc) {
+        hc = document.createElement('div');
+        hc.id = 'authorHoverCard';
+        hc.className = 'author-hover-card';
+        hc.onmouseenter = () => clearTimeout(hoverCardTimeout);
+        hc.onmouseleave = () => hideAuthorCard();
+        document.body.appendChild(hc);
+      }
+
+      const avatarUrl = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.full_name || user.user_name || 'U'}`;
+
+      hc.innerHTML = `
+        <img src="${avatarUrl}" alt="Avatar">
+        <div class="hc-name">${user.full_name || user.user_name}</div>
+        <div class="hc-stats">
+          <span><strong>${allPosts.length}</strong> ${lang === 'vi' ? 'Bài viết' : 'Posts'}</span>
+          <span><strong>${likesCount}</strong> ${lang === 'vi' ? 'Lượt thích' : 'Likes'}</span>
+        </div>
+      `;
+
+      const rect = el.getBoundingClientRect();
+      hc.style.top = (rect.bottom + window.scrollY) + 'px';
+      hc.style.left = (rect.left + rect.width / 2 + window.scrollX) + 'px';
+      hc.classList.add('show');
+    }
+
+    function hideAuthorCard() {
+      hoverCardTimeout = setTimeout(() => {
+        const hc = document.getElementById('authorHoverCard');
+        if (hc) hc.classList.remove('show');
+      }, 300);
+    }
+
+    function renderMobileChips() {
+      const container = document.getElementById('mobileCatChips');
+      if (!container) return;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+
+      container.innerHTML = allCatOptions.map(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        const active = String(c.id) === String(currentCatFilter);
+        return `<button type="button" class="mobile-cat-chip ${active ? 'active' : ''}" aria-pressed="${active}" onclick="filterByCat('${c.id}')">${label}</button>`;
+      }).join('');
+      requestAnimationFrame(() => {
+        container.querySelector('.mobile-cat-chip.active')?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        updateMobileCategorySlider();
+      });
+    }
+
+    function scrollMobileCategories(direction) {
+      const container = document.getElementById('mobileCatChips');
+      if (!container) return;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('system-reduce-motion');
+      container.scrollBy({ left: direction * Math.max(180, container.clientWidth * 0.72), behavior: reduceMotion ? 'auto' : 'smooth' });
+      window.setTimeout(updateMobileCategorySlider, reduceMotion ? 0 : 260);
+    }
+
+    function updateMobileCategorySlider() {
+      const container = document.getElementById('mobileCatChips');
+      const previous = document.getElementById('mobileCatPrev');
+      const next = document.getElementById('mobileCatNext');
+      if (!container || !previous || !next) return;
+      const maxScroll = Math.max(0, container.scrollWidth - container.clientWidth);
+      previous.disabled = container.scrollLeft <= 2;
+      next.disabled = container.scrollLeft >= maxScroll - 2;
+    }
+
+    window.addEventListener('resize', updateMobileCategorySlider);
+
+    function toggleCatDropdown() {
+      const panel = document.getElementById('catDropdownPanel');
+      const isOpen = panel.classList.toggle('open');
+      if (isOpen) {
+        document.getElementById('catSearchInput').focus();
+        renderCatDropdown();
+      }
+    }
+
+    function renderCatDropdown(kw = '') {
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      const list = document.getElementById('catDropdownList');
+      const kl = kw.toLowerCase();
+      const opts = allCatOptions.filter(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        return label.toLowerCase().includes(kl);
+      });
+      list.innerHTML = opts.map(c => {
+        const label = lang === 'vi' ? (c.nameVi || c.name) : c.name;
+        return `<button class="cat-drop-item ${c.id === currentCatFilter ? 'active' : ''}" onclick="filterByCat('${c.id}')">${label}</button>`;
+      }).join('');
+    }
+
+    function filterCatDropdown(kw) { renderCatDropdown(kw); }
+
+    function filterByCat(catId) {
+      currentCatFilter = catId;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      const langId = localStorage.getItem('current_language_id') || '1';
+      const catObj = allCatOptions.find(c => String(c.id) === String(catId));
+      const label = catObj ? (lang === 'vi' ? (catObj.nameVi || catObj.name) : catObj.name) : 'Tất cả';
+      document.getElementById('catDropdownLabel').textContent = label;
+      document.getElementById('catDropdownPanel').classList.remove('open');
+      renderCatDropdown();
+      renderMobileChips();
+      const filtered = catId === 'all' ? allPosts : allPosts.filter(p => String(p.category_id) === String(catId));
+      currentFeedPage = 1;
+      setPageInQuery(1);
+      renderPosts(filtered);
+      document.getElementById('feedEmpty').style.display = filtered.length === 0 ? 'block' : 'none';
+    }
+
+    function renderPosts(posts) {
       const container = document.getElementById('feed-articles');
-      let html = '';
-
-      posts.forEach(post => {
-        // Trích xuất 1 đoạn ngắn text từ content html
+      const emptyEl = document.getElementById('feedEmpty');
+      const paginationEl = document.getElementById('feedPagination');
+      if (!posts.length) {
+        container.innerHTML = '';
+        emptyEl.style.display = 'block';
+        paginationEl.innerHTML = '';
+        paginationEl.hidden = true;
+        return;
+      }
+      const pageData = paginateItems(posts, currentFeedPage);
+      currentFeedPage = pageData.currentPage;
+      setPageInQuery(currentFeedPage);
+      emptyEl.style.display = 'none';
+      container.innerHTML = pageData.items.map(post => {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = post.content;
-        const snippet = tempDiv.textContent || tempDiv.innerText || "";
-        const shortDesc = snippet.length > 100 ? snippet.substring(0, 100) + '...' : snippet;
-
-        // Random 1 cái ảnh đại diện cho sinh động (thực tế lấy từ csdl)
-        const randomImage = `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
-
-        html += `
+        const snippet = (tempDiv.textContent || tempDiv.innerText || '');
+        const shortDesc = snippet.length > 120 ? snippet.substring(0, 120) + '...' : snippet;
+        const randomImage = post.thumbnail || `https://images.unsplash.com/photo-${1441974231531 + post.id}-c6227db76b6e?w=400`;
+        return `
         <div class="article-card">
           <div class="article-main">
             <div class="article-source">
-              <span class="source-badge"></span>
-              In ${post.category_name} by <a href="profile.html?id=${post.author_id}" style="color:inherit; font-weight:600;">${post.author_name}</a> &nbsp;&middot;&nbsp; ${post.date_formatted}
+              <img src="${post.author_avatar}" class="author-avatar-feed" alt="avatar" />
+              <span>${post.category_name} by</span>
+              <div class="author-name-wrapper" style="position:relative; display:inline-block;" onmouseenter="showAuthorCard(this, ${post.author_id})" onmouseleave="hideAuthorCard(this)">
+                <a href="profile.html?id=${post.author_id}" style="color:inherit;font-weight:600;">${post.author_name}</a>
+              </div>
+              <span>&middot; ${post.date_formatted}</span>
             </div>
-            <a href="article.html?id=${post.id}" style="text-decoration:none; color:inherit;">
+            <a href="article.html?id=${post.id}" style="text-decoration:none;color:inherit;">
               <div class="article-title">${post.title}</div>
             </a>
             <div class="article-desc">${shortDesc}</div>
             <div class="article-meta">
-              <span class="meta-item">&#128075; ${post.likes}</span>
-              <span class="meta-item">&#128172; ${post.comments}</span>
+              <span class="meta-item like-btn ${isPostLiked(post.id) ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike(${post.id},this)">
+                <iconify-icon icon="solar:heart-bold-duotone"></iconify-icon> <span class="like-count">${post.likes}</span>
+              </span>
+              <span class="meta-item comment-btn" onclick="location.href='article.html?id=${post.id}'">
+                <iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon> ${post.comments}
+              </span>
               <span class="spacer"></span>
-              <span class="meta-item" style="cursor:pointer;" onclick="alert('Đã bookmark!')">&#128278;</span>
-              <span class="meta-item">&#8943;</span>
+              <span class="meta-item bookmark-btn ${isPostBookmarked(post.id) ? 'active' : ''}" onclick="event.stopPropagation();toggleBookmark(${post.id},this)">
+                <iconify-icon icon="solar:bookmark-bold-duotone"></iconify-icon>
+              </span>
             </div>
           </div>
           <a href="article.html?id=${post.id}">
-            <div class="article-thumb" style="background-image:url('${randomImage}');"></div>
+            <div class="article-thumb" style="background-image:url('${randomImage}');" data-fallback-bg="1"></div>
           </a>
-        </div>
-      `;
-      });
-      container.innerHTML = html;
-
-      // 3. Render Staff Picks (Right Rail)
-      const staffPicksContainer = document.getElementById('staff-picks-container');
-      let picksHtml = '';
-      const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes).slice(0, 3);
-      sortedPosts.forEach(post => {
-        picksHtml += `
-        <div class="pick">
-          <div class="pick-source"><span class="badge" style="background:#7C5CE0;"></span> In ${post.category_name} by ${post.author_name}</div>
-          <h4 onclick="location.href='article.html?id=${post.id}'" style="cursor:pointer">${post.title}</h4>
-          <div class="pick-date">&#10022; ${post.date_formatted}</div>
-        </div>
-      `;
-      });
-      staffPicksContainer.innerHTML = picksHtml;
-    });
+        </div>`;
+      }).join('');
+      applyBgFallback();
+      renderPagination({ container: paginationEl, pageData, scrollTarget: '.feed-header', onPageChange: page => { currentFeedPage = page; renderPosts(posts); } });
+    }
   </script>
 </body>
 

@@ -1,0 +1,1711 @@
+/* ============ CSS Variables (Light / Dark theme) ============ */
+:root {
+  --bg: #ffffff;
+  --bg-soft: #F7F7F7;
+  --bg-pill: #F2F2F2;
+  --text: #242424;
+  --text-muted: #6B6B6B;
+  --border: #F2F2F2;
+  --border-strong: #E5E5E5;
+  --accent: #1A8917;
+  --accent-soft: #E8F5E9;
+  --danger: #D9483F;
+  --card-bg: #ffffff;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+
+  /* === Icon color tokens === */
+  --icon-nav: #7C5CE0;
+  /* sidebar navigation icons — tím */
+  --icon-edit: #0984E3;
+  /* edit action — xanh dương */
+  --icon-delete: #D9483F;
+  /* delete action — đỏ */
+  --icon-like: #E0245E;
+  /* like — hồng đỏ */
+  --icon-comment: #6C5CE7;
+  /* comment — tím nhạt */
+  --icon-bookmark: #00B894;
+  /* bookmark — xanh lá */
+  --icon-star: #FFC017;
+  /* featured/star — vàng */
+  --icon-info: #0984E3;
+  /* info — xanh dương */
+  --icon-warning: #E17055;
+  /* warning — cam */
+}
+
+[data-theme="dark"] {
+  --bg: #121212;
+  --bg-soft: #1E1E1E;
+  --bg-pill: #242424;
+  --text: #E8E6E3;
+  --text-muted: #9B9B9B;
+  --border: #2E2E2E;
+  --border-strong: #3A3A3A;
+  --accent: #4CBB4E;
+  --accent-soft: #1B2E1C;
+  --danger: #E5645A;
+  --card-bg: #1A1A1A;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+
+  --icon-nav: #A29BFE;
+  --icon-edit: #74B9FF;
+  --icon-delete: #E5645A;
+  --icon-bookmark: #00CEC9;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ===== Topbar ===== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 32px;
+  background: rgba(var(--bg-rgb, 255, 255, 255), 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+[data-theme="dark"] .topbar {
+  background: rgba(18, 18, 18, 0.85);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.hamburger {
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text);
+  user-select: none;
+}
+
+.logo {
+  font-family: inherit;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-pill);
+  border-radius: 20px;
+  padding: 8px 16px;
+  width: 260px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.btn-getapp {
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.icon-btn {
+  font-size: 18px;
+  color: var(--text);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.write-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #8B5E3C;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===== Theme toggle switch ===== */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 46px;
+  height: 26px;
+  background: var(--bg-pill);
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.theme-toggle .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: left 0.2s ease;
+}
+
+[data-theme="dark"] .theme-toggle .knob {
+  left: 22px;
+}
+
+/* ===== Language dropdown ===== */
+.lang-dropdown {
+  position: relative;
+}
+
+.lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+.lang-menu {
+  display: none;
+  position: absolute;
+  top: 34px;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  min-width: 140px;
+  overflow: hidden;
+  z-index: 50;
+}
+
+.lang-menu.open {
+  display: block;
+}
+
+.lang-menu a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.lang-menu a:hover {
+  background: var(--bg-soft);
+}
+
+.lang-menu a.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Layout: sidebar + main + right rail ===== */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  width: 100%;
+  margin: 0;
+  gap: 0;
+  transition: grid-template-columns 0.2s ease;
+  align-items: start;
+  /* Cực kỳ quan trọng để 'sticky' hoạt động độc lập */
+}
+
+.layout.sidebar-collapsed {
+  grid-template-columns: 0px 1fr 300px;
+}
+
+.layout.no-rail {
+  grid-template-columns: 220px 1fr;
+}
+
+.layout.no-rail.sidebar-collapsed {
+  grid-template-columns: 0px 1fr;
+}
+
+/* --- SỬA ĐỔI: Cố định Sidebar --- */
+.sidebar {
+  padding: 24px 16px;
+  border-right: 1px solid var(--border);
+
+  /* Cố định vị trí khi cuộn trang */
+  position: sticky;
+  top: 60px;
+  /* Bằng đúng chiều cao của Header/Topbar để không bị đè lên */
+  height: calc(100vh - 60px);
+  /* Chiều cao chiếm trọn màn hình trừ Header */
+
+  overflow-y: auto;
+  /* Tự động xuất hiện thanh cuộn nếu danh sách tab quá dài */
+  white-space: nowrap;
+  transition: padding 0.2s ease;
+}
+
+/* Đảm bảo thanh cuộn của sidebar mượt và gọn gàng */
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.layout.sidebar-collapsed .sidebar {
+  padding: 24px 0;
+  border-right: none;
+  overflow: hidden;
+  /* Ẩn hoàn toàn thanh cuộn khi thu nhỏ */
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 15px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.sidebar a.active {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--bg-soft);
+}
+
+.sidebar a:hover {
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.sidebar .icon {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar .icon iconify-icon {
+  font-size: 19px;
+  color: var(--icon-nav);
+  transition: color 0.15s;
+}
+
+.sidebar a.active .icon iconify-icon,
+.sidebar a:hover .icon iconify-icon {
+  color: var(--icon-nav);
+  opacity: 1;
+}
+
+.sidebar hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0;
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.sidebar .follow-box {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 10px 12px;
+}
+
+.sidebar .follow-box .see-suggestions {
+  color: var(--accent);
+  font-weight: 500;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.sidebar .section-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 8px 12px 4px 12px;
+}
+
+/* ===== Right rail ===== */
+/* --- SỬA ĐỔI: Cố định Right Rail --- */
+.right-rail {
+  padding: 24px 16px;
+  border-left: 1px solid var(--border);
+
+  /* Cố định vị trí khi cuộn trang */
+  position: sticky;
+  top: 60px;
+  /* Khớp vị trí bắt đầu với sidebar */
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  /* Cho phép cuộn độc lập nếu content cột phải quá dài */
+}
+
+/* Đảm bảo thanh cuộn của Right Rail mượt */
+.right-rail::-webkit-scrollbar {
+  width: 4px;
+}
+
+.right-rail::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+.right-rail h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.pick {
+  margin-bottom: 20px;
+}
+
+.pick .pick-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.pick .badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.pick .pick-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.pick .author-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.pick h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.pick .pick-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.see-full-list {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 16px 0;
+}
+
+.recommended-topics h3 {
+  margin-top: 8px;
+}
+
+.topic-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 14px;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+/* ============ Shared UI: buttons, forms, tables, badges ============ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline {
+  background: none;
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.btn-outline:hover {
+  background: var(--bg-soft);
+}
+
+.btn-danger {
+  background: none;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.form-group .hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.form-control {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 15px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--text);
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 160px;
+  line-height: 1.6;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+table.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+table.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+table.data-table tr:hover td {
+  background: var(--bg-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.badge-green {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge-gray {
+  background: var(--bg-pill);
+  color: var(--text-muted);
+}
+
+.badge-red {
+  background: #FCEBEA;
+  color: var(--danger);
+}
+
+[data-theme="dark"] .badge-red {
+  background: #3A1E1C;
+}
+
+.checkbox-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-pill input {
+  accent-color: var(--text);
+}
+
+.checkbox-pill.active {
+  border-color: var(--text);
+  background: var(--bg-soft);
+}
+
+
+
+
+
+/* ============ Iconify icon sizing ============ */
+iconify-icon {
+  display: inline-flex;
+  vertical-align: middle;
+  color: var(--text) !important;
+}
+
+.hamburger iconify-icon,
+.hamburger {
+  font-size: 22px;
+}
+
+.icon-btn iconify-icon {
+  font-size: 19px;
+}
+
+.sidebar .icon iconify-icon {
+  font-size: 19px;
+}
+
+.write-link iconify-icon {
+  font-size: 17px;
+}
+
+.btn-getapp iconify-icon {
+  font-size: 15px;
+}
+
+.lang-btn iconify-icon:first-child {
+  font-size: 16px;
+}
+
+.lang-btn iconify-icon:last-child {
+  font-size: 13px;
+}
+
+.theme-toggle .knob iconify-icon {
+  font-size: 12px;
+}
+
+.action-icons iconify-icon {
+  font-size: 16px;
+}
+
+/* Edit buttons */
+.action-icons .edit-btn,
+.action-icons .edit-icon {
+  color: var(--icon-edit) !important;
+}
+
+/* Delete buttons */
+.action-icons .delete-btn,
+.action-icons .delete-icon {
+  color: var(--icon-delete);
+  opacity: 0.7;
+}
+
+.action-icons .delete-btn:hover,
+.action-icons .delete-icon:hover {
+  opacity: 1;
+}
+
+/* Password input với eye toggle */
+.input-password-wrap {
+  position: relative;
+}
+
+.input-password-wrap .form-control {
+  padding-right: 44px;
+}
+
+.eye-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.eye-toggle:hover {
+  color: var(--text);
+}
+
+/* Required star */
+.required-star {
+  color: var(--danger);
+  margin-left: 3px;
+  font-weight: 700;
+}
+
+.meta-item iconify-icon,
+.article-meta iconify-icon,
+.post-meta iconify-icon,
+.toolbar iconify-icon {
+  font-size: 16px;
+}
+
+.comment-actions iconify-icon {
+  font-size: 14px;
+}
+
+/* ============ Mobile sidebar drawer ============ */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 199;
+}
+
+.sidebar-overlay.show {
+  display: block;
+}
+
+
+
+
+
+/* ============ Category dropdown (thay cho pill khi nhiều danh mục) ============ */
+.category-dropdown {
+  position: relative;
+  max-width: 320px;
+  margin-bottom: 24px;
+}
+
+.category-dropdown-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 15px;
+  background: var(--card-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.category-dropdown-panel {
+  display: none;
+  position: absolute;
+  top: 46px;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  z-index: 60;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.category-dropdown-panel.open {
+  display: block;
+}
+
+.category-search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--card-bg);
+}
+
+.category-search-box input {
+  border: none;
+  outline: none;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+  width: 100%;
+}
+
+.category-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.category-option:hover {
+  background: var(--bg-soft);
+}
+
+.category-option.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.category-option .count {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ============ Comment textarea auto-resize ============ */
+textarea.comment-textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--border-strong);
+  padding: 8px 0;
+  font-size: 16px;
+  color: var(--text);
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  font-family: inherit;
+  line-height: 1.5;
+  min-height: 24px;
+}
+
+textarea.comment-textarea:focus {
+  outline: none;
+  border-color: var(--text);
+}
+
+.guest-comment-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.guest-comment-notice a {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ============ Image fallback ============ */
+img.with-fallback {
+  background: var(--bg-soft);
+}
+
+/* ============ Trạng thái tương tác: like / bookmark / comment ============ */
+.like-btn,
+.bookmark-btn,
+.comment-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.like-btn:hover,
+.bookmark-btn:hover,
+.comment-btn:hover {
+  color: var(--text);
+}
+
+.like-btn iconify-icon,
+.bookmark-btn iconify-icon,
+.comment-btn iconify-icon {
+  transition: transform 0.2s ease;
+}
+
+.like-btn:active iconify-icon,
+.bookmark-btn:active iconify-icon {
+  transform: scale(0.8);
+}
+
+.like-btn.liked {
+  color: #E0245E;
+}
+
+.like-btn.liked iconify-icon {
+  animation: pop-heart 0.3s ease;
+}
+
+.bookmark-btn.active {
+  color: var(--accent);
+}
+
+.bookmark-btn.active iconify-icon {
+  animation: pop-heart 0.3s ease;
+}
+
+@keyframes pop-heart {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.35);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE TỔNG THỂ — tablet (<=1080px) và mobile (<=600px)
+   ============================================================ */
+
+/* ---- Topbar ---- */
+
+
+/* ---- Feed / Category cards: xếp chồng dọc trên mobile ---- */
+
+
+/* ---- Article detail ---- */
+
+
+/* ---- Profile ---- */
+
+
+/* ---- Category dropdown full width ---- */
+
+
+/* ---- Forms (login/register/forgot/post-form) ---- */
+
+
+
+
+/* ---- Admin dashboard ---- */
+
+
+
+
+/* ---- Bảng dữ liệu: cuộn ngang trên màn hình nhỏ ---- */
+
+
+/* ---- Modal preview bản dịch ---- */
+
+
+/* ---- Quill editor toolbar wrap trên mobile ---- */
+
+
+/* ============================================================
+   CONFIRM DIALOG — reusable modal
+   ============================================================ */
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.confirm-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+
+.confirm-modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  max-width: 420px;
+  width: 100%;
+  padding: 32px 28px 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  transform: translateY(-10px);
+  transition: transform 0.2s ease;
+}
+
+.confirm-overlay.open .confirm-modal {
+  transform: translateY(0);
+}
+
+.confirm-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  margin: 0 auto 16px;
+}
+
+.confirm-icon.danger {
+  background: #FCEBEA;
+  color: var(--danger);
+}
+
+.confirm-icon.info {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+[data-theme="dark"] .confirm-icon.danger {
+  background: #3A1E1C;
+}
+
+.confirm-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.confirm-message {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.btn-danger-solid {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+}
+
+.btn-danger-solid:hover {
+  box-shadow: 0 4px 12px rgba(217, 72, 63, 0.3);
+}
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.global-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--text);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 600;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.global-toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.global-toast.success {
+  background: var(--accent);
+  color: #fff;
+}
+
+.global-toast.error {
+  background: var(--danger);
+  color: #fff;
+}
+
+.global-toast.info {
+  background: #5A3FBF;
+  color: #fff;
+}
+
+.global-toast iconify-icon {
+  font-size: 18px;
+}
+
+/* ============================================================
+   MODAL FORM (generic: add user, add language…)
+   ============================================================ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--card-bg);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: modal-in 0.22s ease;
+}
+
+@keyframes modal-in {
+  from {
+    transform: translateY(-14px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.modal-close {
+  font-size: 22px;
+  color: var(--text-muted);
+  cursor: pointer;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* ============================================================
+   TOPBAR SEARCH — input + dropdown results
+   ============================================================ */
+.search-box-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-pill);
+  border-radius: 20px;
+  padding: 8px 16px;
+  width: 260px;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: text;
+}
+
+.search-box-wrap .search-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  font-family: inherit;
+}
+
+.search-box-wrap .search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.search-results-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.search-results-dropdown.open {
+  display: block;
+}
+
+.search-result-item {
+  display: block;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: var(--bg-soft);
+}
+
+.search-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.search-result-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.search-empty {
+  padding: 14px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+
+
+/* ============================================================
+   CATEGORY FILTER BAR (in index.html feed)
+   ============================================================ */
+.cat-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.cat-filter-bar .cat-filter-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cat-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cat-pill {
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 5px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: none;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.cat-pill:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.cat-pill.active {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+/* ============================================================
+   DATA TABLE — fixed column widths
+   ============================================================ */
+/* Users table */
+.col-user {
+  width: 200px;
+  min-width: 140px;
+}
+
+.col-email {
+  min-width: 160px;
+}
+
+.col-role {
+  width: 160px;
+}
+
+.col-status {
+  width: 110px;
+}
+
+.col-date {
+  width: 120px;
+}
+
+.col-actions {
+  width: 130px;
+  text-align: right;
+}
+
+/* Languages table */
+.col-flag {
+  width: 60px;
+  text-align: center;
+}
+
+.col-lang {
+  width: 180px;
+}
+
+.col-code {
+  width: 80px;
+}
+
+/* Categories table */
+.col-cat {
+  min-width: 180px;
+}
+
+.col-count {
+  width: 110px;
+}
+
+/* Posts table */
+.col-title {
+  min-width: 200px;
+}
+
+.col-cat-name {
+  width: 140px;
+}
+
+.col-langs {
+  width: 100px;
+}
+
+/* ============================================================
+   RESPONSIVE — BẢN TỔNG HỢP CUỐI CÙNG (3 mốc rõ ràng)
+   Đặt cuối file để chắc chắn được áp dụng, không sửa/xóa rule cũ
+   nhằm tránh phá vỡ hành vi đang hoạt động (sidebar drawer, sticky...)
+   ============================================================ */
+
+/* ---- 1. Laptop / màn hình vừa: sidebar cố định bám trái, không còn canh giữa
+   nên không cần giới hạn max-width cho .layout ở tầng này nữa ---- */
+
+/* ---- 2. Tablet (761px–1080px): main content giãn hết phần trống của right-rail ---- */
+
+
+/* ---- 3. Mobile (≤760px): full-width, giảm padding, gộp control lên 1 hàng ---- */
+
+
+/* ---- 4. Mobile nhỏ (≤400px): thêm 1 bậc siết gọn cho màn hình rất hẹp ---- */
+
+
+/* ============ Floating Preview Panel CSS ============ */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.preview-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+.preview-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  width: min(520px, 90vw);
+  background: var(--bg);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  border-left: 1px solid var(--border);
+}
+
+.preview-panel.open {
+  transform: translateX(0);
+}
+
+.preview-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.preview-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.preview-close-btn:hover {
+  color: var(--text);
+}
+
+.preview-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.preview-footer {
+  padding: 18px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-soft);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.preview-footer .btn {
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ============ Reveal on Scroll CSS ============ */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============ Global Hover & Active States ============ */
+.article-card,
+.post-item,
+.bento-card {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease !important;
+}
+
+.article-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .article-card:hover {
+  box-shadow: 0 12px 28px rgba(255, 255, 255, 0.02);
+}
+
+/* Sidebar item hover and active transition */
+.sidebar a {
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.sidebar a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  height: 0%;
+  background: var(--text);
+  transition: height 0.25s ease;
+}
+
+.sidebar a.active::after,
+.sidebar a:hover::after {
+  height: 100%;
+}
+
+/* Button micro-interactions */
+.btn {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Image scaling inside thumbnail on hover */
+.post-thumb,
+.article-thumb {
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.post-thumb:hover,
+.article-thumb:hover {
+  transform: scale(1.03);
+}
+
+/* Badge interactions */
+.badge {
+  transition: transform 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.06);
+}
+
+/* ===== Author Avatar Feed ===== */
+.author-avatar-feed {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--bg-soft);
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* ===== Drawer Overlay (Global) ===== */
+.drawer-overlay {
+  display: none;
+}
+
+
+/* ===== Author Hover Card ===== */
+.author-hover-card {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 10px;
+  width: 260px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.author-hover-card.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(5px);
+}
+
+.author-hover-card img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+.author-hover-card .hc-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.author-hover-card .hc-stats {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.author-hover-card .hc-stats span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.author-hover-card .hc-stats strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+/* ===== Mobile Responsive (Drawer Menu & Headers) ===== */

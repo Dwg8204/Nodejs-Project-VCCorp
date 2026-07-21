@@ -1,6 +1,7 @@
 -- =========================================================================
 -- PHẦN 1: XÓA SẠCH TOÀN BỘ CÁC BẢNG CŨ (THEO THỨ TỰ AN TOÀN TRÁNH LỖI KHÓA NGOẠ)
 -- =========================================================================
+DROP TABLE IF EXISTS `audit_logs`;
 DROP TABLE IF EXISTS `post_likes`;
 DROP TABLE IF EXISTS `comments`;
 DROP TABLE IF EXISTS `post_translations`;
@@ -33,6 +34,8 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(255) DEFAULT NULL,
   `phone` VARCHAR(20) DEFAULT NULL COMMENT 'Số điện thoại của người dùng',
   `avatar` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh đại diện',
+  `cover_image` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh bìa trang cá nhân',
+  `date_of_birth` DATE DEFAULT NULL COMMENT 'Ngày tháng năm sinh',
   `is_active` TINYINT(1) DEFAULT 1,
   `password_hash` VARCHAR(255) DEFAULT NULL,
   `email_verified` TINYINT(1) DEFAULT 0,
@@ -46,6 +49,33 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_user_name` (`user_name`),
   UNIQUE KEY `uq_email` (`email`),
   CONSTRAINT `fk_users_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- Audit log is append-only. entity_id is intentionally not a foreign key
+-- because one log table records multiple entity types and must retain history
+-- after the source row is deleted.
+CREATE TABLE `audit_logs` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `actor_id` INT DEFAULT NULL,
+  `actor_name` VARCHAR(255) DEFAULT NULL,
+  `actor_role` VARCHAR(50) DEFAULT NULL,
+  `action` VARCHAR(80) NOT NULL,
+  `entity_type` VARCHAR(50) NOT NULL,
+  `entity_id` BIGINT UNSIGNED DEFAULT NULL,
+  `entity_label` VARCHAR(500) DEFAULT NULL,
+  `before_data` JSON DEFAULT NULL,
+  `after_data` JSON DEFAULT NULL,
+  `metadata` JSON DEFAULT NULL,
+  `ip_address` VARCHAR(45) DEFAULT NULL,
+  `user_agent` VARCHAR(500) DEFAULT NULL,
+  `created_at` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_actor` (`actor_id`),
+  KEY `idx_audit_action` (`action`),
+  KEY `idx_audit_entity` (`entity_type`, `entity_id`),
+  KEY `idx_audit_created_at` (`created_at`),
+  CONSTRAINT `fk_audit_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -89,6 +119,7 @@ CREATE TABLE `posts` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `author_id` INT NOT NULL,
   `category_id` INT NOT NULL,
+  `thumbnail` VARCHAR(1000) NOT NULL COMMENT 'URL ảnh đại diện bài viết',
   `status` VARCHAR(50) DEFAULT 'DRAFT',
   `source_language_id` INT DEFAULT NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -187,3 +218,8 @@ ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian x�
 -- 3. Bổ sung trường xóa mềm cho bảng Bình luận (comments)
 ALTER TABLE `comments` 
 ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, khi hiển thị nếu không NULL sẽ hiện chữ: Bình luận này đã bị xóa';
+
+-- 4. Bổ sung lý do từ chối cho bảng Posts
+ALTER TABLE `posts`
+ADD COLUMN `rejection_reason` TEXT DEFAULT NULL
+  COMMENT 'Lý do từ chối bài viết (chỉ có giá trị khi status = REJECTED, do Super Admin điền)';

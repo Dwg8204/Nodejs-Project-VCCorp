@@ -2,6 +2,9 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
 <title>Đăng nhập – Medium</title>
 <link rel="stylesheet" href="shared.css">
 <style>
@@ -18,41 +21,13 @@
     padding: 0 20px;
   }
   .auth-wrapper h1 {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: inherit;
     font-size: 32px;
     font-weight: 400;
     text-align: center;
     margin-bottom: 32px;
   }
-  .social-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    border: 1px solid var(--border-strong);
-    border-radius: 24px;
-    padding: 12px;
-    font-size: 15px;
-    background: var(--card-bg);
-    color: var(--text);
-    cursor: pointer;
-    margin-bottom: 12px;
-  }
-  .divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--text-muted);
-    font-size: 13px;
-    margin: 24px 0;
-  }
-  .divider::before, .divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+
   .btn-primary-block {
     width: 100%;
     background: var(--text);
@@ -85,7 +60,7 @@
 <div class="auth-topbar">
   <a href="index.html" class="logo">Medium</a>
   <div style="display:flex; align-items:center; gap:16px;">
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
+    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
     <span style="font-size:14px; color:var(--text-muted);">Chưa có tài khoản?</span>
     <a href="register.html" class="btn" style="border:1px solid var(--text); color:var(--text); padding:8px 18px;">Đăng ký</a>
   </div>
@@ -94,10 +69,7 @@
 <div class="auth-wrapper">
   <h1>Chào mừng trở lại</h1>
 
-  <button class="social-btn">&#128421; Đăng nhập với Google</button>
-  <button class="social-btn">&#61805; Đăng nhập với Facebook</button>
 
-  <div class="divider">hoặc</div>
 
   <form id="loginForm">
     <div class="form-group">

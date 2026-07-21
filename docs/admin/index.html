@@ -1,129 +1,647 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
-<meta charset="UTF-8">
-<title>Admin Dashboard – Medium</title>
-<link rel="stylesheet" href="../shared.css">
-<style>
-  .admin-main { padding: 24px 40px; }
-  .admin-main h1 {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-size: 32px;
-    font-weight: 400;
-    margin-bottom: 24px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Admin Dashboard – Medium</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
+  <style>
+    .admin-main {
+      padding: 24px 40px;
+    }
+
+    .admin-main h1 {
+      font-family: inherit;
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 24px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .stat-card .num {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-card .label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+
+/* ===== Responsive Breakpoints ===== */
+
+/* --- Tablet (max-width: 1080px) --- */
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 220px 1fr !important;
+  }
+  .right-rail {
+    display: none !important;
+  }
+  .feed-wrapper,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main,
+  .category-main {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
   }
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
+    grid-template-columns: repeat(2, 1fr) !important;
   }
-  .stat-card {
-    padding: 20px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .stat-card .num { font-size: 28px; font-weight: 700; }
-  .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+}
 
-  .quick-links {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
+/* --- Mobile (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* Layout reset */
+  .layout, .layout.sidebar-collapsed, .layout.no-rail, .layout.no-rail.sidebar-collapsed {
+    display: block !important;
+    width: 100%;
+    overflow-x: hidden;
+    padding: 0;
   }
-  .quick-link-card {
-    padding: 24px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+
+  /* Padding adjustments for main content */
+  .feed-wrapper,
+  .category-main,
+  .owner-main,
+  .admin-main,
+  .form-main,
+  .profile-main {
+    padding: 16px !important;
+  }
+
+  /* Sidebar styling to drawer */
+  .sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: -280px;
+    width: 260px !important;
+    height: 100vh !important;
+    background: var(--card-bg) !important;
+    z-index: 1001 !important;
+    border-right: 1px solid var(--border);
+    transition: left 0.3s ease;
+    padding: 24px 16px !important;
+    box-shadow: var(--shadow);
+  }
+  .layout.sidebar-collapsed .sidebar {
+    border-right: none;
+  }
+  .sidebar.drawer-open {
+    left: 0;
+  }
+  .drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .drawer-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Topbar / Header adjustments */
+  .topbar {
+    padding: 12px 16px;
+  }
+  .topbar-left {
+    gap: 12px;
+  }
+  .logo {
+    font-size: 21px;
+  }
+  .topbar-right {
+    gap: 12px;
+  }
+  .lang-btn {
+    padding: 4px;
+  }
+  .theme-toggle {
+    width: 40px;
+    height: 24px;
+  }
+  .theme-toggle .knob {
+    width: 18px;
+    height: 18px;
+  }
+  [data-theme="dark"] .theme-toggle .knob {
+    left: 18px;
+  }
+  .avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .topbar-right .btn-getapp,
+  .topbar-right .write-link,
+  .topbar-right .lang-dropdown {
+    display: none !important;
+  }
+  .search-box, .search-box-wrap {
+    display: none !important;
+  }
+  .mobile-search-icon {
+    display: flex !important;
+    font-size: 22px;
+    align-items: center;
     cursor: pointer;
+    color: var(--text);
   }
-  .quick-link-card:hover { border-color: var(--text); }
-  .quick-link-card .icon { font-size: 28px; margin-bottom: 12px; }
-  .quick-link-card h3 { font-size: 16px; margin-bottom: 6px; }
-  .quick-link-card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-</style>
+
+  /* Card layouts (posts/articles) */
+  .article-card,
+  .post-body {
+    flex-direction: column-reverse !important;
+    gap: 12px !important;
+  }
+  .article-thumb,
+  .post-thumb {
+    width: 100% !important;
+    height: 200px !important;
+    margin-bottom: 16px;
+  }
+  .article-title,
+  .post-title,
+  h1.title {
+    font-size: 24px !important;
+  }
+  .article-meta,
+  .post-meta {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  
+  /* Article specific */
+  .article-wrapper,
+  .responses-section {
+    padding: 16px 12px 50px 12px !important;
+  }
+  .hero-image {
+    height: 200px !important;
+  }
+  .body-text {
+    font-size: 17px !important;
+  }
+  .toolbar, .byline {
+    flex-wrap: wrap;
+    gap: 14px !important;
+  }
+  
+  /* Form, auth, filter rows */
+  .filter-bar,
+  .filter-row,
+  .owner-header,
+  .admin-header,
+  .form-header,
+  .profile-header,
+  .lang-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+  .filter-bar .form-control,
+  .filter-row .form-control {
+    max-width: 100% !important;
+  }
+  .auth-wrapper {
+    margin: 32px auto !important;
+    padding: 0 16px !important;
+  }
+  .auth-topbar {
+    padding: 12px 16px !important;
+  }
+  .form-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .form-actions .btn {
+    flex: 1;
+  }
+  
+  /* Tables */
+  table.data-table {
+    font-size: 13px;
+    min-width: 600px;
+  }
+  .card:has(table.data-table) {
+    overflow-x: auto;
+  }
+  
+  /* Modals */
+  .preview-modal {
+    padding: 20px;
+    max-height: 90vh;
+  }
+  .modal,
+  .app-modal {
+    padding: 18px;
+  }
+  
+  /* Mobile category chips */
+  .mobile-categories-chips {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .mobile-categories-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .mobile-cat-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  .mobile-cat-chip.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  
+  /* Category Dropdown Reset */
+  .category-dropdown {
+    max-width: 100%;
+  }
+
+  /* Stats grid */
+  .stats-row,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  /* Profile tabs */
+  .profile-tabs {
+    gap: 14px !important;
+    overflow-x: auto;
+  }
+}
+
+/* --- Small Mobile (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px 12px;
+  }
+  .logo {
+    font-size: 19px;
+  }
+  .stat-card .num {
+    font-size: 20px;
+  }
+}
+
+  </style>
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="topbar-left">
-    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
-    <a href="../index.html" class="logo">Medium</a>
-    <div class="search-box">&#128269; <span>Search</span></div>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon
+          icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <a href="../index.html" class="logo">Medium</a>
+      <div class="search-box-wrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..."
+          data-en-placeholder="Search...">
+        <div class="search-results-dropdown"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">English</span>
+          <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu">
+          <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+          <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon
+            icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar" style="background:#5A3FBF;">A</div>
+    </div>
   </div>
-  <div class="topbar-right">
-    <div class="lang-dropdown">
-      <button class="lang-btn" onclick="toggleLangMenu()">&#127760; <span class="lang-current-label">Tiếng Việt</span> &#9662;</button>
-      <div class="lang-menu">
-        <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
-        <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html" class="active">
+        <span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span>
+        <span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span>
+      </a>
+      <a href="posts.html">
+        <span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span>
+        <span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span>
+      </a>
+      <a href="users.html">
+        <span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span>
+        <span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span>
+      </a>
+      <a href="categories.html">
+        <span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span>
+        <span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span>
+      </a>
+      <a href="languages.html">
+        <span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span>
+        <span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span>
+      </a>
+      <a href="../index.html">
+        <span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span>
+        <span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span>
+      </a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-dashboard-header">
+        <div>
+          <span class="admin-eyebrow" data-vi="Không gian quản trị" data-en="Admin workspace">Admin workspace</span>
+          <h1 data-vi="Tổng quan hệ thống" data-en="System Dashboard">System Dashboard</h1>
+          <p data-vi="Theo dõi nội dung, người dùng và hiệu suất tương tác trên toàn hệ thống."
+            data-en="Monitor content, users and engagement performance across the system.">Monitor content, users and engagement performance across the system.</p>
+        </div>
+        <div class="dashboard-period-control" id="dashboardPeriodControl">
+          <iconify-icon icon="solar:calendar-linear"></iconify-icon>
+          <select id="dashboardPeriod" onchange="renderAdminAnalytics()" tabindex="-1" aria-hidden="true">
+            <option value="7" data-vi="7 ngày qua" data-en="Last 7 days">Last 7 days</option>
+            <option value="30" selected data-vi="30 ngày qua" data-en="Last 30 days">Last 30 days</option>
+            <option value="90" data-vi="90 ngày qua" data-en="Last 90 days">Last 90 days</option>
+          </select>
+          <button type="button" class="dashboard-period-trigger" id="dashboardPeriodTrigger" aria-haspopup="listbox" aria-expanded="false" onclick="toggleDashboardPeriod(event)">
+            <span id="dashboardPeriodLabel">Last 30 days</span>
+            <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+          </button>
+          <div class="dashboard-period-menu" id="dashboardPeriodMenu" role="listbox" aria-label="Dashboard period">
+            <button type="button" role="option" data-value="7" data-vi="7 ngày qua" data-en="Last 7 days" onclick="selectDashboardPeriod('7')">Last 7 days</button>
+            <button type="button" role="option" data-value="30" data-vi="30 ngày qua" data-en="Last 30 days" onclick="selectDashboardPeriod('30')">Last 30 days</button>
+            <button type="button" role="option" data-value="90" data-vi="90 ngày qua" data-en="Last 90 days" onclick="selectDashboardPeriod('90')">Last 90 days</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <button class="theme-toggle" onclick="toggleTheme()"><span class="knob">&#9728;</span></button>
-    <span class="icon-btn">&#128276;</span>
-    <div class="avatar" style="background:#5A3FBF;">A</div>
+      <div class="stats-grid">
+        <div class="stat-card"><span class="kpi-icon kpi-purple"><iconify-icon icon="solar:users-group-rounded-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-users">0</div>
+          <div class="label" data-vi="Người dùng" data-en="Users">Users</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-blue"><iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-posts">0</div>
+          <div class="label" data-vi="Bài viết" data-en="Posts">Posts</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-orange"><iconify-icon icon="solar:clock-circle-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-pending" style="color:var(--accent);">0</div>
+          <div class="label" data-vi="Bài chờ duyệt" data-en="Pending Posts">Pending Posts</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-green"><iconify-icon icon="solar:folder-with-files-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-categories">0</div>
+          <div class="label" data-vi="Danh mục" data-en="Categories">Categories</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-cyan"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-languages">0</div>
+          <div class="label" data-vi="Ngôn ngữ" data-en="Languages">Languages</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-pink"><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-likes">0</div>
+          <div class="label" data-vi="Lượt thích" data-en="Likes">Likes</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-purple"><iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-comments">0</div>
+          <div class="label" data-vi="Bình luận" data-en="Comments">Comments</div>
+        </div>
+        <div class="stat-card"><span class="kpi-icon kpi-green"><iconify-icon icon="solar:chart-2-bold-duotone"></iconify-icon></span>
+          <div class="num" id="stat-engagement">0</div>
+          <div class="label" data-vi="Tương tác / bài" data-en="Engagement / post">Engagement / post</div>
+        </div>
+      </div>
+
+      <div class="analytics-grid analytics-primary">
+        <section class="analytics-panel engagement-panel">
+          <div class="analytics-panel-head"><div><h2 data-vi="Xu hướng tương tác" data-en="Engagement trend">Engagement trend</h2><p data-vi="Lượt thích và bình luận theo thời gian" data-en="Likes and comments over time">Likes and comments over time</p></div><div class="chart-legend"><span class="legend-like" data-vi="Lượt thích" data-en="Likes">Likes</span><span class="legend-comment" data-vi="Bình luận" data-en="Comments">Comments</span></div></div>
+          <div class="engagement-chart" id="engagementChart"></div>
+        </section>
+        <section class="analytics-panel status-panel">
+          <div class="analytics-panel-head"><div><h2 data-vi="Trạng thái bài viết" data-en="Post status">Post status</h2><p data-vi="Phân bố nội dung hiện tại" data-en="Current content distribution">Current content distribution</p></div></div>
+          <div id="postStatusChart"></div>
+        </section>
+      </div>
+
+      <div class="analytics-grid analytics-secondary">
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Bài viết nổi bật" data-en="Top performing posts">Top performing posts</h2><p data-vi="Xếp hạng theo tổng lượt thích và bình luận" data-en="Ranked by likes and comments">Ranked by likes and comments</p></div></div><div class="admin-bar-list" id="topPostsChart"></div></section>
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Độ phủ bản dịch" data-en="Translation coverage">Translation coverage</h2><p data-vi="Tình trạng nội dung Việt – Anh" data-en="Vietnamese – English content availability">Vietnamese – English content availability</p></div></div><div class="coverage-list" id="translationCoverage"></div></section>
+      </div>
+
+      <div class="analytics-grid analytics-secondary">
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Nội dung theo danh mục" data-en="Content by category">Content by category</h2><p data-vi="Số lượng bài viết đã xuất bản" data-en="Published posts by category">Published posts by category</p></div></div><div class="admin-bar-list" id="categoryChart"></div></section>
+        <section class="analytics-panel"><div class="analytics-panel-head"><div><h2 data-vi="Hoạt động gần đây" data-en="Recent activity">Recent activity</h2><p data-vi="Các sự kiện mới nhất trong hệ thống" data-en="Latest events across the system">Latest events across the system</p></div><a class="analytics-panel-link" href="logs.html" data-vi="Xem tất cả" data-en="View all">View all</a></div><div class="admin-activity-list" id="recentActivity"></div></section>
+      </div>
+
+    </main>
   </div>
-</div>
 
-<div class="layout no-rail" id="layoutRoot">
-  <aside class="sidebar">
-    <a href="index.html" class="active"><span class="icon">&#128202;</span> Dashboard</a>
-    <a href="users.html"><span class="icon">&#128101;</span> Manage users</a>
-    <a href="categories.html"><span class="icon">&#128193;</span> Manage categories</a>
-    <a href="languages.html"><span class="icon">&#127760;</span> Manage languages</a>
-    <hr>
-    <a href="../index.html"><span class="icon">&#8962;</span> Về trang blog</a>
-  </aside>
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/index.html', metadata: { path: location.pathname }, actor: user || null });
+        showToast('Vui lòng đăng nhập với tài khoản Admin!', 'error');
+        setTimeout(() => window.location.href = '../login.html', 1500);
+        return;
+      }
+      document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
+      document.getElementById('stat-users').textContent = db.get('users').length;
+      document.getElementById('stat-posts').textContent = db.get('posts').length;
+      document.getElementById('stat-pending').textContent = db.get('posts').filter(p => p.status === 'PENDING').length;
+      document.getElementById('stat-categories').textContent = db.get('categories').length;
+      document.getElementById('stat-languages').textContent = db.get('languages').length;
+      document.getElementById('stat-likes').textContent = db.get('post_likes').filter(l => l.is_liked).length;
+      document.getElementById('stat-comments').textContent = db.get('comments').length;
+      const publishedCount = db.get('posts').filter(p => p.status === 'PUBLISHED').length;
+      const engagementCount = db.get('post_likes').filter(l => l.is_liked).length + db.get('comments').length;
+      document.getElementById('stat-engagement').textContent = publishedCount ? (engagementCount / publishedCount).toFixed(1) : '0';
+      renderAdminAnalytics();
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
 
-  <main class="admin-main">
-    <h1>Tổng quan hệ thống</h1>
-
-    <div class="stats-grid">
-      <div class="stat-card"><div class="num" id="stat-users">0</div><div class="label">Người dùng</div></div>
-      <div class="stat-card"><div class="num" id="stat-posts">0</div><div class="label">Bài viết</div></div>
-      <div class="stat-card"><div class="num" id="stat-categories">0</div><div class="label">Danh mục</div></div>
-      <div class="stat-card"><div class="num" id="stat-languages">0</div><div class="label">Ngôn ngữ</div></div>
-    </div>
-
-    <div class="quick-links">
-      <div class="quick-link-card" onclick="location.href='admin-users.html'">
-        <div class="icon">&#128101;</div>
-        <h3>Quản lý người dùng</h3>
-        <p>Xem, phân quyền, khóa/mở tài khoản người dùng trong hệ thống.</p>
-      </div>
-      <div class="quick-link-card" onclick="location.href='admin-categories.html'">
-        <div class="icon">&#128193;</div>
-        <h3>Quản lý danh mục</h3>
-        <p>Thêm, sửa, xóa các danh mục bài đăng hiển thị trên blog.</p>
-      </div>
-      <div class="quick-link-card" onclick="location.href='admin-languages.html'">
-        <div class="icon">&#127760;</div>
-        <h3>Quản lý ngôn ngữ</h3>
-        <p>Cấu hình danh sách ngôn ngữ hỗ trợ đa ngôn ngữ trên toàn hệ thống.</p>
-      </div>
-    </div>
-  </main>
-</div>
-
-<script src="../shared.js"></script>
-<script src="../js/mockData.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Auth check
-    const user = db.getCurrentUser();
-    if (!user || user.role_id !== 1) {
-      alert('Vui lòng đăng nhập với tài khoản Admin!');
-      window.location.href = 'login.html';
-      return;
+    function dashboardLocale() { return localStorage.getItem('blog-lang') === 'en' ? 'en' : 'vi'; }
+    function dashboardText(vi, en) { return dashboardLocale() === 'en' ? en : vi; }
+    function escapeDashboardHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     }
-    document.querySelector('.avatar').textContent = (user.full_name || user.user_name || 'A').charAt(0).toUpperCase();
 
-    // Fill stats
-    document.getElementById('stat-users').textContent = db.get('users').length;
-    document.getElementById('stat-posts').textContent = db.get('posts').length;
-    document.getElementById('stat-categories').textContent = db.get('categories').length;
-    document.getElementById('stat-languages').textContent = db.get('languages').length;
-  });
-</script>
+    function renderAdminAnalytics() {
+      if (typeof db === 'undefined') return;
+      const posts = db.get('posts');
+      const likes = db.get('post_likes').filter(l => l.is_liked);
+      const comments = db.get('comments');
+      const translations = db.get('post_translations');
+      const categories = db.get('categories');
+      const categoryTranslations = db.get('category_translation');
+      const users = db.get('users');
+      const languageId = localStorage.getItem('current_language_id') || '1';
+      renderEngagementChart(likes, comments);
+      renderPostStatus(posts);
+      renderTopPosts(posts, likes, comments, translations, languageId);
+      renderTranslationCoverage(posts, translations);
+      renderCategoryChart(posts, categories, categoryTranslations, languageId);
+      renderRecentActivity(posts, comments, users, translations, languageId);
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    }
+
+    function renderEngagementChart(likes, comments) {
+      const days = parseInt(document.getElementById('dashboardPeriod')?.value || '30');
+      const allDates = [...likes.map(x => x.updated_at), ...comments.map(x => x.created_at)].filter(Boolean).map(x => new Date(x));
+      const anchor = allDates.length ? new Date(Math.max(...allDates.map(x => x.getTime()))) : new Date();
+      anchor.setHours(0, 0, 0, 0);
+      const bucketCount = days <= 7 ? 7 : (days <= 30 ? 10 : 12);
+      const bucketDays = Math.ceil(days / bucketCount);
+      const buckets = Array.from({ length: bucketCount }, (_, index) => {
+        const end = new Date(anchor); end.setDate(anchor.getDate() - (bucketCount - 1 - index) * bucketDays);
+        const start = new Date(end); start.setDate(end.getDate() - bucketDays + 1);
+        return { start, end, likes: 0, comments: 0 };
+      });
+      likes.forEach(item => { const date = new Date(item.updated_at); const bucket = buckets.find(b => date >= b.start && date < new Date(b.end.getTime() + 86400000)); if (bucket) bucket.likes++; });
+      comments.forEach(item => { const date = new Date(item.created_at); const bucket = buckets.find(b => date >= b.start && date < new Date(b.end.getTime() + 86400000)); if (bucket) bucket.comments++; });
+      const width = 760, height = 260, padX = 42, padTop = 22, padBottom = 34;
+      const maxValue = Math.max(2, ...buckets.flatMap(b => [b.likes, b.comments]));
+      const point = (value, index) => ({ x: padX + index * (width - padX * 2) / Math.max(1, buckets.length - 1), y: padTop + (maxValue - value) * (height - padTop - padBottom) / maxValue });
+      const path = key => buckets.map((b, i) => `${i ? 'L' : 'M'} ${point(b[key], i).x.toFixed(1)} ${point(b[key], i).y.toFixed(1)}`).join(' ');
+      const grids = Array.from({ length: 5 }, (_, i) => { const y = padTop + i * (height - padTop - padBottom) / 4; const value = Math.round(maxValue * (4 - i) / 4); return `<line x1="${padX}" x2="${width - padX}" y1="${y}" y2="${y}" class="analytics-grid-line"/><text x="${padX - 10}" y="${y + 4}" text-anchor="end" class="analytics-axis-label">${value}</text>`; }).join('');
+      const labels = buckets.map((b, i) => { if (i % Math.ceil(buckets.length / 5) !== 0 && i !== buckets.length - 1) return ''; const x = point(0, i).x; return `<text x="${x}" y="${height - 7}" text-anchor="middle" class="analytics-axis-label">${b.end.toLocaleDateString(dashboardLocale() === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit' })}</text>`; }).join('');
+      const dots = (key, cls) => buckets.map((b, i) => { const p = point(b[key], i); return `<circle cx="${p.x}" cy="${p.y}" r="4" class="${cls}"><title>${b[key]}</title></circle>`; }).join('');
+      document.getElementById('engagementChart').innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Engagement chart"><defs><linearGradient id="likeArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".22"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>${grids}<path d="${path('likes')} L ${width-padX} ${height-padBottom} L ${padX} ${height-padBottom} Z" class="analytics-area"/><path d="${path('likes')}" class="analytics-line analytics-like-line"/><path d="${path('comments')}" class="analytics-line analytics-comment-line"/>${dots('likes','analytics-dot analytics-like-dot')}${dots('comments','analytics-dot analytics-comment-dot')}${labels}</svg>`;
+    }
+
+    function syncDashboardPeriodControl() {
+      const select = document.getElementById('dashboardPeriod');
+      const label = document.getElementById('dashboardPeriodLabel');
+      const menu = document.getElementById('dashboardPeriodMenu');
+      if (!select || !label || !menu) return;
+      const lang = localStorage.getItem('blog-lang') || 'vi';
+      const active = menu.querySelector(`[data-value="${select.value}"]`);
+      if (active) label.textContent = active.dataset[lang] || active.textContent;
+      menu.querySelectorAll('[role="option"]').forEach(option => {
+        const selected = option.dataset.value === select.value;
+        option.classList.toggle('active', selected);
+        option.setAttribute('aria-selected', String(selected));
+      });
+    }
+
+    function toggleDashboardPeriod(event) {
+      event?.stopPropagation();
+      const control = document.getElementById('dashboardPeriodControl');
+      const trigger = document.getElementById('dashboardPeriodTrigger');
+      const isOpen = control.classList.toggle('open');
+      trigger.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) control.querySelector('.dashboard-period-menu .active')?.focus();
+    }
+
+    function closeDashboardPeriod() {
+      document.getElementById('dashboardPeriodControl')?.classList.remove('open');
+      document.getElementById('dashboardPeriodTrigger')?.setAttribute('aria-expanded', 'false');
+    }
+
+    function selectDashboardPeriod(value) {
+      const select = document.getElementById('dashboardPeriod');
+      if (!select) return;
+      select.value = value;
+      syncDashboardPeriodControl();
+      closeDashboardPeriod();
+      renderAdminAnalytics();
+      document.getElementById('dashboardPeriodTrigger')?.focus();
+    }
+
+    document.addEventListener('click', event => {
+      if (!event.target.closest('#dashboardPeriodControl')) closeDashboardPeriod();
+    });
+
+    document.addEventListener('keydown', event => {
+      const control = document.getElementById('dashboardPeriodControl');
+      if (!control) return;
+      if (event.key === 'Escape' && control.classList.contains('open')) {
+        closeDashboardPeriod();
+        document.getElementById('dashboardPeriodTrigger')?.focus();
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', syncDashboardPeriodControl);
+
+    function renderPostStatus(posts) {
+      const counts = { published: posts.filter(p => p.status === 'PUBLISHED').length, draft: posts.filter(p => p.status === 'DRAFT').length, pending: posts.filter(p => p.status === 'PENDING').length, rejected: posts.filter(p => p.status === 'REJECTED').length };
+      const total = Math.max(posts.length, 1); const published = counts.published / total * 100; const draft = counts.draft / total * 100; const pending = counts.pending / total * 100;
+      document.getElementById('postStatusChart').innerHTML = `<div class="status-donut-wrap"><div class="status-donut" style="--published:${published}%;--draft:${published + draft}%;--pending:${published + draft + pending}%"><div><strong>${posts.length}</strong><span>${dashboardText('Bài viết','Posts')}</span></div></div><div class="status-legend"><div><i class="status-published"></i><span>${dashboardText('Đã xuất bản','Published')}</span><strong>${counts.published}</strong></div><div><i class="status-draft"></i><span>${dashboardText('Bản nháp','Draft')}</span><strong>${counts.draft}</strong></div><div><i class="status-pending"></i><span>${dashboardText('Chờ duyệt','Pending')}</span><strong>${counts.pending}</strong></div><div><i class="status-rejected"></i><span>${dashboardText('Bị từ chối','Rejected')}</span><strong>${counts.rejected}</strong></div></div></div>`;
+    }
+
+    function renderTopPosts(posts, likes, comments, translations, languageId) {
+      const rows = posts.map(post => ({ post, likes: likes.filter(x => x.post_id === post.id).length, comments: comments.filter(x => x.post_id === post.id).length, title: (translations.find(t => t.post_id === post.id && String(t.language_id) === String(languageId)) || translations.find(t => t.post_id === post.id) || {}).title || `Post #${post.id}` })).sort((a,b) => (b.likes+b.comments)-(a.likes+a.comments)).slice(0,5);
+      const max = Math.max(1, ...rows.map(x => x.likes + x.comments));
+      document.getElementById('topPostsChart').innerHTML = rows.map((row,index) => `<a href="../article.html?id=${row.post.id}" class="admin-bar-row"><span class="bar-rank">${index+1}</span><div class="bar-content"><div class="bar-label"><span data-user-content title="${escapeDashboardHtml(row.title)}">${escapeDashboardHtml(row.title)}</span><strong>${row.likes+row.comments}</strong></div><div class="bar-track"><span style="width:${(row.likes+row.comments)/max*100}%"></span></div><small><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon>${row.likes}<iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon>${row.comments}</small></div></a>`).join('');
+    }
+
+    function renderTranslationCoverage(posts, translations) {
+      const languageRows = db.get('languages'); const vi = languageRows.find(l => l.code === 'vi'); const en = languageRows.find(l => l.code === 'en');
+      const both = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===vi?.id) && translations.some(t => t.post_id===p.id && t.language_id===en?.id)).length;
+      const viOnly = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===vi?.id) && !translations.some(t => t.post_id===p.id && t.language_id===en?.id)).length;
+      const enOnly = posts.filter(p => translations.some(t => t.post_id===p.id && t.language_id===en?.id) && !translations.some(t => t.post_id===p.id && t.language_id===vi?.id)).length;
+      const auto = new Set(translations.filter(t => t.is_auto_translated).map(t => t.post_id)).size; const total = Math.max(posts.length,1);
+      const rows = [[dashboardText('Đủ Việt + Anh','Vietnamese + English'),both,'coverage-both'],[dashboardText('Chỉ tiếng Việt','Vietnamese only'),viOnly,'coverage-vi'],[dashboardText('Chỉ tiếng Anh','English only'),enOnly,'coverage-en'],[dashboardText('Có bản dịch tự động','Auto-translated'),auto,'coverage-auto']];
+      document.getElementById('translationCoverage').innerHTML = rows.map(row => `<div class="coverage-row"><div><span>${row[0]}</span><strong>${row[1]}</strong></div><div class="coverage-track"><span class="${row[2]}" style="width:${row[1]/total*100}%"></span></div></div>`).join('');
+    }
+
+    function renderCategoryChart(posts, categories, translations, languageId) {
+      const rows = categories.map(category => ({ name: (translations.find(t => t.category_id===category.id && String(t.language_id)===String(languageId)) || translations.find(t => t.category_id===category.id) || {}).name || `#${category.id}`, count: posts.filter(p => p.category_id===category.id && p.status==='PUBLISHED').length })).sort((a,b)=>b.count-a.count);
+      const max = Math.max(1,...rows.map(x=>x.count));
+      document.getElementById('categoryChart').innerHTML = rows.map(row => `<div class="admin-bar-row category-bar-row"><span class="category-dot"></span><div class="bar-content"><div class="bar-label"><span>${escapeDashboardHtml(row.name)}</span><strong>${row.count}</strong></div><div class="bar-track"><span style="width:${row.count/max*100}%"></span></div></div></div>`).join('');
+    }
+
+    function renderRecentActivity(posts, comments, users, translations, languageId) {
+      const auditLogs = db.get('audit_logs');
+      const actionLabels = {
+        POST_CREATED: dashboardText('Tạo bài viết','Post created'), POST_UPDATED: dashboardText('Sửa bài viết','Post updated'), POST_SUBMITTED: dashboardText('Gửi bài duyệt','Post submitted'), POST_APPROVED: dashboardText('Duyệt bài viết','Post approved'), POST_REJECTED: dashboardText('Từ chối bài viết','Post rejected'), POST_DELETED: dashboardText('Xóa bài viết','Post deleted'),
+        CATEGORY_CREATED: dashboardText('Tạo danh mục','Category created'), CATEGORY_UPDATED: dashboardText('Sửa danh mục','Category updated'), CATEGORY_TRANSLATED: dashboardText('Dịch danh mục','Category translated'), CATEGORY_DELETED: dashboardText('Xóa danh mục','Category deleted'),
+        USER_CREATED: dashboardText('Tạo người dùng','User created'), USER_LOCKED: dashboardText('Khóa người dùng','User locked'), USER_UNLOCKED: dashboardText('Mở khóa người dùng','User unlocked'), USER_ROLE_CHANGED: dashboardText('Đổi vai trò','Role changed'),
+        LANGUAGE_CREATED: dashboardText('Thêm ngôn ngữ','Language created'), LANGUAGE_UPDATED: dashboardText('Sửa ngôn ngữ','Language updated'), LANGUAGE_DELETED: dashboardText('Xóa ngôn ngữ','Language deleted'), LANGUAGE_DEFAULT_CHANGED: dashboardText('Đổi ngôn ngữ mặc định','Default language changed'),
+        SETTINGS_UPDATED: dashboardText('Thay đổi cài đặt','Settings updated'), SETTINGS_RESTORED: dashboardText('Khôi phục cài đặt','Settings restored'), AUTH_LOGIN_SUCCEEDED: dashboardText('Đăng nhập thành công','Login succeeded'), AUTH_LOGIN_FAILED: dashboardText('Đăng nhập thất bại','Login failed'), AUTH_LOGOUT: dashboardText('Đăng xuất','Logout'), AUTH_ACCESS_DENIED: dashboardText('Truy cập bị từ chối','Access denied')
+      };
+      const auditEvents = (Array.isArray(auditLogs) ? auditLogs : []).map(log => ({ id: log.id, date: log.created_at, icon: log.entity_type === 'POST' ? 'solar:document-text-bold-duotone' : log.entity_type === 'CATEGORY' ? 'solar:folder-bold-duotone' : log.entity_type === 'USER' ? 'solar:user-bold-duotone' : 'solar:shield-check-bold-duotone', tone: log.entity_type === 'CATEGORY' ? 'purple' : log.entity_type === 'USER' ? 'green' : 'blue', text: `${actionLabels[log.action] || log.action}: ${log.entity_label || '#' + (log.entity_id || '')}` }));
+      const fallbackEvents = [
+        ...posts.map(post => ({ date: post.created_at, icon: 'solar:document-add-bold-duotone', tone: 'blue', text: `${dashboardText('Bài viết mới','New post')}: ${(translations.find(t=>t.post_id===post.id && String(t.language_id)===String(languageId)) || translations.find(t=>t.post_id===post.id) || {}).title || '#' + post.id}` })),
+        ...comments.map(comment => ({ date: comment.created_at, icon: 'solar:chat-round-dots-bold-duotone', tone: 'purple', text: `${dashboardText('Bình luận mới','New comment')}: ${comment.content}` })),
+        ...users.slice(1).map(user => ({ date: user.created_at, icon: 'solar:user-plus-bold-duotone', tone: 'green', text: `${dashboardText('Người dùng mới','New user')}: ${user.full_name || user.user_name}` }))
+      ];
+      const events = (auditEvents.length ? auditEvents : fallbackEvents).filter(x=>x.date).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6);
+      document.getElementById('recentActivity').innerHTML = events.map(event => `<${event.id ? 'a' : 'div'} ${event.id ? `href="logs.html?id=${event.id}"` : ''} class="activity-row"><span class="activity-icon activity-${event.tone}"><iconify-icon icon="${event.icon}"></iconify-icon></span><div><p data-user-content>${escapeDashboardHtml(event.text)}</p><time>${new Date(event.date).toLocaleDateString(dashboardLocale()==='en'?'en-US':'vi-VN',{day:'2-digit',month:'short',year:'numeric'})}</time></div></${event.id ? 'a' : 'div'}>`).join('');
+    }
+  </script>
 </body>
+
 </html>

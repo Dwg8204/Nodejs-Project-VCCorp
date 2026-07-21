@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  <title>Cài đặt hệ thống – Medium</title>
+  <link rel="stylesheet" href="../shared.css">
+  <link rel="stylesheet" href="../responsive-pages.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="hamburger" onclick="toggleSidebar()"><iconify-icon icon="material-symbols:menu-rounded"></iconify-icon></span>
+      <a href="../index.html" class="logo">Medium</a>
+      <div class="search-box-wrap" id="topSearchWrap">
+        <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+        <input class="search-input" type="text" placeholder="Search..." data-vi-placeholder="Tìm kiếm..." data-en-placeholder="Search...">
+        <div class="search-results-dropdown"></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="lang-dropdown">
+        <button class="lang-btn" onclick="toggleLangMenu()"><span class="lang-current-label">English</span><iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon></button>
+        <div class="lang-menu">
+          <a href="#" data-lang="vi" onclick="selectLanguage('vi');return false;">Tiếng Việt</a>
+          <a href="#" data-lang="en" onclick="selectLanguage('en');return false;">English</a>
+        </div>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()"><span class="knob"><iconify-icon icon="solar:sun-bold"></iconify-icon></span></button>
+      <div class="avatar">A</div>
+    </div>
+  </div>
+
+  <div class="layout no-rail" id="layoutRoot">
+    <aside class="sidebar" id="mainSidebar">
+      <a href="index.html"><span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span><span data-vi="Bảng điều khiển" data-en="Dashboard">Dashboard</span></a>
+      <a href="posts.html"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span><span data-vi="Quản lý bài viết" data-en="Manage posts">Manage posts</span></a>
+      <a href="users.html"><span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span><span data-vi="Quản lý thành viên" data-en="Manage users">Manage users</span></a>
+      <a href="categories.html"><span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span><span data-vi="Quản lý danh mục" data-en="Manage categories">Manage categories</span></a>
+      <a href="languages.html"><span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span><span data-vi="Quản lý ngôn ngữ" data-en="Manage languages">Manage languages</span></a>
+      <a href="settings.html" class="active"><span class="icon"><iconify-icon icon="solar:settings-bold-duotone"></iconify-icon></span><span data-vi="Cài đặt hệ thống" data-en="System settings">System settings</span></a>
+      <a href="../index.html"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span><span data-vi="Về trang Blog" data-en="Back to Blog">Back to Blog</span></a>
+    </aside>
+
+    <main class="admin-main">
+      <div class="settings-shell">
+        <div class="admin-header"><h1 data-vi="Cài đặt hệ thống" data-en="System Settings">System Settings</h1></div>
+        <p class="settings-intro" data-vi="Quản lý cách nội dung hiển thị, ngôn ngữ, quy trình kiểm duyệt và giao diện mặc định." data-en="Manage content display, languages, moderation workflow, and default appearance.">Manage content display, languages, moderation workflow, and default appearance.</p>
+
+        <div class="settings-grid">
+          <section class="settings-card">
+            <div class="settings-card-head"><span class="settings-card-icon"><iconify-icon icon="solar:list-bold-duotone"></iconify-icon></span><div><h2 data-vi="Hiển thị nội dung" data-en="Content display">Content display</h2><p data-vi="Thiết lập kích thước danh sách trên toàn hệ thống." data-en="Configure list sizes across the system.">Configure list sizes across the system.</p></div></div>
+            <div class="settings-field">
+              <label for="postsPerPage" data-vi="Số mục trên mỗi trang" data-en="Items per page">Items per page</label>
+              <input id="postsPerPage" class="form-control" type="number" min="1" max="100" step="1" inputmode="numeric">
+              <p class="settings-hint" data-vi="Giá trị mặc định từ 1 đến 100, áp dụng khi người dùng chưa chọn số mục riêng trên thanh phân trang." data-en="Default value from 1 to 100, used until a user chooses a personal page size in the pagination controls.">Default value from 1 to 100, used until a user chooses a personal page size in the pagination controls.</p>
+            </div>
+          </section>
+
+          <section class="settings-card">
+            <div class="settings-card-head"><span class="settings-card-icon"><iconify-icon icon="solar:global-bold-duotone"></iconify-icon></span><div><h2 data-vi="Ngôn ngữ" data-en="Language">Language</h2><p data-vi="Ngôn ngữ nguồn và hành vi dịch tự động." data-en="Source language and automatic translation behavior.">Source language and automatic translation behavior.</p></div></div>
+            <div class="settings-field"><label for="defaultLanguage" data-vi="Ngôn ngữ mặc định" data-en="Default language">Default language</label><select id="defaultLanguage" class="form-control"></select></div>
+            <div class="settings-field settings-toggle-row"><div class="settings-toggle-copy"><strong data-vi="Tự động dịch danh mục" data-en="Auto-translate categories">Auto-translate categories</strong><span data-vi="Tạo bản dịch cho các ngôn ngữ khác khi lưu." data-en="Create other language versions when saving.">Create other language versions when saving.</span></div><label class="settings-switch"><input id="autoTranslateCategories" type="checkbox"><span></span></label></div>
+            <div class="settings-field settings-toggle-row"><div class="settings-toggle-copy"><strong data-vi="Tự động dịch bài viết" data-en="Auto-translate posts">Auto-translate posts</strong><span data-vi="Chuẩn bị bản dịch khi tác giả gửi bài." data-en="Prepare translations when an author submits a post.">Prepare translations when an author submits a post.</span></div><label class="settings-switch"><input id="autoTranslatePosts" type="checkbox"><span></span></label></div>
+          </section>
+
+          <section class="settings-card">
+            <div class="settings-card-head"><span class="settings-card-icon"><iconify-icon icon="solar:shield-check-bold-duotone"></iconify-icon></span><div><h2 data-vi="Kiểm duyệt" data-en="Moderation">Moderation</h2><p data-vi="Kiểm soát quy trình xuất bản của Blog Owner." data-en="Control the Blog Owner publishing workflow.">Control the Blog Owner publishing workflow.</p></div></div>
+            <div class="settings-field settings-toggle-row"><div class="settings-toggle-copy"><strong data-vi="Bắt buộc duyệt bài viết" data-en="Require post approval">Require post approval</strong><span data-vi="Bài gửi xuất bản sẽ chuyển sang trạng thái chờ duyệt." data-en="Submitted posts enter the pending review state.">Submitted posts enter the pending review state.</span></div><label class="settings-switch"><input id="requirePostApproval" type="checkbox"><span></span></label></div>
+          </section>
+
+          <section class="settings-card">
+            <div class="settings-card-head"><span class="settings-card-icon"><iconify-icon icon="solar:palette-bold-duotone"></iconify-icon></span><div><h2 data-vi="Giao diện" data-en="Appearance">Appearance</h2><p data-vi="Thiết lập mặc định cho người dùng mới." data-en="Set defaults for new users.">Set defaults for new users.</p></div></div>
+            <div class="settings-field"><label for="defaultTheme" data-vi="Chủ đề mặc định" data-en="Default theme">Default theme</label><select id="defaultTheme" class="form-control"><option value="system" data-vi="Theo hệ thống" data-en="System">System</option><option value="light" data-vi="Sáng" data-en="Light">Light</option><option value="dark" data-vi="Tối" data-en="Dark">Dark</option></select></div>
+            <div class="settings-field settings-toggle-row"><div class="settings-toggle-copy"><strong data-vi="Giảm hiệu ứng chuyển động" data-en="Reduce motion">Reduce motion</strong><span data-vi="Giảm animation và chuyển cảnh trên toàn giao diện." data-en="Reduce animations and transitions throughout the interface.">Reduce animations and transitions throughout the interface.</span></div><label class="settings-switch"><input id="reduceMotion" type="checkbox"><span></span></label></div>
+          </section>
+        </div>
+
+        <div class="settings-actions"><button type="button" class="btn btn-outline" onclick="resetSettings()" data-vi="Khôi phục mặc định" data-en="Restore defaults">Restore defaults</button><button type="button" class="btn btn-primary" onclick="saveSettings()"><iconify-icon icon="solar:diskette-bold-duotone"></iconify-icon><span data-vi="Lưu cài đặt" data-en="Save settings">Save settings</span></button></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../shared.js"></script>
+  <script src="../js/mockData.js"></script>
+  <script>
+    let settingsRestorePending = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = db.getCurrentUser();
+      if (!user || user.role_id !== 1) {
+        recordAuditLog({ action: 'AUTH_ACCESS_DENIED', entityType: 'PAGE', entityLabel: 'admin/settings.html', metadata: { path: location.pathname }, actor: user || null });
+        showToast('Vui lòng đăng nhập với tài khoản Super Admin!', 'error');
+        setTimeout(() => location.href = '../login.html', 1500);
+        return;
+      }
+      hydrateAccountAvatar(document.querySelector('.avatar'), user);
+      populateLanguages();
+      fillSettings(getSystemSettings());
+      applyLanguage(localStorage.getItem('blog-lang') || 'vi');
+    });
+
+    function populateLanguages() {
+      const select = document.getElementById('defaultLanguage');
+      select.innerHTML = db.get('languages').map(lang => `<option value="${lang.id}">${lang.name} (${lang.code.toUpperCase()})</option>`).join('');
+    }
+
+    function fillSettings(settings) {
+      document.getElementById('postsPerPage').value = String(settings.posts_per_page);
+      document.getElementById('defaultLanguage').value = String(settings.default_language_id);
+      document.getElementById('autoTranslateCategories').checked = Boolean(settings.auto_translate_categories);
+      document.getElementById('autoTranslatePosts').checked = Boolean(settings.auto_translate_posts);
+      document.getElementById('requirePostApproval').checked = Boolean(settings.require_post_approval);
+      document.getElementById('defaultTheme').value = settings.default_theme;
+      document.getElementById('reduceMotion').checked = Boolean(settings.reduce_motion);
+    }
+
+    function saveSettings() {
+      const beforeSettings = getSystemSettings();
+      const pageSize = Number(document.getElementById('postsPerPage').value);
+      if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+        showToast(localStorage.getItem('blog-lang') === 'en' ? 'Items per page must be between 1 and 100.' : 'Số mục trên mỗi trang phải từ 1 đến 100.', 'error');
+        return;
+      }
+      const settings = {
+        ...beforeSettings,
+        posts_per_page: pageSize,
+        default_language_id: Number(document.getElementById('defaultLanguage').value),
+        auto_translate_categories: document.getElementById('autoTranslateCategories').checked,
+        auto_translate_posts: document.getElementById('autoTranslatePosts').checked,
+        require_post_approval: document.getElementById('requirePostApproval').checked,
+        default_theme: document.getElementById('defaultTheme').value,
+        reduce_motion: document.getElementById('reduceMotion').checked
+      };
+      db.set('settings', settings);
+      recordAuditLog({ action: settingsRestorePending ? 'SETTINGS_RESTORED' : 'SETTINGS_UPDATED', entityType: 'SETTINGS', entityLabel: 'System settings', beforeData: beforeSettings, afterData: settings });
+      settingsRestorePending = false;
+      document.documentElement.classList.toggle('system-reduce-motion', settings.reduce_motion);
+      showToast(localStorage.getItem('blog-lang') === 'en' ? 'System settings saved.' : 'Đã lưu cài đặt hệ thống!', 'success');
+    }
+
+    function resetSettings() {
+      const english = localStorage.getItem('blog-lang') === 'en';
+      showConfirm({
+        title: english ? 'Restore defaults' : 'Khôi phục mặc định',
+        message: english ? 'Restore all system settings to their default values?' : 'Bạn có chắc muốn khôi phục toàn bộ cài đặt hệ thống?',
+        confirmText: english ? 'Restore' : 'Khôi phục',
+        cancelText: english ? 'Cancel' : 'Hủy',
+        onConfirm: () => { settingsRestorePending = true; fillSettings({ ...DEFAULT_SYSTEM_SETTINGS }); showToast(localStorage.getItem('blog-lang') === 'en' ? 'Default values restored. Save to apply.' : 'Đã khôi phục giá trị mặc định. Hãy lưu để áp dụng.', 'info'); }
+      });
+    }
+  </script>
+</body>
+</html>

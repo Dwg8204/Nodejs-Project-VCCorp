@@ -460,6 +460,9 @@ function applyLanguage(lang) {
     if (lang === 'en' && document.title === vi) document.title = en;
     if (lang === 'vi' && document.title === en) document.title = vi;
   });
+  document.querySelectorAll('select').forEach(select => {
+    if (select._uiSelectWrapper) refreshUiSelect(select);
+  });
 }
 
 function selectLanguage(lang) {
@@ -918,6 +921,138 @@ function focusCommentBox() {
 }
 
 // ============ Khởi tạo khi tải trang ============
+// ============ Reusable custom select dropdown ============
+let activeUiSelect = null;
+
+function uiSelectOptionLabel(option) {
+  const lang = localStorage.getItem('blog-lang') || 'vi';
+  return option?.dataset?.[lang] || option?.textContent?.trim() || '';
+}
+
+function positionUiSelectMenu(wrapper) {
+  const menu = wrapper?._uiSelectMenu;
+  const trigger = wrapper?.querySelector('.ui-select-trigger');
+  if (!menu || !trigger) return;
+  const rect = trigger.getBoundingClientRect();
+  const gap = 7;
+  const availableBelow = window.innerHeight - rect.bottom - gap - 10;
+  const availableAbove = rect.top - gap - 10;
+  const openAbove = availableBelow < 180 && availableAbove > availableBelow;
+  const maxHeight = Math.max(120, Math.min(320, openAbove ? availableAbove : availableBelow));
+  menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8))}px`;
+  menu.style.width = `${Math.max(120, Math.min(rect.width, window.innerWidth - 16))}px`;
+  menu.style.maxHeight = `${maxHeight}px`;
+  menu.style.top = openAbove ? 'auto' : `${rect.bottom + gap}px`;
+  menu.style.bottom = openAbove ? `${window.innerHeight - rect.top + gap}px` : 'auto';
+}
+
+function closeUiSelect(focusTrigger = false) {
+  if (!activeUiSelect) return;
+  const wrapper = activeUiSelect;
+  wrapper.classList.remove('open');
+  wrapper._uiSelectMenu?.classList.remove('open');
+  const trigger = wrapper.querySelector('.ui-select-trigger');
+  trigger?.setAttribute('aria-expanded', 'false');
+  if (focusTrigger) trigger?.focus();
+  activeUiSelect = null;
+}
+
+function refreshUiSelect(select) {
+  const wrapper = select?._uiSelectWrapper;
+  if (!wrapper) return;
+  const trigger = wrapper.querySelector('.ui-select-trigger');
+  const label = wrapper.querySelector('.ui-select-label');
+  const menu = wrapper._uiSelectMenu;
+  const selected = select.options[select.selectedIndex] || select.options[0];
+  label.textContent = uiSelectOptionLabel(selected);
+  trigger.disabled = select.disabled;
+  trigger.setAttribute('aria-label', select.getAttribute('aria-label') || label.textContent || 'Select option');
+  menu.replaceChildren(...[...select.options].map(option => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ui-select-option';
+    button.dataset.value = option.value;
+    button.textContent = uiSelectOptionLabel(option);
+    button.disabled = option.disabled;
+    const isSelected = option === selected;
+    button.classList.toggle('active', isSelected);
+    button.setAttribute('role', 'option');
+    button.setAttribute('aria-selected', String(isSelected));
+    button.addEventListener('click', () => {
+      if (button.disabled) return;
+      select.value = option.value;
+      refreshUiSelect(select);
+      closeUiSelect(true);
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    return button;
+  }));
+}
+
+function openUiSelect(wrapper) {
+  const select = wrapper?._uiSelectNative;
+  if (!select || select.disabled) return;
+  if (activeUiSelect === wrapper) { closeUiSelect(); return; }
+  closeUiSelect();
+  refreshUiSelect(select);
+  activeUiSelect = wrapper;
+  wrapper.classList.add('open');
+  wrapper._uiSelectMenu.classList.add('open');
+  wrapper.querySelector('.ui-select-trigger')?.setAttribute('aria-expanded', 'true');
+  positionUiSelectMenu(wrapper);
+  wrapper._uiSelectMenu.querySelector('.active')?.focus();
+}
+
+function enhanceUiSelect(select) {
+  if (!select || select.dataset.uiSelect === 'off' || select.multiple || Number(select.size) > 1 || select.closest('.dashboard-period-control') || select._uiSelectWrapper) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'ui-select';
+  if (select.style.maxWidth) wrapper.style.maxWidth = select.style.maxWidth;
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'ui-select-trigger';
+  trigger.setAttribute('aria-haspopup', 'listbox');
+  trigger.setAttribute('aria-expanded', 'false');
+  trigger.innerHTML = '<span class="ui-select-label"></span><iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>';
+  const menu = document.createElement('div');
+  menu.className = 'ui-select-menu';
+  menu.setAttribute('role', 'listbox');
+  select.parentNode.insertBefore(wrapper, select);
+  wrapper.appendChild(select);
+  wrapper.appendChild(trigger);
+  document.body.appendChild(menu);
+  wrapper._uiSelectNative = select;
+  wrapper._uiSelectMenu = menu;
+  select._uiSelectWrapper = wrapper;
+  select.tabIndex = -1;
+  trigger.addEventListener('click', event => { event.stopPropagation(); openUiSelect(wrapper); });
+  trigger.addEventListener('keydown', event => {
+    if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) { event.preventDefault(); openUiSelect(wrapper); }
+  });
+  select.addEventListener('focus', () => trigger.focus());
+  refreshUiSelect(select);
+}
+
+function enhanceUiSelects(root = document) {
+  if (root.matches?.('select')) enhanceUiSelect(root);
+  root.querySelectorAll?.('select').forEach(enhanceUiSelect);
+}
+
+document.addEventListener('click', event => {
+  if (activeUiSelect && !event.target.closest('.ui-select-menu') && !event.target.closest('.ui-select')) closeUiSelect();
+  queueMicrotask(() => document.querySelectorAll('select').forEach(select => {
+    if (select._uiSelectWrapper) refreshUiSelect(select);
+  }));
+});
+document.addEventListener('change', event => {
+  if (event.target?.matches?.('select') && event.target._uiSelectWrapper) refreshUiSelect(event.target);
+});
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && activeUiSelect) closeUiSelect(true); });
+window.addEventListener('resize', () => { if (activeUiSelect) positionUiSelectMenu(activeUiSelect); });
+window.addEventListener('scroll', event => {
+  if (activeUiSelect && !event.target.closest?.('.ui-select-menu')) closeUiSelect();
+}, true);
+
 window.addEventListener('DOMContentLoaded', () => {
   const systemSettings = getSystemSettings();
   const savedTheme = localStorage.getItem('blog-theme') || systemSettings.default_theme || 'system';
@@ -947,6 +1082,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Gọi hàm gán ngôn ngữ dịch thuật
   applyLanguage(savedLang);
+  enhanceUiSelects(document);
 
   // Global Logout logic
   if (typeof db !== 'undefined') {
@@ -1000,11 +1136,14 @@ window.addEventListener('DOMContentLoaded', () => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           translateUiTree(node, lang);
           enhanceUiAccessibility(node);
+          enhanceUiSelects(node);
         }
         if (node.nodeType === Node.TEXT_NODE && node.parentElement && !node.parentElement.closest('.article-body,.body-text,.comment-content,.post-content,.ql-editor,.post-title,.post-title-cell,.featured-title,.featured-desc,.search-result-title,.user-name,.comment-author,[data-user-content]')) {
           node.nodeValue = translateUiText(node.nodeValue, lang);
         }
       });
+      const changedSelect = record.target?.closest?.('select');
+      if (changedSelect?._uiSelectWrapper) refreshUiSelect(changedSelect);
     });
   });
   uiObserver.observe(document.body, { childList: true, subtree: true });

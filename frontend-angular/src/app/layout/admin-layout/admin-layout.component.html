@@ -1,0 +1,31 @@
+<div class="admin-shell" [class.admin-shell--open]="sidebarOpen()">
+  <header class="admin-topbar">
+    <button class="icon-button" type="button" aria-label="Mở thanh điều hướng" (click)="toggleSidebar()">☰</button>
+    <a class="admin-brand" routerLink="/admin/dashboard">VCCorp <span>Admin</span></a>
+    <div class="admin-user" aria-label="Tài khoản đang đăng nhập">
+      <span class="admin-user__text">Super Admin</span>
+      <span class="admin-user__avatar" aria-hidden="true">SA</span>
+    </div>
+  </header>
+
+  <aside class="admin-sidebar" aria-label="Điều hướng quản trị">
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="active">
+        <span aria-hidden="true">▦</span> Bảng điều khiển
+      </a>
+      <span class="nav-placeholder"><span aria-hidden="true">▤</span> Quản lý bài viết</span>
+      <span class="nav-placeholder"><span aria-hidden="true">◉</span> Quản lý người dùng</span>
+      <span class="nav-placeholder"><span aria-hidden="true">◇</span> Quản lý danh mục</span>
+      <span class="nav-placeholder"><span aria-hidden="true">≡</span> Nhật ký hoạt động</span>
+      <span class="nav-placeholder"><span aria-hidden="true">⚙</span> Cài đặt</span>
+    </nav>
+  </aside>
+
+  @if (sidebarOpen()) {
+    <button class="sidebar-backdrop" type="button" aria-label="Đóng thanh điều hướng" (click)="toggleSidebar()"></button>
+  }
+
+  <main class="admin-content">
+    <router-outlet />
+  </main>
+</div>

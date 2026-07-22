@@ -1,0 +1,38 @@
+<header class="topbar">
+  <div class="container topbar__inner">
+    <a class="brand" routerLink="/" aria-label="Về trang chủ VCCorp Blog">
+      <span class="brand__mark" aria-hidden="true">V</span>
+      <span>VCCorp Blog</span>
+    </a>
+
+    <nav class="desktop-nav" aria-label="Điều hướng chính">
+      <a routerLink="/">Bài viết</a>
+      <a routerLink="/admin">Quản trị</a>
+    </nav>
+
+    <div class="topbar__actions">
+      <button class="language-button" type="button" aria-label="Đổi ngôn ngữ">VI</button>
+      <a class="button button--primary desktop-action" routerLink="/">Viết bài</a>
+      <button
+        class="menu-button"
+        type="button"
+        aria-label="Mở menu"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="toggleMenu()"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  @if (menuOpen()) {
+    <nav class="mobile-nav" aria-label="Điều hướng mobile">
+      <a routerLink="/" (click)="toggleMenu()">Bài viết</a>
+      <a routerLink="/admin" (click)="toggleMenu()">Quản trị</a>
+    </nav>
+  }
+</header>
+
+<main>
+  <router-outlet />
+</main>

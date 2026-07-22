@@ -1,0 +1,34 @@
+<div class="admin-shell" [class.admin-shell--open]="sidebarOpen()">
+  <header class="admin-topbar">
+    <button class="icon-button" type="button" aria-label="Mở thanh điều hướng" (click)="toggleSidebar()">☰</button>
+    <a class="admin-brand" routerLink="/admin/dashboard">VCCorp <span>Admin</span></a>
+    <button class="admin-language" type="button" [attr.aria-label]="'changeLanguage' | translate" (click)="language.toggleLocale()">
+      {{ language.locale().toUpperCase() }}
+    </button>
+    <div class="admin-user" aria-label="Tài khoản đang đăng nhập">
+      <span class="admin-user__text">{{ auth.currentUser()?.fullName || auth.currentUser()?.userName || 'Super Admin' }}</span>
+      <span class="admin-user__avatar" aria-hidden="true">{{ (auth.currentUser()?.fullName || 'SA').slice(0, 2).toUpperCase() }}</span>
+    </div>
+  </header>
+
+  <aside class="admin-sidebar" aria-label="Điều hướng quản trị">
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="active">
+        <span aria-hidden="true">▦</span> {{ 'dashboard' | translate }}
+      </a>
+      <span class="nav-placeholder"><span aria-hidden="true">▤</span> {{ 'managePosts' | translate }}</span>
+      <span class="nav-placeholder"><span aria-hidden="true">◉</span> {{ 'manageUsers' | translate }}</span>
+      <span class="nav-placeholder"><span aria-hidden="true">◇</span> {{ 'manageCategories' | translate }}</span>
+      <span class="nav-placeholder"><span aria-hidden="true">≡</span> {{ 'activityLogs' | translate }}</span>
+      <span class="nav-placeholder"><span aria-hidden="true">⚙</span> {{ 'settings' | translate }}</span>
+    </nav>
+  </aside>
+
+  @if (sidebarOpen()) {
+    <button class="sidebar-backdrop" type="button" aria-label="Đóng thanh điều hướng" (click)="toggleSidebar()"></button>
+  }
+
+  <main class="admin-content">
+    <router-outlet />
+  </main>
+</div>

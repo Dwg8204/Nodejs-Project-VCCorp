@@ -1,0 +1,28 @@
+<section class="dashboard-heading">
+  <div>
+    <p class="eyebrow">Tổng quan hệ thống</p>
+    <h1 class="page-title">Bảng điều khiển</h1>
+    <p>Nền tảng layout cho admin đã sẵn sàng; dữ liệu thật sẽ được chuyển ở các đợt sau.</p>
+  </div>
+  <button class="button button--secondary" type="button">30 ngày gần nhất</button>
+</section>
+
+<section class="metric-grid" aria-label="Tiến độ nền tảng Angular">
+  @for (item of foundations; track item.label) {
+    <article class="metric-card">
+      <strong>{{ item.value }}</strong>
+      <span>{{ item.label }}</span>
+    </article>
+  }
+</section>
+
+<section class="migration-panel">
+  <div>
+    <p class="eyebrow">Nguyên tắc chuyển đổi</p>
+    <h2>Chuyển từng phần, không phá vỡ chức năng hiện tại</h2>
+  </div>
+  <p>
+    Các menu chưa được điều hướng ở đợt này là vị trí dành sẵn. Chúng sẽ được kích hoạt
+    khi từng màn hình và nghiệp vụ tương ứng được chuyển sang Angular.
+  </p>
+</section>

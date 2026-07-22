@@ -6,17 +6,22 @@
     </a>
 
     <nav class="desktop-nav" aria-label="Điều hướng chính">
-      <a routerLink="/">Bài viết</a>
-      <a routerLink="/admin">Quản trị</a>
+      <a routerLink="/">{{ 'posts' | translate }}</a>
+      <a routerLink="/admin">{{ 'admin' | translate }}</a>
     </nav>
 
     <div class="topbar__actions">
-      <button class="language-button" type="button" aria-label="Đổi ngôn ngữ">VI</button>
-      <a class="button button--primary desktop-action" routerLink="/">Viết bài</a>
+      <button
+        class="language-button"
+        type="button"
+        [attr.aria-label]="'changeLanguage' | translate"
+        (click)="language.toggleLocale()"
+      >{{ language.locale().toUpperCase() }}</button>
+      <a class="button button--primary desktop-action" routerLink="/">{{ 'writePost' | translate }}</a>
       <button
         class="menu-button"
         type="button"
-        aria-label="Mở menu"
+        [attr.aria-label]="(menuOpen() ? 'closeMenu' : 'openMenu') | translate"
         [attr.aria-expanded]="menuOpen()"
         (click)="toggleMenu()"
       >
@@ -27,8 +32,8 @@
 
   @if (menuOpen()) {
     <nav class="mobile-nav" aria-label="Điều hướng mobile">
-      <a routerLink="/" (click)="toggleMenu()">Bài viết</a>
-      <a routerLink="/admin" (click)="toggleMenu()">Quản trị</a>
+      <a routerLink="/" (click)="toggleMenu()">{{ 'posts' | translate }}</a>
+      <a routerLink="/admin" (click)="toggleMenu()">{{ 'admin' | translate }}</a>
     </nav>
   }
 </header>

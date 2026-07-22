@@ -40,6 +40,20 @@
   font-weight: 700;
 }
 
+.admin-language {
+  min-width: 44px;
+  min-height: 40px;
+  margin-left: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-weight: 800;
+}
+
+.admin-language + .admin-user {
+  margin-left: 0;
+}
+
 .admin-user__avatar {
   display: grid;
   width: 40px;

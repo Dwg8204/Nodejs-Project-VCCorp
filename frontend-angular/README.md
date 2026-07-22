@@ -35,6 +35,18 @@ bản Angular sẵn sàng thay thế site trong `docs`; đợt 1 chưa thay đ�
 - Route mẫu: `/`, `/admin/dashboard`, trang 404.
 - Cấu hình build có `base-href` phù hợp GitHub Pages.
 
+## Phạm vi đợt 2
+
+- Các model TypeScript dùng chung khớp response Auth/User/Language của NestJS.
+- `HttpClient` và functional interceptor tự gắn Bearer token cho API backend.
+- `AuthService` quản lý đăng nhập, đăng ký, hồ sơ, phiên đăng nhập và role bằng signals.
+- Guard xác thực và guard phân quyền đã sẵn sàng để gắn vào route khi chuyển màn hình đăng nhập.
+- `LanguageService` quản lý VI/EN tập trung, lưu lựa chọn và cập nhật giao diện tức thời.
+- Pipe dịch tái sử dụng cho public/admin layout.
+
+Backend development mặc định: `http://localhost:3000/api`. Khi deploy thật, chuyển URL này sang
+environment/config của môi trường tương ứng; Angular không kết nối trực tiếp tới MySQL.
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
 
 ## Development server

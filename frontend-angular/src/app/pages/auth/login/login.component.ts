@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -7,7 +7,7 @@ import { USER_ROLES, UserRole } from '../../../core/models/auth.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 
-@Component({ selector: 'app-login', standalone: true, imports: [ReactiveFormsModule, RouterLink], templateUrl: './login.component.html', styleUrl: './login.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-login', standalone: true, imports: [ReactiveFormsModule, RouterLink], templateUrl: './login.component.html', styleUrl: './login.component.scss', changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, schemas: [CUSTOM_ELEMENTS_SCHEMA] })
 export class LoginComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly auth = inject(AuthService);

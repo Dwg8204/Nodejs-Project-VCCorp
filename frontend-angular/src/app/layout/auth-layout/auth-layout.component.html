@@ -1,7 +1,1 @@
-<header class="auth-topbar">
-  <a class="auth-brand" routerLink="/"><span aria-hidden="true">V</span> VCCorp Blog</a>
-  <button class="language-button" type="button" (click)="language.toggleLocale()" [attr.aria-label]="language.locale() === 'vi' ? 'Đổi sang tiếng Anh' : 'Switch to Vietnamese'">
-    {{ language.locale().toUpperCase() }}
-  </button>
-</header>
-<main class="auth-page"><router-outlet /></main>
+<router-outlet />

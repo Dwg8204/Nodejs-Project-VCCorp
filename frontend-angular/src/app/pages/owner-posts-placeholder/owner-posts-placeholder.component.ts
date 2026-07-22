@@ -1,4 +1,0 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-
-@Component({ selector: 'app-owner-posts-placeholder', standalone: true, template: `<section class="container owner-page"><p class="eyebrow">Blog Owner</p><h1 class="page-title">Bài viết của tôi</h1><div class="placeholder"><strong>Luồng đăng nhập Blog Owner đã hoạt động.</strong><p>Màn hình quản lý và tạo bài viết sẽ được chuyển trong đợt dành cho Blog Owner.</p></div></section>`, styles: `.owner-page{padding-block:48px}.placeholder{margin-top:28px;padding:32px;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);box-shadow:var(--shadow-sm)}.placeholder p{margin:10px 0 0;color:var(--color-text-muted)}`, changeDetection: ChangeDetectionStrategy.OnPush })
-export class OwnerPostsPlaceholderComponent {}

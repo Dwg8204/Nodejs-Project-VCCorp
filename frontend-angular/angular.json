@@ -35,12 +35,25 @@
               }
             ],
             "styles": [
+              "../docs/shared.css",
+              "../docs/responsive-pages.css",
+              "../docs/unified_media.css",
               "src/styles.scss"
             ],
             "scripts": []
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": true
+                },
+                "fonts": {
+                  "inline": false
+                }
+              },
               "budgets": [
                 {
                   "type": "initial",
@@ -94,6 +107,9 @@
               }
             ],
             "styles": [
+              "../docs/shared.css",
+              "../docs/responsive-pages.css",
+              "../docs/unified_media.css",
               "src/styles.scss"
             ],
             "scripts": []

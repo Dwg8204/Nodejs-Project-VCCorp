@@ -103,6 +103,9 @@
   white-space: nowrap;
 }
 
+.admin-logout { display: flex; min-height: 48px; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border: 0; border-radius: var(--radius-sm); color: var(--color-danger); background: transparent; font-weight: 700; }
+.admin-logout:hover { background: #ffedf0; }
+
 .admin-sidebar a.active {
   color: var(--color-primary);
   background: var(--color-primary-soft);

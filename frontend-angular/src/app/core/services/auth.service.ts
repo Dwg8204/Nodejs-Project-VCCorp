@@ -1,8 +1,6 @@
-import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
-import { APP_CONFIG } from '../config/app.config';
 import { ApiResponse } from '../models/api.model';
 import {
   AuthData,
@@ -12,6 +10,7 @@ import {
   UserRole,
 } from '../models/auth.model';
 import { StorageService } from './storage.service';
+import { AuthRepository } from '../../data/contracts/auth.repository';
 
 export const AUTH_STORAGE_KEYS = {
   token: 'vccorp_access_token',
@@ -20,7 +19,7 @@ export const AUTH_STORAGE_KEYS = {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly http = inject(HttpClient);
+  private readonly repository = inject(AuthRepository);
   private readonly storage = inject(StorageService);
   private readonly userState = signal<User | null>(
     this.storage.get<User>(AUTH_STORAGE_KEYS.user),
@@ -33,20 +32,19 @@ export class AuthService {
   readonly role = computed(() => this.userState()?.role?.nameRole ?? null);
 
   login(request: LoginRequest): Observable<ApiResponse<AuthData>> {
-    return this.http
-      .post<ApiResponse<AuthData>>(`${APP_CONFIG.apiBaseUrl}/auth/login`, request)
+    return this.repository.login(request)
       .pipe(tap((response) => this.persistSession(response.data)));
   }
 
   register(request: RegisterRequest): Observable<ApiResponse<AuthData>> {
-    return this.http
-      .post<ApiResponse<AuthData>>(`${APP_CONFIG.apiBaseUrl}/auth/register`, request)
+    return this.repository.register(request)
       .pipe(tap((response) => this.persistSession(response.data)));
   }
 
   refreshProfile(): Observable<ApiResponse<{ user: User }>> {
-    return this.http
-      .get<ApiResponse<{ user: User }>>(`${APP_CONFIG.apiBaseUrl}/users/profile`)
+    const userId = this.currentUser()?.id;
+    if (!userId) throw new Error('Không có phiên đăng nhập.');
+    return this.repository.getProfile(userId)
       .pipe(tap((response) => this.setUser(response.data.user)));
   }
 
@@ -60,6 +58,7 @@ export class AuthService {
   }
 
   logout(): void {
+    this.repository.logout(this.userState());
     this.storage.remove(AUTH_STORAGE_KEYS.token);
     this.storage.remove(AUTH_STORAGE_KEYS.user);
     this.userState.set(null);

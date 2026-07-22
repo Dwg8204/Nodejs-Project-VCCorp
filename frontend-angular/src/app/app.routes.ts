@@ -10,6 +10,7 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./layout/public-layout/public-layout.component').then((c) => c.PublicLayoutComponent),
     children: [
+      { path: 'article/:id', title: 'Article | VCCorp Blog', loadComponent: () => import('./pages/article/article.component').then((c) => c.ArticleComponent) },
       { path: '', title: 'Trang chủ | VCCorp Blog', loadComponent: () => import('./pages/home/home.component').then((c) => c.HomeComponent) },
     ],
   },
@@ -38,6 +39,8 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/public-layout/public-layout.component').then((c) => c.PublicLayoutComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'posts' },
+      { path: 'posts/new', title: 'Viết bài mới | VCCorp Blog', loadComponent: () => import('./pages/post-form/post-form.component').then((c) => c.PostFormComponent) },
+      { path: 'posts/:id/edit', title: 'Chỉnh sửa bài viết | VCCorp Blog', loadComponent: () => import('./pages/post-form/post-form.component').then((c) => c.PostFormComponent) },
       { path: 'posts', title: 'Bài viết của tôi | VCCorp Blog', loadComponent: () => import('./pages/owner-posts/owner-posts.component').then((c) => c.OwnerPostsComponent) },
     ],
   },

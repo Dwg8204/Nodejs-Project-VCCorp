@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { FeedUiService } from '../../core/services/feed-ui.service';
@@ -13,6 +13,7 @@ interface AuthorHover { name:string; avatar:string; posts:number; likes:number; 
 @Component({ selector:'app-home', standalone:true, imports:[RouterLink], templateUrl:'./home.component.html', styleUrl:'./home.component.scss', changeDetection:ChangeDetectionStrategy.OnPush, encapsulation:ViewEncapsulation.None, schemas:[CUSTOM_ELEMENTS_SCHEMA] })
 export class HomeComponent {
   private readonly database=inject(MockDatabaseService);
+  private readonly router=inject(Router);
   protected readonly language=inject(LanguageService);
   protected readonly auth=inject(AuthService);
   protected readonly feedUi=inject(FeedUiService);
@@ -45,6 +46,7 @@ export class HomeComponent {
   protected readonly totalPages=computed(()=>Math.max(1,Math.ceil(this.filteredPosts().length/this.pageSize)));
   protected readonly pageNumbers=computed(()=>Array.from({length:this.totalPages()},(_,index)=>index+1));
   protected readonly visiblePosts=computed(()=>{const page=Math.min(this.currentPage(),this.totalPages());return this.filteredPosts().slice((page-1)*this.pageSize,page*this.pageSize);});
+  @HostListener('click',['$event']) protected openArticle(event:MouseEvent):void{const target=(event.target as HTMLElement).closest('.article-title,.article-thumb');if(!target)return;event.preventDefault();const card=target.closest('.article-card');const root=card?.parentElement;if(!card||!root)return;const index=Array.from(root.children).indexOf(card);const post=this.visiblePosts()[index];if(post)void this.router.navigate(['/article',post.id]);}
   protected readonly staffPicks=computed(()=>[...this.posts()].sort((a,b)=>(b.likes+b.comments)-(a.likes+a.comments)).slice(0,3));
   protected readonly hoveredAuthor=computed<AuthorHover|null>(()=>{
     const authorId=this.hoveredAuthorId(); if(authorId===null)return null;

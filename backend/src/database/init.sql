@@ -1,63 +1,309 @@
--- =========================================================================
--- PHẦN 1: XÓA SẠCH TOÀN BỘ CÁC BẢNG CŨ (THEO THỨ TỰ AN TOÀN TRÁNH LỖI KHÓA NGOẠ)
--- =========================================================================
+-- =============================================================================
+-- VCCORP BLOG - MYSQL INITIAL SCHEMA
+-- Đồng bộ với các nghiệp vụ hiện có trong docs/ và sẵn sàng cho NestJS/Angular.
+-- LƯU Ý: Script này xóa toàn bộ bảng nghiệp vụ trước khi tạo lại.
+-- =============================================================================
+
+SET NAMES utf8mb4;
+CREATE DATABASE IF NOT EXISTS `vccorp_db`
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `vccorp_db`;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
 DROP TABLE IF EXISTS `audit_logs`;
+DROP TABLE IF EXISTS `post_bookmarks`;
 DROP TABLE IF EXISTS `post_likes`;
 DROP TABLE IF EXISTS `comments`;
 DROP TABLE IF EXISTS `post_translations`;
-DROP TABLE IF EXISTS `category_translation`;
 DROP TABLE IF EXISTS `posts`;
+DROP TABLE IF EXISTS `category_translation`;
 DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `user_preferences`;
+DROP TABLE IF EXISTS `system_settings`;
 DROP TABLE IF EXISTS `languages`;
 DROP TABLE IF EXISTS `users`;
 DROP TABLE IF EXISTS `role`;
 
+SET FOREIGN_KEY_CHECKS = 1;
 
--- =========================================================================
--- PHẦN 2: KHỞI TẠO HỆ THỐNG BẢNG CHUẨN ĐỘNG (ĐÃ CÓ AVATAR & PHONE VÀ FIX LỖI)
--- =========================================================================
+-- =============================================================================
+-- 1. PHÂN QUYỀN VÀ NGƯỜI DÙNG
+-- =============================================================================
 
--- 1. Tạo bảng role (Danh sách vai trò hệ thống)
 CREATE TABLE `role` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `name_role` VARCHAR(255) NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name_role` VARCHAR(50) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_role_name` (`name_role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- 2. Tạo bảng users (ĐÃ BỔ SUNG ĐẦY ĐỦ AVATAR VÀ PHONE)
 CREATE TABLE `users` (
-  `id` INT NOT NULL AUTO_INCREMENT,
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `user_name` VARCHAR(255) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   `full_name` VARCHAR(255) DEFAULT NULL,
-  `phone` VARCHAR(20) DEFAULT NULL COMMENT 'Số điện thoại của người dùng',
-  `avatar` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh đại diện',
-  `cover_image` VARCHAR(500) DEFAULT NULL COMMENT 'Đường dẫn liên kết URL ảnh bìa trang cá nhân',
-  `date_of_birth` DATE DEFAULT NULL COMMENT 'Ngày tháng năm sinh',
-  `is_active` TINYINT(1) DEFAULT 1,
+  `phone` VARCHAR(20) DEFAULT NULL,
+  -- MEDIUMTEXT hỗ trợ cả URL lẫn data URL/base64 đang được giao diện HTML tạo ra.
+  `avatar` MEDIUMTEXT DEFAULT NULL,
+  `cover_image` MEDIUMTEXT DEFAULT NULL,
+  `date_of_birth` DATE DEFAULT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `password_hash` VARCHAR(255) DEFAULT NULL,
-  `email_verified` TINYINT(1) DEFAULT 0,
-  `role_id` INT NOT NULL COMMENT 'Liên kết trực tiếp bằng ID dạng INT sang bảng role để dễ dàng mở rộng tác nhân',
-  `otp_code` VARCHAR(10) DEFAULT NULL COMMENT 'Lưu mã PIN/OTP 6 số mới nhất',
-  `otp_created_at` TIMESTAMP NULL COMMENT 'Thời điểm tạo mã OTP gần nhất',
-  `otp_ttl_seconds` INT DEFAULT 180 COMMENT 'Thời gian sống của OTP tính bằng giây',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
+  `email_verified` TINYINT(1) NOT NULL DEFAULT 0,
+  `role_id` INT UNSIGNED NOT NULL,
+  `otp_code` VARCHAR(10) DEFAULT NULL,
+  `otp_created_at` TIMESTAMP NULL DEFAULT NULL,
+  `otp_ttl_seconds` INT UNSIGNED NOT NULL DEFAULT 180,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_user_name` (`user_name`),
-  UNIQUE KEY `uq_email` (`email`),
-  CONSTRAINT `fk_users_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  UNIQUE KEY `uq_users_user_name` (`user_name`),
+  UNIQUE KEY `uq_users_email` (`email`),
+  KEY `idx_users_role_active` (`role_id`, `is_active`),
+  KEY `idx_users_created_at` (`created_at`),
+  CONSTRAINT `fk_users_role`
+    FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =============================================================================
+-- 2. NGÔN NGỮ, CÀI ĐẶT HỆ THỐNG VÀ TÙY CHỌN NGƯỜI DÙNG
+-- =============================================================================
 
--- Audit log is append-only. entity_id is intentionally not a foreign key
--- because one log table records multiple entity types and must retain history
--- after the source row is deleted.
+CREATE TABLE `languages` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `code` VARCHAR(10) NOT NULL COMMENT 'Mã BCP 47 ngắn: vi, en, ja...',
+  `name` VARCHAR(255) NOT NULL,
+  `flag` VARCHAR(500) DEFAULT NULL COMMENT 'URL, emoji hoặc mã tài nguyên cờ',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_languages_code` (`code`),
+  KEY `idx_languages_active_name` (`deleted_at`, `name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Chỉ dùng một bản ghi id = 1 cho cài đặt toàn hệ thống.
+CREATE TABLE `system_settings` (
+  `id` TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  `default_language_id` INT UNSIGNED NOT NULL,
+  `posts_per_page` SMALLINT UNSIGNED NOT NULL DEFAULT 5,
+  `require_post_approval` TINYINT(1) NOT NULL DEFAULT 1,
+  `auto_translate_categories` TINYINT(1) NOT NULL DEFAULT 1,
+  `auto_translate_posts` TINYINT(1) NOT NULL DEFAULT 1,
+  `default_theme` VARCHAR(20) NOT NULL DEFAULT 'system',
+  `reduce_motion` TINYINT(1) NOT NULL DEFAULT 0,
+  `updated_by` INT UNSIGNED DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `chk_system_settings_singleton` CHECK (`id` = 1),
+  CONSTRAINT `chk_system_settings_page_size` CHECK (`posts_per_page` BETWEEN 1 AND 100),
+  CONSTRAINT `chk_system_settings_theme` CHECK (`default_theme` IN ('system', 'light', 'dark')),
+  CONSTRAINT `fk_settings_language`
+    FOREIGN KEY (`default_language_id`) REFERENCES `languages` (`id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_settings_updated_by`
+    FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ghi đè lựa chọn riêng của mỗi tài khoản; NULL nghĩa là dùng mặc định hệ thống.
+CREATE TABLE `user_preferences` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `language_id` INT UNSIGNED DEFAULT NULL,
+  `posts_per_page` SMALLINT UNSIGNED DEFAULT NULL,
+  `theme` VARCHAR(20) DEFAULT NULL,
+  `reduce_motion` TINYINT(1) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `chk_user_preferences_page_size`
+    CHECK (`posts_per_page` IS NULL OR `posts_per_page` BETWEEN 1 AND 100),
+  CONSTRAINT `chk_user_preferences_theme`
+    CHECK (`theme` IS NULL OR `theme` IN ('system', 'light', 'dark')),
+  CONSTRAINT `fk_preferences_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_preferences_language`
+    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 3. DANH MỤC ĐA NGÔN NGỮ
+-- =============================================================================
+
+CREATE TABLE `categories` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `source_language_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_categories_active_created` (`deleted_at`, `created_at`),
+  CONSTRAINT `fk_categories_source_language`
+    FOREIGN KEY (`source_language_id`) REFERENCES `languages` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `category_translation` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `category_id` INT UNSIGNED NOT NULL,
+  `language_id` INT UNSIGNED NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `des` TEXT DEFAULT NULL,
+  `is_auto_translated` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_category_translation_language` (`category_id`, `language_id`),
+  KEY `idx_category_translation_language_name` (`language_id`, `name`),
+  CONSTRAINT `fk_category_translation_category`
+    FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_category_translation_language`
+    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 4. BÀI VIẾT, DỊCH THUẬT VÀ QUY TRÌNH KIỂM DUYỆT
+-- =============================================================================
+
+CREATE TABLE `posts` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `author_id` INT UNSIGNED NOT NULL,
+  `category_id` INT UNSIGNED NOT NULL,
+  `source_language_id` INT UNSIGNED DEFAULT NULL,
+  -- Giao diện hiện tại đọc ảnh bằng FileReader nên có thể nhận data URL/base64 lớn.
+  `thumbnail` MEDIUMTEXT NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+  `rejection_reason` TEXT DEFAULT NULL,
+  `submitted_at` TIMESTAMP NULL DEFAULT NULL,
+  `reviewed_by` INT UNSIGNED DEFAULT NULL,
+  `reviewed_at` TIMESTAMP NULL DEFAULT NULL,
+  `published_at` TIMESTAMP NULL DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_posts_public_feed` (`status`, `deleted_at`, `published_at`),
+  KEY `idx_posts_author_status_created` (`author_id`, `status`, `created_at`),
+  KEY `idx_posts_category_status_published` (`category_id`, `status`, `published_at`),
+  KEY `idx_posts_reviewer` (`reviewed_by`, `reviewed_at`),
+  CONSTRAINT `chk_posts_status`
+    CHECK (`status` IN ('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED')),
+  CONSTRAINT `fk_posts_author`
+    FOREIGN KEY (`author_id`) REFERENCES `users` (`id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_posts_category`
+    FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_posts_source_language`
+    FOREIGN KEY (`source_language_id`) REFERENCES `languages` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_posts_reviewer`
+    FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `post_translations` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `post_id` BIGINT UNSIGNED NOT NULL,
+  `language_id` INT UNSIGNED NOT NULL,
+  `title` VARCHAR(500) NOT NULL,
+  `content` LONGTEXT NOT NULL,
+  `is_auto_translated` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_post_translation_language` (`post_id`, `language_id`),
+  KEY `idx_post_translation_language` (`language_id`, `post_id`),
+  FULLTEXT KEY `ft_post_translation_title_content` (`title`, `content`),
+  CONSTRAINT `fk_post_translation_post`
+    FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_post_translation_language`
+    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 5. TƯƠNG TÁC: BÌNH LUẬN, THÍCH VÀ LƯU BÀI
+-- =============================================================================
+
+CREATE TABLE `comments` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` INT UNSIGNED NOT NULL,
+  `post_id` BIGINT UNSIGNED NOT NULL,
+  `parent_id` BIGINT UNSIGNED DEFAULT NULL,
+  `content` TEXT NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_comments_post_created` (`post_id`, `created_at`),
+  KEY `idx_comments_user_created` (`user_id`, `created_at`),
+  KEY `idx_comments_parent` (`parent_id`),
+  CONSTRAINT `fk_comments_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `fk_comments_post`
+    FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_comments_parent`
+    FOREIGN KEY (`parent_id`) REFERENCES `comments` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `post_likes` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `post_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  `is_liked` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_post_likes_post_user` (`post_id`, `user_id`),
+  KEY `idx_post_likes_user_updated` (`user_id`, `updated_at`),
+  KEY `idx_post_likes_post_state` (`post_id`, `is_liked`),
+  CONSTRAINT `fk_post_likes_post`
+    FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_post_likes_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `post_bookmarks` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `post_id` BIGINT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_post_bookmarks_post_user` (`post_id`, `user_id`),
+  KEY `idx_post_bookmarks_user_created` (`user_id`, `created_at`),
+  CONSTRAINT `fk_post_bookmarks_post`
+    FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_post_bookmarks_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =============================================================================
+-- 6. NHẬT KÝ HOẠT ĐỘNG
+-- =============================================================================
+
+-- Append-only. entity_id không dùng foreign key để log vẫn tồn tại sau khi
+-- đối tượng nguồn đã bị xóa. JSON metadata chỉ chứa dữ liệu bổ sung, không
+-- thay thế các cột được dùng thường xuyên trong bộ lọc.
 CREATE TABLE `audit_logs` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `actor_id` INT DEFAULT NULL,
+  `actor_id` INT UNSIGNED DEFAULT NULL,
   `actor_name` VARCHAR(255) DEFAULT NULL,
   `actor_role` VARCHAR(50) DEFAULT NULL,
   `action` VARCHAR(80) NOT NULL,
@@ -71,155 +317,53 @@ CREATE TABLE `audit_logs` (
   `user_agent` VARCHAR(500) DEFAULT NULL,
   `created_at` TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
   PRIMARY KEY (`id`),
-  KEY `idx_audit_actor` (`actor_id`),
-  KEY `idx_audit_action` (`action`),
-  KEY `idx_audit_entity` (`entity_type`, `entity_id`),
-  KEY `idx_audit_created_at` (`created_at`),
-  CONSTRAINT `fk_audit_actor` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  KEY `idx_audit_created_id` (`created_at`, `id`),
+  KEY `idx_audit_actor_created` (`actor_id`, `created_at`),
+  KEY `idx_audit_action_created` (`action`, `created_at`),
+  KEY `idx_audit_entity_created` (`entity_type`, `entity_id`, `created_at`),
+  KEY `idx_audit_role_created` (`actor_role`, `created_at`),
+  CONSTRAINT `fk_audit_actor`
+    FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- =============================================================================
+-- 7. DỮ LIỆU KHỞI TẠO
+-- Mật khẩu của các tài khoản mẫu: 123456
+-- =============================================================================
 
--- 3. Tạo bảng languages
-CREATE TABLE `languages` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `code` VARCHAR(5) NOT NULL COMMENT 'vi, en, ja...',
-  `name` VARCHAR(255) NOT NULL,
-  `flag` VARCHAR(255) DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_language_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO `role` (`id`, `name_role`) VALUES
+  (1, 'SUPER_ADMIN'),
+  (2, 'BLOG_OWNER'),
+  (3, 'AUTHENTICATED_USER');
 
-
--- 4. Tạo bảng categories
-CREATE TABLE `categories` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 5. Tạo bảng category_translation
-CREATE TABLE `category_translation` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `category_id` INT NOT NULL,
-  `language_id` INT NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `des` TEXT DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_cat_trans_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_cat_trans_language` FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 6. Tạo bảng posts
-CREATE TABLE `posts` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `author_id` INT NOT NULL,
-  `category_id` INT NOT NULL,
-  `thumbnail` VARCHAR(1000) NOT NULL COMMENT 'URL ảnh đại diện bài viết',
-  `status` VARCHAR(50) DEFAULT 'DRAFT',
-  `source_language_id` INT DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_posts_author` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_posts_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_posts_source_lang` FOREIGN KEY (`source_language_id`) REFERENCES `languages` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 7. Tạo bảng post_translations
-CREATE TABLE `post_translations` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `post_id` INT NOT NULL,
-  `language_id` INT NOT NULL,
-  `title` VARCHAR(255) NOT NULL,
-  `content` LONGTEXT NOT NULL,
-  `is_auto_translated` TINYINT(1) DEFAULT 0,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_post_trans_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_post_trans_language` FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  FULLTEXT KEY `ft_title_content` (`title`, `content`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 8. Tạo bảng comments
-CREATE TABLE `comments` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `user_id` INT NOT NULL,
-  `post_id` INT NOT NULL,
-  `parent_id` INT DEFAULT NULL,
-  `is_reply` TINYINT(1) DEFAULT 0,
-  `content` TEXT NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_comments_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_comments_parent` FOREIGN KEY (`parent_id`) REFERENCES `comments` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- 9. Tạo bảng post_likes
-CREATE TABLE `post_likes` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `post_id` INT NOT NULL,
-  `user_id` INT NOT NULL,
-  `is_liked` TINYINT(1) DEFAULT 1,
-  `updated_at` TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_post_user_like` (`post_id`, `user_id`),
-  CONSTRAINT `fk_likes_post` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_likes_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
--- =========================================================================
--- PHẦN 3: CHÈN DỮ LIỆU BAN ĐẦU (ROLES, ADMIN VÀ 5 BLOGGERS MẬT KHẨU BCRYPT 123456)
--- =========================================================================
-
--- Khởi tạo các vai trò độc lập vào bảng role
-INSERT INTO `role` (`id`, `name_role`) VALUES 
-(1, 'SUPER_ADMIN'),
-(2, 'BLOG_OWNER'),
-(3, 'AUTHENTICATED_USER');
-
--- Khởi tạo tài khoản, bao gồm cả cột avatar và phone mặc định
 INSERT INTO `users` (
-  `user_name`, 
-  `email`, 
-  `full_name`, 
-  `phone`,
-  `avatar`,
-  `is_active`, 
-  `password_hash`, 
-  `email_verified`, 
-  `role_id`
-) VALUES 
-('admin', 'admin@blogproject.com', 'Super Admin Hệ Thống', '0123456789', 'https://example.com/avatars/admin.png', 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 1),
-('blogger1', 'blogger1@gmail.com', 'Nguyễn Văn Blogger Một', '0911111111', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
-('blogger2', 'blogger2@gmail.com', 'Trần Thị Blogger Hai',   '0922222222', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
-('blogger3', 'blogger3@gmail.com', 'Lê Hoàng Blogger Ba',    '0933333333', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
-('blogger4', 'blogger4@gmail.com', 'Phạm Minh Blogger Bốn',  '0944444444', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2),
-('blogger5', 'blogger5@gmail.com', 'Hoàng Anh Blogger Năm',  '0955555555', NULL, 1, '$2b$10$a6Mq7OoYEJn1/NJujrnleeD.HO6d2oxwccQ973GV2/x72BPrA3uc6', 1, 2);
+  `id`, `user_name`, `email`, `full_name`, `phone`, `avatar`,
+  `is_active`, `password_hash`, `email_verified`, `role_id`
+) VALUES
+  (1, 'admin', 'admin@blogproject.com', 'Super Admin Hệ Thống', '0123456789', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 1),
+  (2, 'blogger1', 'blogger1@gmail.com', 'Nguyễn Văn Blogger Một', '0911111111', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
+  (3, 'blogger2', 'blogger2@gmail.com', 'Trần Thị Blogger Hai', '0922222222', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
+  (4, 'blogger3', 'blogger3@gmail.com', 'Lê Hoàng Blogger Ba', '0933333333', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
+  (5, 'blogger4', 'blogger4@gmail.com', 'Phạm Minh Blogger Bốn', '0944444444', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
+  (6, 'blogger5', 'blogger5@gmail.com', 'Hoàng Anh Blogger Năm', '0955555555', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
+  (7, 'reader1', 'reader1@gmail.com', 'Người Dùng Mẫu', NULL, NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 3);
 
+INSERT INTO `languages` (`id`, `code`, `name`, `flag`) VALUES
+  (1, 'en', 'English', 'https://flagcdn.com/w40/gb.png'),
+  (2, 'vi', 'Tiếng Việt', 'https://flagcdn.com/w40/vn.png');
 
--- 1. Bổ sung trường xóa mềm cho bảng Danh mục (categories)
-ALTER TABLE `categories` 
-ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, NULL nghĩa là danh mục vẫn tồn tại';
+INSERT INTO `system_settings` (
+  `id`, `default_language_id`, `posts_per_page`, `require_post_approval`,
+  `auto_translate_categories`, `auto_translate_posts`, `default_theme`,
+  `reduce_motion`, `updated_by`
+) VALUES (1, 2, 5, 1, 1, 1, 'system', 0, 1);
 
--- 2. Bổ sung trường xóa mềm cho bảng Ngôn ngữ (languages)
-ALTER TABLE `languages` 
-ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, NULL nghĩa là ngôn ngữ vẫn đang kích hoạt';
+-- =============================================================================
+-- 8. KIỂM TRA NHANH SAU KHI CHẠY SCRIPT
+-- =============================================================================
 
--- 3. Bổ sung trường xóa mềm cho bảng Bình luận (comments)
-ALTER TABLE `comments` 
-ADD COLUMN `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Lưu thời gian xóa mềm, khi hiển thị nếu không NULL sẽ hiện chữ: Bình luận này đã bị xóa';
-
--- 4. Bổ sung lý do từ chối cho bảng Posts
-ALTER TABLE `posts`
-ADD COLUMN `rejection_reason` TEXT DEFAULT NULL
-  COMMENT 'Lý do từ chối bài viết (chỉ có giá trị khi status = REJECTED, do Super Admin điền)';
+SELECT 'schema_ready' AS `status`, DATABASE() AS `database_name`;
+SELECT `id`, `name_role` FROM `role` ORDER BY `id`;
+SELECT `id`, `code`, `name` FROM `languages` ORDER BY `id`;
+SELECT * FROM `system_settings` WHERE `id` = 1;

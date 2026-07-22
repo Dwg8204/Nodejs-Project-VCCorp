@@ -38,7 +38,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/public-layout/public-layout.component').then((c) => c.PublicLayoutComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'posts' },
-      { path: 'posts', title: 'Bài viết của tôi | VCCorp Blog', loadComponent: () => import('./pages/owner-posts-placeholder/owner-posts-placeholder.component').then((c) => c.OwnerPostsPlaceholderComponent) },
+      { path: 'posts', title: 'Bài viết của tôi | VCCorp Blog', loadComponent: () => import('./pages/owner-posts/owner-posts.component').then((c) => c.OwnerPostsComponent) },
     ],
   },
   { path: '**', title: 'Không tìm thấy trang | VCCorp Blog', loadComponent: () => import('./pages/not-found/not-found.component').then((c) => c.NotFoundComponent) },

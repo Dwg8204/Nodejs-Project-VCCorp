@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -10,7 +10,7 @@ function passwordMatch(control: AbstractControl): ValidationErrors | null {
   return control.get('password')?.value === control.get('confirmPassword')?.value ? null : { passwordMismatch: true };
 }
 
-@Component({ selector: 'app-register', standalone: true, imports: [ReactiveFormsModule, RouterLink], templateUrl: './register.component.html', styleUrl: './register.component.scss', changeDetection: ChangeDetectionStrategy.OnPush })
+@Component({ selector: 'app-register', standalone: true, imports: [ReactiveFormsModule, RouterLink], templateUrl: './register.component.html', styleUrl: './register.component.scss', changeDetection: ChangeDetectionStrategy.OnPush, encapsulation: ViewEncapsulation.None, schemas: [CUSTOM_ELEMENTS_SCHEMA] })
 export class RegisterComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly auth = inject(AuthService);

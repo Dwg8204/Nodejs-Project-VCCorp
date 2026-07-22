@@ -47,6 +47,30 @@ bản Angular sẵn sàng thay thế site trong `docs`; đợt 1 chưa thay đ�
 Backend development mặc định: `http://localhost:3000/api`. Khi deploy thật, chuyển URL này sang
 environment/config của môi trường tương ứng; Angular không kết nối trực tiếp tới MySQL.
 
+## Phạm vi đợt 3
+
+- Chuyển frontend sang chế độ mock hoàn toàn, không cần chạy NestJS hoặc MySQL.
+- Mock database gồm đúng 13 bảng và tên cột tương ứng với `backend/src/database/init.sql`.
+- Reactive Forms cho đăng nhập, đăng ký và quên mật khẩu/OTP mock.
+- Phiên đăng nhập, guard và điều hướng theo `SUPER_ADMIN`, `BLOG_OWNER`, `AUTHENTICATED_USER`.
+- Ghi log đăng nhập, đăng xuất và đăng ký vào bảng mock `audit_logs`.
+- Dữ liệu mock được lưu trong `localStorage` và giữ nguyên sau khi reload.
+
+Tài khoản kiểm thử dùng chung mật khẩu `123456`:
+
+```text
+admin@blogproject.com  → SUPER_ADMIN
+blogger1@gmail.com     → BLOG_OWNER
+reader1@gmail.com      → AUTHENTICATED_USER
+```
+
+## Phạm vi đợt 4
+
+- Chuyển trang chủ và dashboard admin bằng đúng cấu trúc HTML, CSS và tương tác từ `docs`.
+- Chuyển màn hình quản lý bài viết của Blog Owner sang Angular với mock database.
+- Thống kê trạng thái, tìm kiếm, lọc, sắp xếp, phân trang và bảng bài viết responsive.
+- Tooltip thông tin tác giả được render ở lớp overlay ngoài thẻ bài viết để không bị cắt nội dung.
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.2.21.
 
 ## Development server

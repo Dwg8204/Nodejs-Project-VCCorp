@@ -1,50 +1,39 @@
-<header class="topbar">
-  <div class="container topbar__inner">
-    <a class="brand" routerLink="/" aria-label="Về trang chủ VCCorp Blog">
-      <span class="brand__mark" aria-hidden="true">V</span>
-      <span>VCCorp Blog</span>
-    </a>
-
-    <nav class="desktop-nav" aria-label="Điều hướng chính">
-      <a routerLink="/">{{ 'posts' | translate }}</a>
-      <a routerLink="/admin">{{ 'admin' | translate }}</a>
-    </nav>
-
-    <div class="topbar__actions">
-      <button
-        class="language-button"
-        type="button"
-        [attr.aria-label]="'changeLanguage' | translate"
-        (click)="language.toggleLocale()"
-      >{{ language.locale().toUpperCase() }}</button>
-      @if (auth.isAuthenticated()) {
-        @if (auth.role() === 'BLOG_OWNER') { <a class="button button--primary desktop-action" routerLink="/owner/posts">{{ 'writePost' | translate }}</a> }
-        <button class="user-chip" type="button" (click)="logout()" title="Đăng xuất"><span>{{ (auth.currentUser()?.fullName || auth.currentUser()?.userName || 'U').slice(0, 2).toUpperCase() }}</span><b>{{ auth.currentUser()?.fullName || auth.currentUser()?.userName }}</b></button>
-      } @else {
-        <a class="button button--primary desktop-action" routerLink="/login">Đăng nhập</a>
-      }
-      <button
-        class="menu-button"
-        type="button"
-        [attr.aria-label]="(menuOpen() ? 'closeMenu' : 'openMenu') | translate"
-        [attr.aria-expanded]="menuOpen()"
-        (click)="toggleMenu()"
-      >
-        <span></span><span></span><span></span>
-      </button>
+<div class="topbar">
+  <div class="topbar-left">
+    <button class="hamburger" type="button" (click)="toggleMenu()" aria-label="Mở hoặc đóng menu">
+      <iconify-icon icon="material-symbols:menu-rounded"></iconify-icon>
+    </button>
+    <a routerLink="/" class="logo">Medium</a>
+    <div class="search-box-wrap" id="topSearchWrap" [class.mobile-open]="mobileSearchOpen()">
+      <iconify-icon icon="solar:magnifer-linear"></iconify-icon>
+      <input class="search-input" type="search" [placeholder]="language.locale() === 'vi' ? 'Tìm kiếm...' : 'Search...'" aria-label="Search" [value]="feedUi.searchQuery()" (input)="feedUi.searchQuery.set($any($event.target).value)">
+      @if (mobileSearchOpen()) { <button type="button" class="mobile-search-close" (click)="toggleSearch()" aria-label="Close"><iconify-icon icon="solar:close-circle-linear"></iconify-icon></button> }
     </div>
   </div>
-
-  @if (menuOpen()) {
-    <nav class="mobile-nav" aria-label="Điều hướng mobile">
-      <a routerLink="/" (click)="toggleMenu()">{{ 'posts' | translate }}</a>
-      <a routerLink="/admin" (click)="toggleMenu()">{{ 'admin' | translate }}</a>
-      @if (auth.isAuthenticated()) { <button class="mobile-logout" type="button" (click)="logout()">Đăng xuất</button> }
-      @else { <a routerLink="/login" (click)="toggleMenu()">Đăng nhập</a> }
-    </nav>
-  }
-</header>
-
-<main>
-  <router-outlet />
-</main>
+  <div class="topbar-right">
+    <button type="button" class="mobile-search-icon" (click)="toggleSearch()" aria-label="Search"><iconify-icon icon="solar:magnifer-linear"></iconify-icon></button>
+    <div class="lang-dropdown" [class.open]="languageOpen()">
+      <button class="lang-btn" type="button" (click)="languageOpen.set(!languageOpen())">
+        <span class="lang-current-label"><img [src]="language.locale() === 'vi' ? 'https://flagcdn.com/w40/vn.png' : 'https://flagcdn.com/w40/gb.png'" width="20" alt=""> <span>{{ language.locale() === 'vi' ? 'Tiếng Việt' : 'English' }}</span></span>
+        <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
+      </button>
+      @if (languageOpen()) {
+        <div class="lang-menu" style="display:block">
+          <button type="button" (click)="selectLanguage('vi')"><img src="https://flagcdn.com/w40/vn.png" width="20" alt=""> Tiếng Việt</button>
+          <button type="button" (click)="selectLanguage('en')"><img src="https://flagcdn.com/w40/gb.png" width="20" alt=""> English</button>
+        </div>
+      }
+    </div>
+    <button class="theme-toggle" type="button" aria-label="Toggle theme" (click)="toggleTheme()"><span class="knob"><iconify-icon [icon]="darkTheme() ? 'solar:moon-bold' : 'solar:sun-bold'"></iconify-icon></span></button>
+    @if (auth.isAuthenticated()) {
+      <a routerLink="/" class="avatar" [title]="language.locale() === 'vi' ? 'Hồ sơ' : 'Profile'">{{ (auth.currentUser()?.fullName || auth.currentUser()?.userName || 'N').slice(0, 1).toUpperCase() }}</a>
+      <button class="logout-link" type="button" (click)="requestLogout()" [title]="language.locale() === 'vi' ? 'Đăng xuất' : 'Logout'"><iconify-icon icon="solar:logout-2-linear"></iconify-icon><span>{{ language.locale() === 'vi' ? 'Đăng xuất' : 'Logout' }}</span></button>
+    } @else {
+      <a routerLink="/login" style="color:var(--text-muted);text-decoration:none;font-size:14px;">{{ language.locale() === 'vi' ? 'Đăng nhập' : 'Sign In' }}</a>
+      <a routerLink="/register" style="background:var(--text);color:var(--bg);padding:8px 16px;border-radius:20px;text-decoration:none;font-size:14px;">{{ language.locale() === 'vi' ? 'Bắt đầu' : 'Get Started' }}</a>
+    }
+  </div>
+</div>
+<div class="drawer-overlay" [class.show]="menuOpen()" (click)="toggleMenu()"></div>
+<router-outlet />
+@if(logoutConfirmOpen()){<div class="confirm-overlay open" (click)="cancelLogout()"><div class="confirm-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()"><div class="confirm-icon info"><iconify-icon icon="solar:question-circle-bold-duotone"></iconify-icon></div><h3 class="confirm-title">{{language.locale()==='vi'?'Đăng xuất':'Logout'}}</h3><p class="confirm-message">{{language.locale()==='vi'?'Bạn có chắc muốn đăng xuất khỏi tài khoản này không?':'Are you sure you want to log out of this account?'}}</p><div class="confirm-actions"><button class="btn btn-outline" type="button" (click)="cancelLogout()">{{language.locale()==='vi'?'Hủy':'Cancel'}}</button><button class="btn btn-primary" type="button" (click)="confirmLogout()">{{language.locale()==='vi'?'Đăng xuất':'Logout'}}</button></div></div></div>}

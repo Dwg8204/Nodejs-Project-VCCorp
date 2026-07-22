@@ -17,7 +17,12 @@
         [attr.aria-label]="'changeLanguage' | translate"
         (click)="language.toggleLocale()"
       >{{ language.locale().toUpperCase() }}</button>
-      <a class="button button--primary desktop-action" routerLink="/">{{ 'writePost' | translate }}</a>
+      @if (auth.isAuthenticated()) {
+        @if (auth.role() === 'BLOG_OWNER') { <a class="button button--primary desktop-action" routerLink="/owner/posts">{{ 'writePost' | translate }}</a> }
+        <button class="user-chip" type="button" (click)="logout()" title="Đăng xuất"><span>{{ (auth.currentUser()?.fullName || auth.currentUser()?.userName || 'U').slice(0, 2).toUpperCase() }}</span><b>{{ auth.currentUser()?.fullName || auth.currentUser()?.userName }}</b></button>
+      } @else {
+        <a class="button button--primary desktop-action" routerLink="/login">Đăng nhập</a>
+      }
       <button
         class="menu-button"
         type="button"
@@ -34,6 +39,8 @@
     <nav class="mobile-nav" aria-label="Điều hướng mobile">
       <a routerLink="/" (click)="toggleMenu()">{{ 'posts' | translate }}</a>
       <a routerLink="/admin" (click)="toggleMenu()">{{ 'admin' | translate }}</a>
+      @if (auth.isAuthenticated()) { <button class="mobile-logout" type="button" (click)="logout()">Đăng xuất</button> }
+      @else { <a routerLink="/login" (click)="toggleMenu()">Đăng nhập</a> }
     </nav>
   }
 </header>

@@ -1,0 +1,17 @@
+<section class="auth-shell"><div class="auth-card">
+  <header class="auth-heading"><p class="eyebrow">{{ copy().eyebrow }}</p><h1>{{ copy().title }}</h1><p>{{ copy().subtitle }}</p></header>
+  <form class="form-stack" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (errorMessage()) { <div class="alert alert--error" role="alert">{{ errorMessage() }}</div> }
+    <div class="field"><label for="login-email">Email</label><input id="login-email" type="email" formControlName="email" autocomplete="email" placeholder="you@example.com" [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched">
+      @if (form.controls.email.touched && form.controls.email.hasError('required')) { <p class="field-error">{{ copy().emailRequired }}</p> }
+      @if (form.controls.email.touched && form.controls.email.hasError('email')) { <p class="field-error">{{ copy().emailInvalid }}</p> }
+    </div>
+    <div class="field"><label for="login-password">{{ copy().password }}</label><div class="input-wrap"><input class="password-input" id="login-password" [type]="showPassword() ? 'text' : 'password'" formControlName="password" autocomplete="current-password" [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"><button class="password-toggle" type="button" (click)="showPassword.set(!showPassword())">{{ showPassword() ? copy().hide : copy().show }}</button></div>
+      @if (form.controls.password.touched && form.controls.password.invalid) { <p class="field-error">{{ copy().passwordRequired }}</p> }
+    </div>
+    <div class="form-row"><a class="text-link" routerLink="/forgot-password">{{ copy().forgot }}</a></div>
+    <button class="submit-button" type="submit" [disabled]="loading()">{{ loading() ? copy().submitting : copy().submit }}</button>
+  </form>
+  <div class="quick-login"><p>{{ copy().quick }} · password: 123456</p><button class="quick-button" type="button" (click)="quickLogin('admin@blogproject.com')">Super Admin</button><button class="quick-button" type="button" (click)="quickLogin('blogger1@gmail.com')">Blog Owner</button><button class="quick-button" type="button" (click)="quickLogin('reader1@gmail.com')">Authenticated User</button></div>
+  <p class="auth-footer">{{ copy().noAccount }} <a class="text-link" routerLink="/register">{{ copy().register }}</a></p>
+</div></section>

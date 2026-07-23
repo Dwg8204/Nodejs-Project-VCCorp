@@ -19,11 +19,11 @@ export class RegisterComponent {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly showPassword = signal(false);
-  protected readonly copy = computed(() => this.language.locale() === 'vi' ? {
+  protected readonly copy = computed(() => this.language.chooseObject({
     eyebrow: 'Tham gia cộng đồng', title: 'Tạo tài khoản', subtitle: 'Tài khoản mới được tạo với vai trò người dùng đã xác thực.', fullName: 'Họ và tên', userName: 'Tên người dùng', password: 'Mật khẩu', confirm: 'Xác nhận mật khẩu', submit: 'Đăng ký', submitting: 'Đang tạo tài khoản…', hasAccount: 'Đã có tài khoản?', login: 'Đăng nhập', required: 'Trường này là bắt buộc.', invalidEmail: 'Email không hợp lệ.', username: 'Tên người dùng cần từ 2 đến 50 ký tự.', passwordRule: 'Ít nhất 6 ký tự, gồm chữ hoa, chữ thường và số.', mismatch: 'Mật khẩu xác nhận không khớp.', terms: 'Bằng việc đăng ký, bạn đồng ý sử dụng dữ liệu mock trên trình duyệt này.'
-  } : {
+  }, {
     eyebrow: 'Join the community', title: 'Create an account', subtitle: 'New accounts use the authenticated user role.', fullName: 'Full name', userName: 'Username', password: 'Password', confirm: 'Confirm password', submit: 'Create account', submitting: 'Creating account…', hasAccount: 'Already have an account?', login: 'Sign in', required: 'This field is required.', invalidEmail: 'Email is invalid.', username: 'Username must contain 2–50 characters.', passwordRule: 'At least 6 characters with uppercase, lowercase and a number.', mismatch: 'Passwords do not match.', terms: 'By registering, you agree to use mock data stored in this browser.'
-  });
+  }));
   protected readonly form = this.formBuilder.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(255)]],
     userName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],

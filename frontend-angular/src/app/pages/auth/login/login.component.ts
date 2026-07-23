@@ -17,11 +17,11 @@ export class LoginComponent {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly showPassword = signal(false);
-  protected readonly copy = computed(() => this.language.locale() === 'vi' ? {
+  protected readonly copy = computed(() => this.language.chooseObject({
     eyebrow: 'Chào mừng trở lại', title: 'Đăng nhập', subtitle: 'Tiếp tục đọc, viết và quản lý nội dung của bạn.', password: 'Mật khẩu', forgot: 'Quên mật khẩu?', submit: 'Đăng nhập', submitting: 'Đang đăng nhập…', noAccount: 'Chưa có tài khoản?', register: 'Đăng ký ngay', quick: 'Tài khoản kiểm thử nhanh', show: 'Hiện', hide: 'Ẩn', emailRequired: 'Vui lòng nhập email.', emailInvalid: 'Email không hợp lệ.', passwordRequired: 'Vui lòng nhập mật khẩu.'
-  } : {
+  }, {
     eyebrow: 'Welcome back', title: 'Sign in', subtitle: 'Continue reading, writing and managing your content.', password: 'Password', forgot: 'Forgot password?', submit: 'Sign in', submitting: 'Signing in…', noAccount: 'No account yet?', register: 'Create one', quick: 'Quick test accounts', show: 'Show', hide: 'Hide', emailRequired: 'Email is required.', emailInvalid: 'Email is invalid.', passwordRequired: 'Password is required.'
-  });
+  }));
   protected readonly form = this.formBuilder.nonNullable.group({ email: ['', [Validators.required, Validators.email]], password: ['', Validators.required] });
 
   protected submit(): void {

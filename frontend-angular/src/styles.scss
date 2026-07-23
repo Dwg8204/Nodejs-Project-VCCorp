@@ -6,3 +6,26 @@
 app-root { display: block; min-height: 100vh; }
 router-outlet { display: none; }
 button, input, select, textarea { font: inherit; }
+
+/* Shared interaction cursor for current and future reusable controls. */
+button,
+[role="button"],
+a[href],
+label[for],
+select,
+summary,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+input:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}

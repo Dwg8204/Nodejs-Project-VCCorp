@@ -19,9 +19,18 @@ export const MOCK_DATABASE_SEED: MockDatabase = {
     { id: 7, user_name: 'reader1', email: 'reader1@gmail.com', full_name: 'Người Dùng Mẫu', phone: null, avatar: null, cover_image: null, date_of_birth: null, is_active: true, password_hash: passwordHash, email_verified: true, role_id: 3, otp_code: null, otp_created_at: null, otp_ttl_seconds: 180, created_at: now, updated_at: now },
   ],
   languages: [
-    { id: 1, code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/gb.png', created_at: now, updated_at: now, deleted_at: null },
-    { id: 2, code: 'vi', name: 'Tiếng Việt', flag: 'https://flagcdn.com/w40/vn.png', created_at: now, updated_at: now, deleted_at: null },
+    { id: 1, code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/gb.png', is_active: true, is_system_language: true, fallback_language_id: 2, translation_status: 'READY', created_at: now, updated_at: now, deleted_at: null },
+    { id: 2, code: 'vi', name: 'Tiếng Việt', flag: 'https://flagcdn.com/w40/vn.png', is_active: true, is_system_language: true, fallback_language_id: 1, translation_status: 'READY', created_at: now, updated_at: now, deleted_at: null },
   ],
+  ui_translation_keys: [
+    'nav.home', 'nav.profile', 'nav.dashboard', 'nav.managePosts', 'nav.manageUsers',
+    'nav.manageCategories', 'nav.manageLanguages', 'nav.backToBlog', 'action.search',
+    'action.signIn', 'action.getStarted', 'action.logout', 'action.cancel', 'action.confirm',
+  ].map((translation_key, index) => ({ id: index + 1, translation_key, description: null, is_required: true, created_at: now, updated_at: now })),
+  ui_translations: [
+    ['Home','Profile','Dashboard','Manage posts','Manage users','Manage categories','Manage languages','Back to Blog','Search...','Sign In','Get Started','Logout','Cancel','Confirm'],
+    ['Trang chủ','Hồ sơ','Bảng điều khiển','Quản lý bài viết','Quản lý người dùng','Quản lý danh mục','Quản lý ngôn ngữ','Về trang Blog','Tìm kiếm...','Đăng nhập','Bắt đầu','Đăng xuất','Hủy','Xác nhận'],
+  ].flatMap((values, languageIndex) => values.map((translated_value, keyIndex) => ({ id: languageIndex * 14 + keyIndex + 1, language_id: languageIndex + 1, translation_key_id: keyIndex + 1, translated_value, is_auto_translated: false, is_reviewed: true, created_at: now, updated_at: now }))),
   system_settings: [{ id: 1, default_language_id: 2, posts_per_page: 5, require_post_approval: true, auto_translate_categories: true, auto_translate_posts: true, default_theme: 'system', reduce_motion: false, updated_by: 1, created_at: now, updated_at: now }],
   user_preferences: [],
   categories: [

@@ -35,6 +35,9 @@ export const routes: Routes = [
       { path: 'dashboard', title: 'Bảng điều khiển | VCCorp Blog', loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.component').then((c) => c.AdminDashboardComponent) },
       { path: 'posts', title: 'Quản lý bài viết | VCCorp Blog', loadComponent: () => import('./pages/admin-posts/admin-posts.component').then((c) => c.AdminPostsComponent) },
       { path: 'users', title: 'Quản lý người dùng | VCCorp Blog', loadComponent: () => import('./pages/admin-users/admin-users.component').then((c) => c.AdminUsersComponent) },
+      { path: 'categories', title: 'Quản lý danh mục | VCCorp Blog', loadComponent: () => import('./pages/admin-categories/admin-categories.component').then((c) => c.AdminCategoriesComponent) },
+      { path: 'languages', title: 'Quản lý ngôn ngữ | VCCorp Blog', loadComponent: () => import('./pages/admin-languages/admin-languages.component').then((c) => c.AdminLanguagesComponent) },
+      { path: 'logs', title: 'Nhật ký hoạt động | VCCorp Blog', loadComponent: () => import('./pages/admin-logs/admin-logs.component').then((c) => c.AdminLogsComponent) },
     ],
   },
   {

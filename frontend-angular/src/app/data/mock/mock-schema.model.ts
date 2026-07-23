@@ -29,9 +29,33 @@ export interface LanguageRow {
   code: string;
   name: string;
   flag: string | null;
+  is_active: boolean;
+  is_system_language: boolean;
+  fallback_language_id: number | null;
+  translation_status: 'DRAFT' | 'TRANSLATING' | 'READY' | 'DISABLED';
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+}
+
+export interface UiTranslationKeyRow {
+  id: number;
+  translation_key: string;
+  description: string | null;
+  is_required: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UiTranslationRow {
+  id: number;
+  language_id: number;
+  translation_key_id: number;
+  translated_value: string;
+  is_auto_translated: boolean;
+  is_reviewed: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SystemSettingsRow {
@@ -155,6 +179,8 @@ export interface MockDatabase {
   role: RoleRow[];
   users: UserRow[];
   languages: LanguageRow[];
+  ui_translation_keys: UiTranslationKeyRow[];
+  ui_translations: UiTranslationRow[];
   system_settings: SystemSettingsRow[];
   user_preferences: UserPreferenceRow[];
   categories: CategoryRow[];

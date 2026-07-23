@@ -51,7 +51,7 @@ export class LanguageApiService {
       return throwError(() => new Error('Mã ngôn ngữ đã tồn tại.'));
     }
     const timestamp = new Date().toISOString();
-    const row: LanguageRow = { id: this.database.nextId('languages'), code: payload.code.trim().toLowerCase(), name: payload.name.trim(), flag: payload.flag ?? null, created_at: timestamp, updated_at: timestamp, deleted_at: null };
+    const row: LanguageRow = { id: this.database.nextId('languages'), code: payload.code.trim().toLowerCase(), name: payload.name.trim(), flag: payload.flag ?? null, is_active: true, is_system_language: true, fallback_language_id: 2, translation_status: 'READY', created_at: timestamp, updated_at: timestamp, deleted_at: null };
     rows.push(row);
     this.database.write('languages', rows);
     return of({ success: true, message: 'Tạo ngôn ngữ thành công', data: { language: this.map(row) } }).pipe(delay(250));

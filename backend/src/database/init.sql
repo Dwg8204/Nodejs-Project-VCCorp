@@ -19,6 +19,8 @@ DROP TABLE IF EXISTS `post_translations`;
 DROP TABLE IF EXISTS `posts`;
 DROP TABLE IF EXISTS `category_translation`;
 DROP TABLE IF EXISTS `categories`;
+DROP TABLE IF EXISTS `ui_translations`;
+DROP TABLE IF EXISTS `ui_translation_keys`;
 DROP TABLE IF EXISTS `user_preferences`;
 DROP TABLE IF EXISTS `system_settings`;
 DROP TABLE IF EXISTS `languages`;
@@ -76,13 +78,54 @@ CREATE TABLE `languages` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `code` VARCHAR(10) NOT NULL COMMENT 'Mã BCP 47 ngắn: vi, en, ja...',
   `name` VARCHAR(255) NOT NULL,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `is_system_language` TINYINT(1) NOT NULL DEFAULT 0,
+  `fallback_language_id` INT UNSIGNED DEFAULT NULL,
+  `translation_status` VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
   `flag` VARCHAR(500) DEFAULT NULL COMMENT 'URL, emoji hoặc mã tài nguyên cờ',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_languages_code` (`code`),
-  KEY `idx_languages_active_name` (`deleted_at`, `name`)
+  KEY `idx_languages_active_name` (`is_active`, `deleted_at`, `name`),
+  KEY `idx_languages_fallback` (`fallback_language_id`),
+  CONSTRAINT `chk_languages_translation_status`
+    CHECK (`translation_status` IN ('DRAFT', 'TRANSLATING', 'READY', 'DISABLED')),
+  CONSTRAINT `fk_languages_fallback`
+    FOREIGN KEY (`fallback_language_id`) REFERENCES `languages` (`id`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `ui_translation_keys` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `translation_key` VARCHAR(191) NOT NULL,
+  `description` VARCHAR(500) DEFAULT NULL,
+  `is_required` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ui_translation_keys_key` (`translation_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `ui_translations` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `language_id` INT UNSIGNED NOT NULL,
+  `translation_key_id` BIGINT UNSIGNED NOT NULL,
+  `translated_value` TEXT NOT NULL,
+  `is_auto_translated` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_reviewed` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ui_translations_language_key` (`language_id`, `translation_key_id`),
+  KEY `idx_ui_translations_key_language` (`translation_key_id`, `language_id`),
+  CONSTRAINT `fk_ui_translations_language`
+    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ui_translations_key`
+    FOREIGN KEY (`translation_key_id`) REFERENCES `ui_translation_keys` (`id`)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Chỉ dùng một bản ghi id = 1 cho cài đặt toàn hệ thống.
@@ -349,9 +392,38 @@ INSERT INTO `users` (
   (6, 'blogger5', 'blogger5@gmail.com', 'Hoàng Anh Blogger Năm', '0955555555', NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 2),
   (7, 'reader1', 'reader1@gmail.com', 'Người Dùng Mẫu', NULL, NULL, 1, '$2b$10$9bpSGAJoauYqD3mkWJccEeXEf1Fn3oTD2f7Sc1ACnFhx4mdcUbQZ6', 1, 3);
 
-INSERT INTO `languages` (`id`, `code`, `name`, `flag`) VALUES
-  (1, 'en', 'English', 'https://flagcdn.com/w40/gb.png'),
-  (2, 'vi', 'Tiếng Việt', 'https://flagcdn.com/w40/vn.png');
+INSERT INTO `languages` (
+  `id`, `code`, `name`, `flag`, `is_active`, `is_system_language`,
+  `fallback_language_id`, `translation_status`
+) VALUES
+  (1, 'en', 'English', 'https://flagcdn.com/w40/gb.png', 1, 1, NULL, 'READY'),
+  (2, 'vi', 'Tiếng Việt', 'https://flagcdn.com/w40/vn.png', 1, 1, NULL, 'READY');
+
+UPDATE `languages` SET `fallback_language_id` = 2 WHERE `id` = 1;
+UPDATE `languages` SET `fallback_language_id` = 1 WHERE `id` = 2;
+
+INSERT INTO `ui_translation_keys` (`id`, `translation_key`, `description`) VALUES
+  (1, 'nav.home', 'Trang chủ'), (2, 'nav.profile', 'Hồ sơ'),
+  (3, 'nav.dashboard', 'Bảng điều khiển'), (4, 'nav.managePosts', 'Quản lý bài viết'),
+  (5, 'nav.manageUsers', 'Quản lý người dùng'), (6, 'nav.manageCategories', 'Quản lý danh mục'),
+  (7, 'nav.manageLanguages', 'Quản lý ngôn ngữ'), (8, 'nav.backToBlog', 'Về trang Blog'),
+  (9, 'action.search', 'Tìm kiếm'), (10, 'action.signIn', 'Đăng nhập'),
+  (11, 'action.getStarted', 'Bắt đầu'), (12, 'action.logout', 'Đăng xuất'),
+  (13, 'action.cancel', 'Hủy'), (14, 'action.confirm', 'Xác nhận');
+
+INSERT INTO `ui_translations`
+  (`language_id`, `translation_key_id`, `translated_value`, `is_auto_translated`, `is_reviewed`)
+VALUES
+  (1,1,'Home',0,1),(1,2,'Profile',0,1),(1,3,'Dashboard',0,1),
+  (1,4,'Manage posts',0,1),(1,5,'Manage users',0,1),(1,6,'Manage categories',0,1),
+  (1,7,'Manage languages',0,1),(1,8,'Back to Blog',0,1),(1,9,'Search...',0,1),
+  (1,10,'Sign In',0,1),(1,11,'Get Started',0,1),(1,12,'Logout',0,1),
+  (1,13,'Cancel',0,1),(1,14,'Confirm',0,1),
+  (2,1,'Trang chủ',0,1),(2,2,'Hồ sơ',0,1),(2,3,'Bảng điều khiển',0,1),
+  (2,4,'Quản lý bài viết',0,1),(2,5,'Quản lý người dùng',0,1),(2,6,'Quản lý danh mục',0,1),
+  (2,7,'Quản lý ngôn ngữ',0,1),(2,8,'Về trang Blog',0,1),(2,9,'Tìm kiếm...',0,1),
+  (2,10,'Đăng nhập',0,1),(2,11,'Bắt đầu',0,1),(2,12,'Đăng xuất',0,1),
+  (2,13,'Hủy',0,1),(2,14,'Xác nhận',0,1);
 
 INSERT INTO `system_settings` (
   `id`, `default_language_id`, `posts_per_page`, `require_post_approval`,

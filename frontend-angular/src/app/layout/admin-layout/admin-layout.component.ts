@@ -39,5 +39,5 @@ export class AdminLayoutComponent {
   protected cancelLogout():void{this.logoutConfirmOpen.set(false);}
   protected confirmLogout():void{this.logoutConfirmOpen.set(false);this.logout();}
 
-  protected selectLanguage(locale: 'vi' | 'en'): void { this.language.setLocale(locale); this.languageOpen.set(false); }
+  protected selectLanguage(locale: string): void { this.language.setLocale(locale); this.languageOpen.set(false); }
 }

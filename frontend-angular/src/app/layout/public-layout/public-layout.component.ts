@@ -38,7 +38,7 @@ export class PublicLayoutComponent {
     localStorage.setItem('blog-theme', this.darkTheme() ? 'dark' : 'light');
   }
 
-  protected selectLanguage(locale: 'vi' | 'en'): void { this.language.setLocale(locale); this.languageOpen.set(false); }
+  protected selectLanguage(locale: string): void { this.language.setLocale(locale); this.languageOpen.set(false); }
 
   protected logout(): void {
     this.auth.logout();

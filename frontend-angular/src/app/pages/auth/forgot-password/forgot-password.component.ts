@@ -11,11 +11,11 @@ export class ForgotPasswordComponent {
   private readonly database = inject(MockDatabaseService);
   protected readonly language = inject(LanguageService);
   protected readonly submitted = signal(false);
-  protected readonly copy = computed(() => this.language.locale() === 'vi' ? {
+  protected readonly copy = computed(() => this.language.chooseObject({
     eyebrow: 'Khôi phục tài khoản', title: 'Khôi phục mật khẩu', subtitle: 'Nhập email đã đăng ký, chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.', submit: 'Gửi liên kết khôi phục', back: 'Quay lại đăng nhập', success: 'Nếu email tồn tại trong hệ thống, một liên kết khôi phục mật khẩu đã được gửi tới hộp thư của bạn.', mock: 'Trong chế độ mock, mã kiểm thử là 123456 và có hiệu lực trong 180 giây.', invalid: 'Vui lòng nhập email hợp lệ.'
-  } : {
+  }, {
     eyebrow: 'Account recovery', title: 'Recover password', subtitle: 'Enter your registered email and we will send you a password recovery link.', submit: 'Send recovery link', back: 'Back to sign in', success: 'If the email exists, a recovery link has been sent to your inbox.', mock: 'In mock mode, the test code is 123456 and remains valid for 180 seconds.', invalid: 'Enter a valid email address.'
-  });
+  }));
   protected readonly form = this.formBuilder.nonNullable.group({ email: ['', [Validators.required, Validators.email]] });
 
   protected submit(): void {

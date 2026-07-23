@@ -1,6 +1,6 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
 
-import { LanguageService, UiMessageKey } from '../../core/services/language.service';
+import { LanguageService } from '../../core/services/language.service';
 
 @Pipe({
   name: 'translate',
@@ -10,7 +10,7 @@ import { LanguageService, UiMessageKey } from '../../core/services/language.serv
 export class TranslatePipe implements PipeTransform {
   private readonly languageService = inject(LanguageService);
 
-  transform(key: UiMessageKey): string {
+  transform(key: string): string {
     return this.languageService.translate(key);
   }
 }

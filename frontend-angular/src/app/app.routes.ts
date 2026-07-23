@@ -33,6 +33,8 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Bảng điều khiển | VCCorp Blog', loadComponent: () => import('./pages/admin-dashboard/admin-dashboard.component').then((c) => c.AdminDashboardComponent) },
+      { path: 'posts', title: 'Quản lý bài viết | VCCorp Blog', loadComponent: () => import('./pages/admin-posts/admin-posts.component').then((c) => c.AdminPostsComponent) },
+      { path: 'users', title: 'Quản lý người dùng | VCCorp Blog', loadComponent: () => import('./pages/admin-users/admin-users.component').then((c) => c.AdminUsersComponent) },
     ],
   },
   {

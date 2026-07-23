@@ -22,8 +22,8 @@
 <div class="layout no-rail" [class.sidebar-collapsed]="!sidebarOpen()">
   <aside class="sidebar" id="mainSidebar" [class.drawer-open]="mobileMenuOpen()">
     <a routerLink="/admin/dashboard" routerLinkActive="active"><span class="icon"><iconify-icon icon="mage:dashboard-fill"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Bảng điều khiển' : 'Dashboard' }}</span></a>
-    <span class="admin-nav-placeholder"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý bài viết' : 'Manage posts' }}</span></span>
-    <span class="admin-nav-placeholder"><span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý thành viên' : 'Manage users' }}</span></span>
+    <a routerLink="/admin/posts" routerLinkActive="active"><span class="icon"><iconify-icon icon="fluent-mdl2:blog"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý bài viết' : 'Manage posts' }}</span></a>
+    <a routerLink="/admin/users" routerLinkActive="active"><span class="icon"><iconify-icon icon="glyphs:users-bold"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý thành viên' : 'Manage users' }}</span></a>
     <span class="admin-nav-placeholder"><span class="icon"><iconify-icon icon="arcticons:solar-manager"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý danh mục' : 'Manage categories' }}</span></span>
     <span class="admin-nav-placeholder"><span class="icon"><iconify-icon icon="fa:language"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Quản lý ngôn ngữ' : 'Manage languages' }}</span></span>
     <a routerLink="/"><span class="icon"><iconify-icon icon="material-symbols:home-rounded"></iconify-icon></span><span>{{ language.locale() === 'vi' ? 'Về trang Blog' : 'Back to Blog' }}</span></a>

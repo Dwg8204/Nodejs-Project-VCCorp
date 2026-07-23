@@ -3,7 +3,7 @@
 .mobile-search-icon { display: none; }
 .lang-menu button { display: flex; align-items:center; gap:6px; width: 100%; padding: 9px 14px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
 .lang-menu button:hover { background: var(--hover-bg); }
-.avatar { border: 0; }
+.avatar { border: 0; background-color:var(--text)!important; color:var(--bg)!important; background-position:center!important; background-size:cover!important; }
 .lang-current-label { display: inline-flex; align-items: center; gap: 6px; }
 .lang-current-label img { border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
 .drawer-overlay { display: none; }

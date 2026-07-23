@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -48,4 +48,5 @@ export class PublicLayoutComponent {
   protected requestLogout():void{this.logoutConfirmOpen.set(true);}
   protected cancelLogout():void{this.logoutConfirmOpen.set(false);}
   protected confirmLogout():void{this.logoutConfirmOpen.set(false);this.logout();}
+  @HostListener('click',['$event']) protected openProfile(event:MouseEvent):void{const target=event.target as HTMLElement;const link=target.closest('a');if(!link)return;const isAvatar=link.classList.contains('avatar');const isProfileLink=!!link.querySelector('iconify-icon[icon="solar:user-bold"]');if(!isAvatar&&!isProfileLink)return;event.preventDefault();const id=this.auth.currentUser()?.id;void this.router.navigate(id?['/profile',id]:['/profile']);}
 }

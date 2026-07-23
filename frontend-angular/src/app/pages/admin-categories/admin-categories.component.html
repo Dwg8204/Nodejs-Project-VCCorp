@@ -1,0 +1,36 @@
+<div class="admin-header">
+  <h1>{{ language.choose('Quản lý danh mục','Manage Categories') }}</h1>
+  <button class="btn btn-primary" type="button" (click)="openAdd()"><iconify-icon icon="solar:folder-with-files-bold-duotone"></iconify-icon>{{ language.choose('Thêm danh mục','Add Category') }}</button>
+</div>
+<div class="category-filter-row"><div class="category-search"><iconify-icon icon="solar:magnifer-linear"></iconify-icon><input class="form-control" type="search" [placeholder]="language.choose('Tìm danh mục...','Search categories...')" [value]="search()" (input)="filter($any($event.target).value)"></div></div>
+<div class="card categories-table">
+  <table class="data-table"><thead><tr><th>{{ language.choose('Tên danh mục','Category name') }}</th><th>{{ language.choose('Số bài viết','Posts') }}</th><th></th></tr></thead>
+    <tbody>
+      @for (row of visibleRows(); track row.category.id) {
+        <tr>
+          <td [attr.data-label]="language.choose('TÊN DANH MỤC','CATEGORY NAME')"><strong class="category-name">{{ row.translation?.name || (language.choose('Chưa có','Missing')) }}</strong></td>
+          <td [attr.data-label]="language.choose('SỐ BÀI VIẾT','POSTS')">{{ row.posts }}</td>
+          <td><div class="category-actions"><button class="edit-btn" type="button" (click)="openEdit(row)" [title]="language.choose('Sửa','Edit')"><iconify-icon icon="tabler:edit"></iconify-icon></button><button class="delete-btn" type="button" (click)="deleteTarget.set(row)" [title]="language.choose('Xóa','Delete')"><iconify-icon icon="weui:delete-outlined"></iconify-icon></button></div></td>
+        </tr>
+      } @empty { <tr><td colspan="3" class="empty-row">{{ language.choose('Không tìm thấy danh mục.','No categories found.') }}</td></tr> }
+    </tbody>
+  </table>
+</div>
+@if (rows().length) {
+  <div class="pagination-wrap"><p class="pagination-summary">{{summary()}}</p><div class="pagination-actions"><nav class="pagination-nav"><button type="button" [disabled]="page()===1" (click)="changePage(page()-1)"><iconify-icon icon="solar:alt-arrow-left-linear"></iconify-icon>{{language.choose('Trước','Previous')}}</button><div class="pagination-pages">@for(value of pages();track value.key){@if(value.page!==null){<button class="pagination-page" type="button" [class.active]="page()===value.page" (click)="changePage(value.page)">{{value.page}}</button>}@else{<span class="pagination-ellipsis">…</span>}}</div><span class="pagination-mobile-status">{{language.choose('Trang','Page')}} {{page()}} {{language.choose('/','of')}} {{totalPages()}}</span><button type="button" [disabled]="page()===totalPages()" (click)="changePage(page()+1)">{{language.choose('Sau','Next')}}<iconify-icon icon="solar:alt-arrow-right-linear"></iconify-icon></button></nav><div class="pagination-tools"><div class="pagination-jump"><span>{{language.choose('Trang','Page')}}</span><input type="number" min="1" [max]="totalPages()" [value]="pageInput()" (input)="pageInput.set(+$any($event.target).value)" (keydown.enter)="applyPage()"><button type="button" (click)="applyPage()">{{language.choose('Đi','Go')}}</button></div><div class="pagination-size"><span>{{language.choose('Mục/trang','Items/page')}}</span><input type="number" min="1" max="100" [value]="sizeInput()" (input)="sizeInput.set(+$any($event.target).value)" (keydown.enter)="applyPageSize()"><button type="button" (click)="applyPageSize()"><iconify-icon icon="solar:check-circle-linear"></iconify-icon></button></div></div></div></div>
+}
+@if (modal()) {
+  <div class="modal-overlay open" (click)="modal.set(null)"><div class="modal-box category-modal" (click)="$event.stopPropagation()">
+    <header class="modal-header"><h2><iconify-icon [icon]="modal() === 'add' ? 'solar:folder-with-files-bold-duotone' : 'tabler:edit'"></iconify-icon>{{ modal() === 'add' ? (language.choose('Thêm danh mục','Add Category')) : (language.choose('Chỉnh sửa danh mục','Edit Category')) }}</h2><button class="modal-close" type="button" (click)="modal.set(null)"><iconify-icon icon="solar:close-circle-bold-duotone"></iconify-icon></button></header>
+    <div class="modal-body">
+      @if (modal() === 'add') { <div class="category-source-banner"><span class="category-source-icon"><iconify-icon icon="solar:translation-2-bold-duotone"></iconify-icon></span><div><strong>{{ language.choose('Nhập một lần, tự động dịch','Enter once, translate automatically') }}</strong><p>{{ language.choose('Hệ thống sẽ tạo và lưu phiên bản cho mọi ngôn ngữ còn lại.','The system will create and save versions for every other language.') }}</p></div></div> }
+      <div class="form-group"><label>{{ modal() === 'add' ? (language.choose('Ngôn ngữ nguồn','Source language')) : (language.choose('Bản ngôn ngữ đang chỉnh sửa','Language version being edited')) }}</label><select class="form-control" [value]="sourceLanguageId()" (change)="changeLanguage(+$any($event.target).value)">@for (item of languages; track item.id) {<option [value]="item.id" [selected]="item.id === sourceLanguageId()">{{ item.name }} ({{ item.code.toUpperCase() }})</option>}</select></div>
+      <div class="category-single-form"><div class="category-form-language"><img [src]="sourceLanguage().flag" width="22" [alt]="sourceLanguage().name"><strong>{{ sourceLanguage().name }}</strong></div><div class="form-group"><label>{{ formCopy().nameLabel }}</label><input class="form-control" maxlength="100" [placeholder]="formCopy().namePlaceholder" [value]="name()" (input)="name.set($any($event.target).value)"></div><div class="form-group"><label>{{ formCopy().descriptionLabel }}</label><textarea class="form-control" rows="3" maxlength="300" [placeholder]="formCopy().descriptionPlaceholder" [value]="description()" (input)="description.set($any($event.target).value)"></textarea></div></div>
+      @if (error()) { <p class="form-error">{{ error() }}</p> }
+    </div>
+    <footer class="modal-footer"><button class="btn btn-outline" type="button" (click)="modal.set(null)">{{ language.choose('Hủy','Cancel') }}</button><button class="btn btn-primary" type="button" (click)="save()">{{ modal() === 'add' ? (language.choose('Tạo và dịch','Create & translate')) : (language.choose('Lưu thay đổi','Save changes')) }}</button></footer>
+  </div></div>
+}
+@if (deleteTarget(); as target) {
+  <div class="confirm-overlay open" (click)="deleteTarget.set(null)"><div class="confirm-modal" (click)="$event.stopPropagation()"><div class="confirm-icon danger"><iconify-icon icon="solar:trash-bin-trash-bold-duotone"></iconify-icon></div><h3 class="confirm-title">{{ language.choose('Xóa danh mục','Delete category') }}</h3><p class="confirm-message">{{ language.choose('Bạn có chắc muốn xóa danh mục','Are you sure you want to delete') }} <strong>{{ target.translation?.name }}</strong>?</p><div class="confirm-actions"><button class="btn btn-outline" type="button" (click)="deleteTarget.set(null)">{{ language.choose('Hủy','Cancel') }}</button><button class="btn btn-danger" type="button" (click)="remove()">{{ language.choose('Xóa','Delete') }}</button></div></div></div>
+}

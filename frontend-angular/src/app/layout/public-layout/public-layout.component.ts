@@ -28,6 +28,7 @@ export class PublicLayoutComponent {
 
   protected toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+    this.feedUi.sidebarCollapsed.update((collapsed) => !collapsed);
     document.getElementById('mainSidebar')?.classList.toggle('drawer-open', this.menuOpen());
   }
 

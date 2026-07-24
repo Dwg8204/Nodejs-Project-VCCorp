@@ -2,6 +2,24 @@
 .mock-line-chart { min-height: 220px; position: relative; }
 .mock-line-chart svg { display: block; width: 100%; height: 220px; overflow: visible; }
 .mock-line-chart path { fill: none; stroke-width: 4; stroke-linecap: round; }
+.chart-grid-line { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border); border-style: dashed; border-width: 1px 0 0; z-index: 1; }
+.analytics-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; z-index: 2; position: relative; }
+.analytics-like-line { stroke: #3b82f6; }
+.analytics-comment-line { stroke: #10b981; }
+.chart-grid-line-svg { stroke: var(--border); stroke-width: 1; stroke-dasharray: 4 4; }
+.chart-axis-text { fill: var(--text-muted); font-size: 11px; font-family: sans-serif; }
+.chart-axis-x { text-anchor: middle; }
+.chart-point { fill: var(--card-bg); stroke-width: 2; opacity: 0; transition: opacity 0.2s, r 0.2s; cursor: pointer; pointer-events: none; }
+.chart-point.like-point { stroke: #3b82f6; }
+.chart-point.comment-point { stroke: #10b981; }
+svg:hover .chart-point { opacity: 1; }
+
+.chart-tooltip { position: absolute; background: var(--text); color: var(--bg); padding: 8px 12px; border-radius: 6px; font-size: 12px; pointer-events: none; transform: translate(-50%, -100%); z-index: 10; white-space: nowrap; box-shadow: var(--shadow-md); transition: top 0.1s, left 0.1s; }
+.chart-tooltip strong { display: block; margin-bottom: 4px; font-weight: 600; color: #fff; }
+.chart-tooltip div { display: flex; align-items: center; gap: 6px; line-height: 1.4; color: #e5e7eb; }
+.chart-tooltip .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.chart-tooltip .like-dot { background-color: #3b82f6; }
+.chart-tooltip .comment-dot { background-color: #10b981; }
 .status-summary { display: grid; gap: 12px; padding-top: 12px; }
 .status-summary-row, .coverage-item, .admin-bar-label { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .status-summary-row, .coverage-item { padding: 14px 16px; border-radius: 12px; background: var(--hover-bg); }
@@ -10,3 +28,7 @@
 .admin-bar-label span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .admin-bar-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--hover-bg); }
 .admin-bar-track span { display: block; height: 100%; min-width: 4%; border-radius: inherit; background: var(--accent); }
+.stat-card-link { text-decoration: none; color: inherit; cursor: pointer; transition: all .2s; }
+.stat-card-link:hover { border-color: var(--accent); background: var(--bg-soft); }
+.top-post-link { text-decoration: none; color: inherit; cursor: pointer; transition: background .2s; }
+.top-post-link:hover { background: var(--hover-bg); border-radius: 8px; }

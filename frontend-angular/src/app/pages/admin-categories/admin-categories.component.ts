@@ -264,8 +264,7 @@ export class AdminCategoriesComponent {
     if (changed) this.db.write('category_translation', translations);
   }
   private writeLog(action: string, category: CategoryRow, before: CategoryRow | null, metadata: Record<string, unknown>): void {
-    const actor = this.auth.currentUser(); const logs = this.db.table('audit_logs');
-    logs.push({ id: this.db.nextId('audit_logs'), actor_id: actor?.id ?? null, actor_name: actor?.fullName ?? null, actor_role: actor?.role.nameRole ?? null, action, entity_type: 'CATEGORY', entity_id: category.id, entity_label: this.name(), before_data: before, after_data: structuredClone(category), metadata, ip_address: null, user_agent: navigator.userAgent, created_at: new Date().toISOString() });
-    this.db.write('audit_logs', logs);
+    const actor = this.auth.currentUser();
+    this.db.appendAuditLog({ id: this.db.nextId('audit_logs'), actor_id: actor?.id ?? null, actor_name: actor?.fullName ?? null, actor_role: actor?.role.nameRole ?? null, action, entity_type: 'CATEGORY', entity_id: category.id, entity_label: this.name(), before_data: before, after_data: structuredClone(category), metadata, ip_address: null, user_agent: navigator.userAgent, created_at: new Date().toISOString() });
   }
 }

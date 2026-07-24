@@ -9,7 +9,9 @@
 .article-title:hover { text-decoration: underline; }
 .article-desc { font-size: 16px; color: var(--text-muted); margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .article-meta { display: flex; align-items: center; gap: 20px; color: var(--text-muted); font-size: 14px; }
-.article-meta .meta-item { display: flex; align-items: center; gap: 6px; }
+.article-meta .meta-item { display: flex; align-items: center; gap: 6px; background: transparent; border: none; padding: 0; color: inherit; cursor: pointer; font: inherit; outline: none; }
+.article-meta .meta-item:hover { color: var(--text); }
+.article-meta .like-btn.liked { color: #f43f5e; }
 .article-meta .spacer { flex: 1; }
 .article-thumb { width: 160px; height: 110px; border-radius: 6px; object-fit: cover; background-size: cover; background-position: center; flex-shrink: 0; cursor: pointer; }
 .feed-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 16px; flex-wrap: wrap; }

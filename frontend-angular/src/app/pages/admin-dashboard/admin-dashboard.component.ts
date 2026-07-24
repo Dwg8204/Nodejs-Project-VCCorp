@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { LanguageService } from '../../core/services/language.service';
 import { MockDatabaseService } from '../../data/mock/mock-database.service';
@@ -11,6 +12,7 @@ import { MockDatabaseService } from '../../data/mock/mock-database.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  imports: [RouterLink],
 })
 export class AdminDashboardComponent {
   private readonly database = inject(MockDatabaseService);
@@ -23,11 +25,11 @@ export class AdminDashboardComponent {
     const likes = this.database.table('post_likes').filter((row) => row.is_liked).length;
     const comments = this.database.table('comments').filter((row) => !row.deleted_at).length;
     return [
-      { icon: 'solar:users-group-rounded-bold-duotone', tone: 'kpi-purple', value: this.database.table('users').length, vi: 'Người dùng', en: 'Users' },
-      { icon: 'solar:document-text-bold-duotone', tone: 'kpi-blue', value: posts.length, vi: 'Bài viết', en: 'Posts' },
-      { icon: 'solar:clock-circle-bold-duotone', tone: 'kpi-orange', value: posts.filter((row) => row.status === 'PENDING').length, vi: 'Bài chờ duyệt', en: 'Pending Posts' },
-      { icon: 'solar:folder-with-files-bold-duotone', tone: 'kpi-green', value: this.database.table('categories').filter((row) => !row.deleted_at).length, vi: 'Danh mục', en: 'Categories' },
-      { icon: 'solar:global-bold-duotone', tone: 'kpi-cyan', value: this.database.table('languages').filter((row) => !row.deleted_at).length, vi: 'Ngôn ngữ', en: 'Languages' },
+      { icon: 'solar:users-group-rounded-bold-duotone', tone: 'kpi-purple', value: this.database.table('users').length, vi: 'Người dùng', en: 'Users', link: ['/admin/users'] },
+      { icon: 'solar:document-text-bold-duotone', tone: 'kpi-blue', value: posts.length, vi: 'Bài viết', en: 'Posts', link: ['/admin/posts'] },
+      { icon: 'solar:clock-circle-bold-duotone', tone: 'kpi-orange', value: posts.filter((row) => row.status === 'PENDING').length, vi: 'Bài chờ duyệt', en: 'Pending Posts', link: ['/admin/posts'], queryParams: { status: 'PENDING' } },
+      { icon: 'solar:folder-with-files-bold-duotone', tone: 'kpi-green', value: this.database.table('categories').filter((row) => !row.deleted_at).length, vi: 'Danh mục', en: 'Categories', link: ['/admin/categories'] },
+      { icon: 'solar:global-bold-duotone', tone: 'kpi-cyan', value: this.database.table('languages').filter((row) => !row.deleted_at).length, vi: 'Ngôn ngữ', en: 'Languages', link: ['/admin/languages'] },
       { icon: 'solar:heart-bold-duotone', tone: 'kpi-pink', value: likes, vi: 'Lượt thích', en: 'Likes' },
       { icon: 'solar:chat-round-dots-bold-duotone', tone: 'kpi-purple', value: comments, vi: 'Bình luận', en: 'Comments' },
       { icon: 'solar:chart-2-bold-duotone', tone: 'kpi-green', value: posts.length ? ((likes + comments) / posts.length).toFixed(1) : '0', vi: 'Tương tác / bài', en: 'Engagement / post' },
@@ -100,4 +102,93 @@ export class AdminDashboardComponent {
 
   protected label(item: { vi: string; en: string }): string { return this.language.choose(item.vi,item.en); }
   protected selectPeriod(value: number): void { this.period.set(value); this.periodOpen.set(false); }
+  
+  protected readonly engagementChartData = computed(() => {
+    const days = this.period();
+    const now = new Date();
+    const startDate = new Date(now);
+    startDate.setDate(now.getDate() - days + 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const likes = this.database.table('post_likes').filter(l => l.is_liked && new Date(l.updated_at) >= startDate);
+    const comments = this.database.table('comments').filter(c => !c.deleted_at && new Date(c.created_at) >= startDate);
+
+    const data: { date: string; likes: number; comments: number }[] = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      data.push({ date: dateStr, likes: 0, comments: 0 });
+    }
+
+    likes.forEach(l => {
+      const dateStr = l.updated_at.slice(0, 10);
+      const entry = data.find(d => d.date === dateStr);
+      if (entry) entry.likes++;
+    });
+
+    comments.forEach(c => {
+      const dateStr = c.created_at.slice(0, 10);
+      const entry = data.find(d => d.date === dateStr);
+      if (entry) entry.comments++;
+    });
+
+    return data;
+  });
+
+  protected readonly engagementSvgPaths = computed(() => {
+    const data = this.engagementChartData();
+    const maxValRaw = Math.max(1, ...data.map(d => Math.max(d.likes, d.comments)));
+    const maxVal = Math.ceil(maxValRaw / 5) * 5; // Round up to nearest 5 for nicer Y-axis
+
+    const width = 720;
+    const height = 220;
+    const paddingX = 40;
+    const paddingY = 30;
+    const innerWidth = width - paddingX * 2;
+    const innerHeight = height - paddingY * 2;
+    
+    const stepX = innerWidth / Math.max(1, data.length - 1);
+    const scaleY = (val: number) => paddingY + innerHeight - (val / maxVal) * innerHeight;
+    
+    let likePath = '';
+    let commentPath = '';
+    const points: { x: number, ly: number, cy: number, date: string, likes: number, comments: number }[] = [];
+    
+    data.forEach((d, i) => {
+      const x = paddingX + i * stepX;
+      const ly = scaleY(d.likes);
+      const cy = scaleY(d.comments);
+      
+      points.push({ x, ly, cy, date: d.date, likes: d.likes, comments: d.comments });
+
+      if (i === 0) {
+        likePath = `M${x} ${ly}`;
+        commentPath = `M${x} ${cy}`;
+      } else {
+        likePath += ` L${x} ${ly}`;
+        commentPath += ` L${x} ${cy}`;
+      }
+    });
+
+    const yAxisMarks = [0, Math.round(maxVal / 2), maxVal].map(v => ({ value: v, y: scaleY(v) }));
+    
+    // Select ~5 equally spaced points for X axis labels
+    const xAxisMarks: { x: number, label: string }[] = [];
+    const numLabels = Math.min(5, data.length);
+    for (let i = 0; i < numLabels; i++) {
+      const idx = Math.floor(i * (data.length - 1) / (numLabels - 1));
+      xAxisMarks.push({ x: points[idx].x, label: data[idx].date.slice(5) }); // MM-DD
+    }
+    
+    return { likePath, commentPath, maxVal, points, yAxisMarks, xAxisMarks, paddingX, paddingY, width, height };
+  });
+
+  protected activeTooltip = signal<{ x: number, y: number, date: string, likes: number, comments: number } | null>(null);
+  protected showTooltip(point: any, event: MouseEvent) {
+    this.activeTooltip.set({ x: point.x, y: point.ly < point.cy ? point.ly : point.cy, date: point.date, likes: point.likes, comments: point.comments });
+  }
+  protected hideTooltip() {
+    this.activeTooltip.set(null);
+  }
 }

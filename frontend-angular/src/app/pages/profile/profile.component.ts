@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { FeedUiService } from '../../core/services/feed-ui.service';
 import { LanguageService } from '../../core/services/language.service';
 import { MockDatabaseService } from '../../data/mock/mock-database.service';
 import { PostStatus, UserRow } from '../../data/mock/mock-schema.model';
@@ -9,7 +10,7 @@ interface ProfilePost {id:number;title:string;content:string;thumbnail:string;da
 
 @Component({selector:'app-profile',standalone:true,imports:[RouterLink],templateUrl:'./profile.component.html',styleUrl:'./profile.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class ProfileComponent {
-  private readonly route=inject(ActivatedRoute);private readonly database=inject(MockDatabaseService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);private readonly revision=signal(0);
+  private readonly route=inject(ActivatedRoute);private readonly database=inject(MockDatabaseService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);protected readonly feedUi=inject(FeedUiService);private readonly revision=signal(0);
   protected readonly tab=signal<'home'|'about'>('home');protected readonly page=signal(1);protected readonly pageSize=5;
   private readonly requestedId=Number(this.route.snapshot.paramMap.get('id'))||this.auth.currentUser()?.id||1;
   protected readonly user=computed<UserRow|null>(()=>{this.revision();return this.database.table('users').find(row=>row.id===this.requestedId)??null;});

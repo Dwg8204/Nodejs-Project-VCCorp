@@ -152,8 +152,7 @@ export class AdminLanguagesComponent {
     this.db.write('category_translation', translations);
   }
   private log(action: string, item: LanguageRow, before: unknown, after: unknown): void {
-    const actor = this.auth.currentUser(); const logs = this.db.table('audit_logs');
-    logs.push({ id: this.db.nextId('audit_logs'), actor_id: actor?.id ?? null, actor_name: actor?.fullName ?? null, actor_role: actor?.role.nameRole ?? null, action, entity_type: 'LANGUAGE', entity_id: item.id, entity_label: item.name, before_data: before, after_data: after ?? structuredClone(item), metadata: { code: item.code }, ip_address: null, user_agent: navigator.userAgent, created_at: new Date().toISOString() });
-    this.db.write('audit_logs', logs);
+    const actor = this.auth.currentUser();
+    this.db.appendAuditLog({ id: this.db.nextId('audit_logs'), actor_id: actor?.id ?? null, actor_name: actor?.fullName ?? null, actor_role: actor?.role.nameRole ?? null, action, entity_type: 'LANGUAGE', entity_id: item.id, entity_label: item.name, before_data: before, after_data: after ?? structuredClone(item), metadata: { code: item.code }, ip_address: null, user_agent: navigator.userAgent, created_at: new Date().toISOString() });
   }
 }

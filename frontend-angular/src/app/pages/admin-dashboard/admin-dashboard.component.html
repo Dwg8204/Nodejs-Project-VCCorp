@@ -20,14 +20,49 @@
 
 <div class="stats-grid">
   @for (item of statistics(); track item.en) {
-    <div class="stat-card"><span class="kpi-icon" [class]="item.tone"><iconify-icon [icon]="item.icon"></iconify-icon></span><div class="num">{{ item.value }}</div><div class="label">{{ label(item) }}</div></div>
+    @if (item.link) {
+      <a class="stat-card stat-card-link" [routerLink]="item.link" [queryParams]="item.queryParams"><span class="kpi-icon" [class]="item.tone"><iconify-icon [icon]="item.icon"></iconify-icon></span><div class="num">{{ item.value }}</div><div class="label">{{ label(item) }}</div></a>
+    } @else {
+      <div class="stat-card"><span class="kpi-icon" [class]="item.tone"><iconify-icon [icon]="item.icon"></iconify-icon></span><div class="num">{{ item.value }}</div><div class="label">{{ label(item) }}</div></div>
+    }
   }
 </div>
 
 <div class="analytics-grid analytics-primary">
   <section class="analytics-panel engagement-panel">
     <div class="analytics-panel-head"><div><h2>{{ language.choose('Xu hướng tương tác','Engagement trend') }}</h2><p>{{ language.choose('Lượt thích và bình luận theo thời gian','Likes and comments over time') }}</p></div><div class="chart-legend"><span class="legend-like">{{ language.choose('Lượt thích','Likes') }}</span><span class="legend-comment">{{ language.choose('Bình luận','Comments') }}</span></div></div>
-    <div class="engagement-chart mock-line-chart" aria-label="Engagement chart"><div class="chart-grid-line"></div><svg viewBox="0 0 720 220" role="img"><path d="M24 175 C120 150,150 165,230 115 S360 80,430 112 S575 65,696 36" class="analytics-line analytics-like-line"/><path d="M24 192 C130 185,180 155,250 170 S390 125,470 148 S590 112,696 96" class="analytics-line analytics-comment-line"/></svg></div>
+    <div class="engagement-chart mock-line-chart" aria-label="Engagement chart">
+      @if (engagementSvgPaths(); as chart) {
+        <svg [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height" role="img" (mouseleave)="hideTooltip()">
+          <!-- Y Axis Marks -->
+          @for (mark of chart.yAxisMarks; track mark.value) {
+            <text x="5" [attr.y]="mark.y + 4" class="chart-axis-text">{{mark.value}}</text>
+            <line [attr.x1]="chart.paddingX" [attr.y1]="mark.y" [attr.x2]="chart.width - chart.paddingX" [attr.y2]="mark.y" class="chart-grid-line-svg" />
+          }
+          <!-- X Axis Marks -->
+          @for (mark of chart.xAxisMarks; track mark.label) {
+            <text [attr.x]="mark.x" [attr.y]="chart.height - 5" class="chart-axis-text chart-axis-x">{{mark.label}}</text>
+          }
+          <!-- Lines -->
+          <path [attr.d]="chart.likePath" class="analytics-line analytics-like-line"/>
+          <path [attr.d]="chart.commentPath" class="analytics-line analytics-comment-line"/>
+          <!-- Hover Points -->
+          @for (point of chart.points; track point.date) {
+            <circle [attr.cx]="point.x" [attr.cy]="point.ly" r="6" class="chart-point like-point" (mouseenter)="showTooltip(point, $event)"></circle>
+            <circle [attr.cx]="point.x" [attr.cy]="point.cy" r="6" class="chart-point comment-point" (mouseenter)="showTooltip(point, $event)"></circle>
+            <!-- Invisible wide rect for easier hover -->
+            <rect [attr.x]="point.x - 10" [attr.y]="chart.paddingY" width="20" [attr.height]="chart.height - 2*chart.paddingY" fill="transparent" (mouseenter)="showTooltip(point, $event)"></rect>
+          }
+        </svg>
+      }
+      @if (activeTooltip(); as tooltip) {
+        <div class="chart-tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y - 10">
+          <strong>{{tooltip.date}}</strong>
+          <div><span class="dot like-dot"></span> {{language.choose('Lượt thích','Likes')}}: {{tooltip.likes}}</div>
+          <div><span class="dot comment-dot"></span> {{language.choose('Bình luận','Comments')}}: {{tooltip.comments}}</div>
+        </div>
+      }
+    </div>
   </section>
   <section class="analytics-panel status-panel">
     <div class="analytics-panel-head"><div><h2>{{ language.choose('Trạng thái bài viết','Post status') }}</h2><p>{{ language.choose('Phân bố nội dung hiện tại','Current content distribution') }}</p></div></div>
@@ -36,7 +71,7 @@
 </div>
 
 <div class="analytics-grid analytics-secondary">
-  <section class="analytics-panel"><div class="analytics-panel-head"><div><h2>{{ language.choose('Bài viết nổi bật','Top performing posts') }}</h2><p>{{ language.choose('Xếp hạng theo tổng lượt thích và bình luận','Ranked by likes and comments') }}</p></div></div><div class="admin-bar-list">@for(post of topPosts();track post.id){<div class="admin-bar-row"><span class="bar-rank">{{$index+1}}</span><div class="bar-content"><div class="bar-label"><span [title]="post.title">{{post.title}}</span><strong>{{post.value}}</strong></div><div class="bar-track"><span [style.width.%]="post.value/maxTopPost()*100"></span></div><small><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon>{{post.likes}}<iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon>{{post.comments}}</small></div></div>}</div></section>
+  <section class="analytics-panel"><div class="analytics-panel-head"><div><h2>{{ language.choose('Bài viết nổi bật','Top performing posts') }}</h2><p>{{ language.choose('Xếp hạng theo tổng lượt thích và bình luận','Ranked by likes and comments') }}</p></div></div><div class="admin-bar-list">@for(post of topPosts();track post.id){<a class="admin-bar-row top-post-link" [routerLink]="['/article', post.id]"><span class="bar-rank">{{$index+1}}</span><div class="bar-content"><div class="bar-label"><span [title]="post.title">{{post.title}}</span><strong>{{post.value}}</strong></div><div class="bar-track"><span [style.width.%]="post.value/maxTopPost()*100"></span></div><small><iconify-icon icon="solar:heart-bold-duotone"></iconify-icon>{{post.likes}}<iconify-icon icon="solar:chat-round-dots-bold-duotone"></iconify-icon>{{post.comments}}</small></div></a>}</div></section>
   <section class="analytics-panel"><div class="analytics-panel-head"><div><h2>{{ language.choose('Độ phủ bản dịch','Translation coverage') }}</h2><p>{{ language.choose('Tình trạng nội dung theo các ngôn ngữ hệ thống','Content availability across system languages') }}</p></div></div><div class="coverage-list">@for(row of translationCoverage();track row.en){<div class="coverage-row"><div><span>{{label(row)}}</span><strong>{{row.value}}</strong></div><div class="coverage-track"><span [class]="row.tone" [style.width.%]="row.percent"></span></div></div>}</div></section>
 </div>
 

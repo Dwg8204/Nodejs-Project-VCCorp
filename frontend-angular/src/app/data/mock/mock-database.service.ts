@@ -2,10 +2,11 @@ import { inject, Injectable } from '@angular/core';
 
 import { StorageService } from '../../core/services/storage.service';
 import { MOCK_DATABASE_SEED } from './mock.seed';
-import { MockDatabase, MockTableName } from './mock-schema.model';
+import { AuditLogRow, MockDatabase, MockTableName } from './mock-schema.model';
 
 const DATABASE_KEY = 'vccorp_angular_mock_database_v1';
 const CREDENTIALS_KEY = 'vccorp_angular_mock_credentials_v1';
+const MAX_AUDIT_LOGS = 300;
 
 @Injectable({ providedIn: 'root' })
 export class MockDatabaseService {
@@ -23,7 +24,25 @@ export class MockDatabaseService {
   write<K extends MockTableName>(name: K, rows: MockDatabase[K]): void {
     const database = this.read();
     database[name] = structuredClone(rows) as MockDatabase[K];
-    this.storage.set(DATABASE_KEY, database);
+    this.persist(database);
+  }
+
+  appendAuditLog(row: AuditLogRow): boolean {
+    const database = this.read();
+    database.audit_logs.unshift(this.compactAuditLog(row));
+    database.audit_logs = database.audit_logs
+      .sort((left, right) => +new Date(right.created_at) - +new Date(left.created_at))
+      .slice(0, MAX_AUDIT_LOGS);
+    try {
+      this.persist(database);
+      return true;
+    } catch (error) {
+      if (this.isQuotaExceeded(error)) {
+        console.warn('Audit log was skipped because browser storage is full.', error);
+        return false;
+      }
+      throw error;
+    }
   }
 
   nextId<K extends MockTableName>(name: K): number {
@@ -43,7 +62,7 @@ export class MockDatabaseService {
   }
 
   reset(): void {
-    this.storage.set(DATABASE_KEY, structuredClone(MOCK_DATABASE_SEED));
+    this.persist(structuredClone(MOCK_DATABASE_SEED));
     this.storage.set(CREDENTIALS_KEY, {});
   }
 
@@ -94,7 +113,7 @@ export class MockDatabaseService {
       }
     }
     this.ensureAuditLogSamples(database);
-    this.storage.set(DATABASE_KEY, database);
+    this.persist(database);
   }
 
   private ensureAuditLogSamples(database: MockDatabase): void {
@@ -132,5 +151,69 @@ export class MockDatabaseService {
         user_agent:'Angular mock audit seed',created_at:new Date(Date.UTC(2026,6,23-index,9,index,0)).toISOString(),
       });
     });
+  }
+
+  private persist(database: MockDatabase): void {
+    try {
+      this.storage.set(DATABASE_KEY, database);
+    } catch (error) {
+      if (!this.isQuotaExceeded(error)) throw error;
+
+      // Audit history is expendable in the browser mock. Business data is not.
+      // Remove binary/large snapshots first, then progressively retain fewer logs.
+      const compacted = structuredClone(database);
+      compacted.audit_logs = compacted.audit_logs
+        .map((row) => this.compactAuditLog(row))
+        .sort((left, right) => +new Date(right.created_at) - +new Date(left.created_at));
+      for (const limit of [100, 25, 0]) {
+        try {
+          this.storage.set(DATABASE_KEY, { ...compacted, audit_logs: compacted.audit_logs.slice(0, limit) });
+          return;
+        } catch (retryError) {
+          if (!this.isQuotaExceeded(retryError)) throw retryError;
+        }
+      }
+      throw error;
+    }
+  }
+
+  private compactAuditLog(row: AuditLogRow): AuditLogRow {
+    return {
+      ...row,
+      actor_name: this.compactText(row.actor_name, 300),
+      entity_label: this.compactText(row.entity_label, 500),
+      user_agent: this.compactText(row.user_agent, 500),
+      before_data: this.compactAuditValue(row.before_data),
+      after_data: this.compactAuditValue(row.after_data),
+      metadata: this.compactAuditValue(row.metadata) as Record<string, unknown> | null,
+    };
+  }
+
+  private compactAuditValue(value: unknown, depth = 0): unknown {
+    if (value === null || value === undefined || typeof value === 'number' || typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      if (/^data:[^;]+;base64,/i.test(value)) return `[binary data omitted: ${value.length} characters]`;
+      return value.length > 4000 ? `${value.slice(0, 4000)}…` : value;
+    }
+    if (depth >= 6) return '[nested data omitted]';
+    if (Array.isArray(value)) return value.slice(0, 50).map((item) => this.compactAuditValue(item, depth + 1));
+    if (typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value as Record<string, unknown>)
+          .slice(0, 60)
+          .map(([key, item]) => [key, this.compactAuditValue(item, depth + 1)]),
+      );
+    }
+    return String(value);
+  }
+
+  private compactText(value: string | null, maximum: number): string | null {
+    if (!value || value.length <= maximum) return value;
+    return `${value.slice(0, maximum)}…`;
+  }
+
+  private isQuotaExceeded(error: unknown): boolean {
+    return error instanceof DOMException
+      && (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED');
   }
 }

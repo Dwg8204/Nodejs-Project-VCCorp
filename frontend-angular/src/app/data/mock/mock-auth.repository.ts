@@ -100,9 +100,8 @@ export class MockAuthRepository implements AuthRepository {
   }
 
   private writeAudit(actor: UserRow | null, action: string, entityType: string, entityId: number | null, label: string, metadata: Record<string, unknown> | null): void {
-    const logs = this.database.table('audit_logs');
     const role = actor ? this.database.table('role').find((item: RoleRow) => item.id === actor.role_id) : null;
-    logs.unshift({
+    this.database.appendAuditLog({
       id: this.database.nextId('audit_logs'), actor_id: actor?.id ?? null,
       actor_name: actor?.full_name ?? actor?.user_name ?? null,
       actor_role: role?.name_role ?? null, action, entity_type: entityType,
@@ -110,6 +109,5 @@ export class MockAuthRepository implements AuthRepository {
       metadata, ip_address: '127.0.0.1', user_agent: navigator.userAgent,
       created_at: new Date().toISOString(),
     });
-    this.database.write('audit_logs', logs);
   }
 }

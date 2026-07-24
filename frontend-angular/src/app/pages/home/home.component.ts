@@ -7,7 +7,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { MockDatabaseService } from '../../data/mock/mock-database.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
 
-interface FeedPost { id:number; authorId:number; categoryId:number; title:string; content:string; authorName:string; authorAvatar:string; categoryName:string; thumbnail:string; createdAt:string; likes:number; comments:number; }
+interface FeedPost { id:number; authorId:number; categoryId:number; title:string; content:string; authorName:string; authorAvatar:string; categoryName:string; thumbnail:string; createdAt:string; likes:number; comments:number; isLiked:boolean; }
 interface FeedCategory { id:number|'all'; name:string; }
 interface AuthorHover { name:string; avatar:string; posts:number; likes:number; }
 
@@ -24,6 +24,7 @@ export class HomeComponent {
   protected readonly hoveredAuthorId=signal<number|null>(null);
   protected readonly hoverCardPosition=signal({top:0,left:0});
   private hoverTimer:ReturnType<typeof setTimeout>|null=null;
+  private readonly revision = signal(0);
   protected readonly currentPage=signal(1);
   protected readonly pageSize=signal(5);
   protected readonly pageInput=signal(1);
@@ -35,14 +36,16 @@ export class HomeComponent {
     return [{id:'all',name:this.language.choose('Tất cả','All')},...rows.map(row=>({id:row.id,name:translations.find(t=>t.category_id===row.id&&t.language_id===languageId)?.name??''})).filter(item=>item.name)];
   });
   protected readonly posts=computed<FeedPost[]>(()=>{
+    this.revision();
     const languageId=this.language.languageId();
+    const currentUser = this.auth.currentUser();
     const users=this.database.table('users'); const roles=this.database.table('role'); void roles;
     const categories=this.database.table('category_translation'); const translations=this.database.table('post_translations');
     const likes=this.database.table('post_likes'); const comments=this.database.table('comments');
     return this.database.table('posts').filter(p=>p.status==='PUBLISHED'&&!p.deleted_at).map(post=>{
       const translation=translations.find(t=>t.post_id===post.id&&t.language_id===languageId); if(!translation)return null;
       const author=users.find(u=>u.id===post.author_id); const category=categories.find(t=>t.category_id===post.category_id&&t.language_id===languageId);
-      return {id:post.id,authorId:post.author_id,categoryId:post.category_id,title:translation.title,content:translation.content,authorName:author?.full_name||author?.user_name||'Unknown',authorAvatar:author?.avatar||`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(author?.full_name||'U')}`,categoryName:category?.name||'',thumbnail:post.thumbnail,createdAt:post.published_at||post.created_at,likes:likes.filter(l=>l.post_id===post.id&&l.is_liked).length,comments:comments.filter(c=>c.post_id===post.id&&!c.deleted_at).length} as FeedPost;
+      return {id:post.id,authorId:post.author_id,categoryId:post.category_id,title:translation.title,content:translation.content,authorName:author?.full_name||author?.user_name||'Unknown',authorAvatar:author?.avatar||`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(author?.full_name||'U')}`,categoryName:category?.name||'',thumbnail:post.thumbnail,createdAt:post.published_at||post.created_at,likes:likes.filter(l=>l.post_id===post.id&&l.is_liked).length,comments:comments.filter(c=>c.post_id===post.id&&!c.deleted_at).length,isLiked:currentUser ? likes.some(l=>l.post_id===post.id&&l.user_id===currentUser.id&&l.is_liked) : false} as FeedPost;
     }).filter((post):post is FeedPost=>post!==null).sort((a,b)=>new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
   });
   protected readonly filteredPosts=computed(()=>{const search=this.feedUi.searchQuery().trim().toLocaleLowerCase();return this.posts().filter(post=>(this.selectedCategory()==='all'||post.categoryId===this.selectedCategory())&&(!search||[post.title,post.authorName,post.categoryName].some(value=>value.toLocaleLowerCase().includes(search))));});
@@ -70,4 +73,33 @@ export class HomeComponent {
   protected applyPageSize():void{const size=Math.min(100,Math.max(1,Math.trunc(this.sizeInput()||1)));this.pageSize.set(size);this.sizeInput.set(size);this.changePage(1);}
   protected excerpt(html:string):string{const text=html.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();return text.length>120?`${text.slice(0,120)}...`:text;}
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{month:'short',day:'numeric'}).format(new Date(value));}
+  
+  protected toggleLike(postId: number): void {
+    const user = this.auth.currentUser();
+    if (!user) {
+      void this.router.navigate(['/login']);
+      return;
+    }
+    const likes = this.database.table('post_likes');
+    const existing = likes.find(l => l.post_id === postId && l.user_id === user.id);
+    if (existing) {
+      existing.is_liked = !existing.is_liked;
+      existing.updated_at = new Date().toISOString();
+    } else {
+      likes.push({
+        id: this.database.nextId('post_likes'),
+        post_id: postId,
+        user_id: user.id,
+        is_liked: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+    }
+    this.database.write('post_likes', likes);
+    this.revision.update(x => x + 1);
+  }
+
+  protected goToComments(postId: number): void {
+    void this.router.navigate(['/article', postId], { fragment: 'comments' });
+  }
 }

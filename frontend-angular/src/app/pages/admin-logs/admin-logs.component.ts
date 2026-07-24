@@ -54,4 +54,26 @@ export class AdminLogsComponent {
   protected changePage(value:number):void {const next=Math.min(Math.max(1,value),this.totalPages());this.page.set(next);this.pageInput.set(next);document.querySelector('.audit-filter-row')?.scrollIntoView({behavior:'smooth',block:'start'});}
   protected applyPage():void{this.changePage(this.pageInput());}
   protected applyPageSize():void{const size=Math.min(100,Math.max(1,Math.trunc(this.sizeInput()||1)));this.pageSize.set(size);this.sizeInput.set(size);this.changePage(1);}
+
+  protected getDiff(before: unknown, after: unknown): { key: string, beforeVal: string, afterVal: string, changed: boolean }[] {
+    const isObject = (val: unknown): val is Record<string, unknown> => val !== null && typeof val === 'object' && !Array.isArray(val);
+    if (!isObject(before) && !isObject(after)) return [];
+
+    const beforeObj = isObject(before) ? before : {};
+    const afterObj = isObject(after) ? after : {};
+    const keys = new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]);
+    const diff: { key: string, beforeVal: string, afterVal: string, changed: boolean }[] = [];
+
+    for (const key of keys) {
+      const bVal = JSON.stringify(beforeObj[key] ?? null);
+      const aVal = JSON.stringify(afterObj[key] ?? null);
+      diff.push({
+        key,
+        beforeVal: beforeObj[key] !== undefined ? String(beforeObj[key]) : '—',
+        afterVal: afterObj[key] !== undefined ? String(afterObj[key]) : '—',
+        changed: bVal !== aVal
+      });
+    }
+    return diff;
+  }
 }

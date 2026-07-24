@@ -5,7 +5,7 @@
 .article-main { flex: 1; min-width: 0; }
 .article-source { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
 .source-badge { width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #7C5CE0, #4A90E2); display: inline-block; }
-.article-title { font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; cursor: pointer; }
+.article-title { width: 100%; max-width: none; font-size: 22px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; cursor: pointer; text-wrap: wrap !important; }
 .article-title:hover { text-decoration: underline; }
 .article-desc { font-size: 16px; color: var(--text-muted); margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .article-meta { display: flex; align-items: center; gap: 20px; color: var(--text-muted); font-size: 14px; }

@@ -1,4 +1,5 @@
-import { inject, Injectable } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { inject, Injectable, signal } from '@angular/core';
 
 import { StorageService } from '../../core/services/storage.service';
 import { MOCK_DATABASE_SEED } from './mock.seed';
@@ -11,13 +12,19 @@ const MAX_AUDIT_LOGS = 300;
 @Injectable({ providedIn: 'root' })
 export class MockDatabaseService {
   private readonly storage = inject(StorageService);
+  private readonly document = inject(DOCUMENT);
+  readonly revision = signal(0);
 
   constructor() {
     if (!this.storage.get<MockDatabase>(DATABASE_KEY)) this.reset();
     this.migrateDynamicLanguages();
+    this.document.defaultView?.addEventListener('storage', (event) => {
+      if (event.key === DATABASE_KEY) this.revision.update((value) => value + 1);
+    });
   }
 
   table<K extends MockTableName>(name: K): MockDatabase[K] {
+    this.revision();
     return structuredClone(this.read()[name]);
   }
 
@@ -25,6 +32,7 @@ export class MockDatabaseService {
     const database = this.read();
     database[name] = structuredClone(rows) as MockDatabase[K];
     this.persist(database);
+    this.revision.update((value) => value + 1);
   }
 
   appendAuditLog(row: AuditLogRow): boolean {
@@ -35,6 +43,7 @@ export class MockDatabaseService {
       .slice(0, MAX_AUDIT_LOGS);
     try {
       this.persist(database);
+      this.revision.update((value) => value + 1);
       return true;
     } catch (error) {
       if (this.isQuotaExceeded(error)) {

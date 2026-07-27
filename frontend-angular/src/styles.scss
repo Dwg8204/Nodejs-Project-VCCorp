@@ -29,3 +29,28 @@ input:disabled,
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }
+
+@media (max-width: 768px) {
+  body .profile-layout > .sidebar.drawer-open {
+    display: block !important;
+    width: min(260px, calc(100vw - 44px)) !important;
+    max-width: calc(100vw - 44px) !important;
+    padding: 24px 16px !important;
+    white-space: normal;
+  }
+
+  body .profile-layout > .sidebar.drawer-open > a {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    align-items: center;
+    margin: 3px 0;
+    white-space: normal;
+  }
+
+  body .profile-layout > .sidebar.drawer-open > a > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

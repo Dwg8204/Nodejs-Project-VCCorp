@@ -1,44 +1,56 @@
-/**
- * =============================================================
- * CategoryTranslation Entity (TypeORM - MySQL)
- * =============================================================
- *
- * Entity tương ứng với bảng 'category_translation' trong MySQL.
- * Lưu bản dịch tên danh mục theo từng ngôn ngữ (i18n).
- */
-
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
+  CreateDateColumn,
+  Entity,
+  Index,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Category } from './category';
 import { Language } from 'modules/language/models/language';
+import { Category } from './category';
 
-@Entity('category_translation')
+@Entity({ name: 'category_translation' })
+@Unique('uq_category_translation_language', ['categoryId', 'languageId'])
+@Index('idx_category_translation_language_name', ['languageId', 'name'])
 export class CategoryTranslation {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
+  id: string;
 
-  @Column({ name: 'category_id' })
+  @Column({ name: 'category_id', type: 'int', unsigned: true })
   categoryId: number;
 
-  @Column({ name: 'language_id' })
+  @Column({ name: 'language_id', type: 'int', unsigned: true })
   languageId: number;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
   @Column({ type: 'text', nullable: true })
-  des: string;
+  des: string | null;
 
-  @ManyToOne(() => Category, (category) => category.translations, { onDelete: 'CASCADE' })
+  @Column({ name: 'is_auto_translated', type: 'boolean', default: false })
+  isAutoTranslated: boolean;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
+  updatedAt: Date;
+
+  @ManyToOne(() => Category, (category) => category.translations, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  @ManyToOne(() => Language, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Language, (language) => language.categoryTranslations, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinColumn({ name: 'language_id' })
   language: Language;
 }

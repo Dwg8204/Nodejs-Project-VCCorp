@@ -8,8 +8,12 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { validateEnvironment } from 'config/environment';
+import { DatabaseModule } from 'database/database.module';
+import { AuditModule } from 'modules/audit/audit.module';
+import { InteractionModule } from 'modules/interaction/interaction.module';
+import { PostModule } from 'modules/post/post.module';
 import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { LanguageModule } from 'modules/language/language.module';
@@ -22,24 +26,10 @@ import { AppController } from './app.controller';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      cache: true,
+      validate: validateEnvironment,
     }),
-
-    // Kết nối MySQL (XAMPP)
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'mysql' as const,
-        host: configService.get<string>('DB_HOST', 'localhost'),
-        port: configService.get<number>('DB_PORT', 3306),
-        username: configService.get<string>('DB_USER', 'root'),
-        password: configService.get<string>('DB_PASSWORD', ''),
-        database: configService.get<string>('DB_NAME', 'vccorp_db'),
-        autoLoadEntities: true, // Tự động load entities từ các module
-        synchronize: false, // Tắt sync - schema được quản lý bằng init.sql
-        timezone: '+07:00',
-      }),
-    }),
+    DatabaseModule,
 
     // =============================================================
     // Import các module nghiệp vụ
@@ -48,6 +38,9 @@ import { AppController } from './app.controller';
     AuthModule,
     LanguageModule,
     CategoryModule,
+    PostModule,
+    InteractionModule,
+    AuditModule,
   ],
   controllers: [AppController],
 })

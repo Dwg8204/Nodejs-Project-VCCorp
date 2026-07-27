@@ -6,17 +6,22 @@
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
 
   // Prefix toàn cục: tất cả routes sẽ bắt đầu với /api
   app.setGlobalPrefix('api');
 
   // Bật CORS
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: config
+      .getOrThrow<string>('CORS_ORIGIN')
+      .split(',')
+      .map((origin) => origin.trim()),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -34,15 +39,18 @@ async function bootstrap() {
     }),
   );
 
-  const PORT = process.env.PORT || 3000;
-  await app.listen(PORT);
+  app.enableShutdownHooks();
+
+  const port = config.getOrThrow<number>('PORT');
+  const nodeEnvironment = config.getOrThrow<string>('NODE_ENV');
+  await app.listen(port);
 
   console.log('='.repeat(50));
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 URL: http://localhost:${PORT}`);
-  console.log(`📋 API: http://localhost:${PORT}/api`);
-  console.log(`💚 Health: http://localhost:${PORT}/api/health`);
+  console.log(`🚀 Server is running on port ${port}`);
+  console.log(`📍 Environment: ${nodeEnvironment}`);
+  console.log(`🔗 URL: http://localhost:${port}`);
+  console.log(`📋 API: http://localhost:${port}/api`);
+  console.log(`💚 Health: http://localhost:${port}/api/health`);
   console.log('='.repeat(50));
 }
 

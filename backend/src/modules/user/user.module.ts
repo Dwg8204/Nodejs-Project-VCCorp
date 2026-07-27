@@ -14,7 +14,6 @@ import { User } from 'modules/user/models/user';
 import { Role } from 'modules/user/models/role';
 import { UserController } from 'modules/user/controllers/userController';
 import { UserService } from 'modules/user/services/userService';
-import { AuthGuard, RolesGuard } from 'modules/user/middlewares/authMiddleware';
 
 @Module({
   imports: [
@@ -25,7 +24,7 @@ import { AuthGuard, RolesGuard } from 'modules/user/middlewares/authMiddleware';
     AuthModule,
   ],
   controllers: [UserController],
-  providers: [UserService, AuthGuard, RolesGuard],
-  exports: [UserService, AuthGuard, RolesGuard, TypeOrmModule],
+  providers: [UserService],
+  exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}

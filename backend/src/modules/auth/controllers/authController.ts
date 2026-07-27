@@ -1,61 +1,114 @@
-/**
- * =============================================================
- * User Controller - Nhận và xử lý yêu cầu từ người dùng
- * =============================================================
- *
- * Đặt tên file: xXXController.ts (camelCase)
- * Trong NestJS, Controller định nghĩa routes qua decorators.
- *
- * Routes được tạo tự động:
- *   POST   /api/users/register     → register()
- *   POST   /api/users/login        → login()
- *   GET    /api/users/profile      → getProfile()
- *   PUT    /api/users/profile      → updateProfile()
- *   GET    /api/users              → getAllUsers()
- *   GET    /api/users/:id          → getUserById()
- *   DELETE /api/users/:id          → deleteUser()
- */
-
 import {
+  Body,
   Controller,
   Get,
+  Headers,
+  Ip,
   Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
   UseGuards,
-  Request,
-  ParseIntPipe,
 } from '@nestjs/common';
-import { AuthService } from 'modules/auth/services/authService';
-import { RegisterDto, LoginDto } from 'modules/auth/validations/authValidation';
-import { AuthGuard } from 'modules/auth/middlewares/authMiddleware';
+import { CurrentUser } from '../decorators/current-user.decorator';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import {
+  AuthenticatedUser,
+  RequestContext,
+} from '../interfaces/auth-user.interface';
+import { AuthService } from '../services/authService';
+import {
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+  VerifyOtpDto,
+} from '../validations/authValidation';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /**
-   * Đăng ký tài khoản mới
-   * POST /api/auth/register
-   * @access Public
-   */
   @Post('register')
-  register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  register(
+    @Body() dto: RegisterDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.register(
+      dto,
+      this.requestContext(ipAddress, userAgent),
+    );
   }
 
-  /**
-   * Đăng nhập
-   * POST /api/auth/login
-   * @access Public
-   */
   @Post('login')
-  login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  login(
+    @Body() dto: LoginDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.login(
+      dto,
+      this.requestContext(ipAddress, userAgent),
+    );
   }
 
-  
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  me(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.me(user.id);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  logout(
+    @CurrentUser() user: AuthenticatedUser,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.logout(
+      user,
+      this.requestContext(ipAddress, userAgent),
+    );
+  }
+
+  @Post('forgot-password')
+  forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.forgotPassword(
+      dto,
+      this.requestContext(ipAddress, userAgent),
+    );
+  }
+
+  @Post('verify-otp')
+  verifyOtp(
+    @Body() dto: VerifyOtpDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.verifyOtp(
+      dto,
+      this.requestContext(ipAddress, userAgent),
+    );
+  }
+
+  @Post('reset-password')
+  resetPassword(
+    @Body() dto: ResetPasswordDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.authService.resetPassword(
+      dto,
+      this.requestContext(ipAddress, userAgent),
+    );
+  }
+
+  private requestContext(
+    ipAddress: string,
+    userAgent?: string,
+  ): RequestContext {
+    return { ipAddress, userAgent };
+  }
 }

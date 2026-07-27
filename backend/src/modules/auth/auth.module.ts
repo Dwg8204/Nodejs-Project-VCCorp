@@ -6,10 +6,14 @@ import { User } from 'modules/user/models/user';
 import { Role } from 'modules/user/models/role';
 import { AuthController } from './controllers/authController';
 import { AuthService } from './services/authService';
+import { AuditModule } from 'modules/audit/audit.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role]),
+    AuditModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -22,7 +26,7 @@ import { AuthService } from './services/authService';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

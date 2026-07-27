@@ -31,7 +31,10 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'modules/user/services/userService';
 import { UpdateProfileDto, QueryUserDto } from 'modules/user/validations/userValidation';
-import { AuthGuard, RolesGuard, Roles } from 'modules/user/middlewares/authMiddleware';
+import { RoleName } from 'common/enums/database.enums';
+import { Roles } from 'modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'modules/auth/guards/roles.guard';
 
 @Controller('users')
 export class UserController {
@@ -45,7 +48,7 @@ export class UserController {
    * @access Private (cần đăng nhập)
    */
   @Get('profile')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   getProfile(@Request() req) {
     return this.userService.getProfile(req.user.id);
   }
@@ -56,7 +59,7 @@ export class UserController {
    * @access Private
    */
   @Put('profile')
-  @UseGuards(AuthGuard)
+  @UseGuards(JwtAuthGuard)
   updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
     return this.userService.updateProfile(req.user.id, updateProfileDto);
   }
@@ -67,8 +70,8 @@ export class UserController {
    * @access Private (Admin)
    */
   @Get()
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.SuperAdmin)
   getAllUsers(@Query() queryDto: QueryUserDto) {
     return this.userService.getAllUsers(queryDto);
   }
@@ -79,8 +82,8 @@ export class UserController {
    * @access Private (Admin)
    */
   @Get(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.SuperAdmin)
   getUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.getUserById(id);
   }
@@ -91,8 +94,8 @@ export class UserController {
    * @access Private (Admin)
    */
   @Delete(':id')
-  @UseGuards(AuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(RoleName.SuperAdmin)
   deleteUser(@Param('id', ParseIntPipe) id: number) {
     return this.userService.deleteUser(id);
   }

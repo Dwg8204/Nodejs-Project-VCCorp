@@ -31,11 +31,14 @@ import {
   UpdateCategoryDto,
   QueryCategoryDto,
 } from 'modules/category/validations/categoryValidation';
-import { AuthGuard, RolesGuard, Roles } from 'modules/user/middlewares/authMiddleware';
+import { RoleName } from 'common/enums/database.enums';
+import { Roles } from 'modules/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'modules/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'modules/auth/guards/roles.guard';
 
 @Controller('categories')
-@UseGuards(AuthGuard, RolesGuard)
-@Roles('SUPER_ADMIN')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(RoleName.SuperAdmin)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

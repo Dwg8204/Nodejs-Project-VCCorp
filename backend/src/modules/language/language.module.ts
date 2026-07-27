@@ -14,6 +14,6 @@ import { UserModule } from 'modules/user/user.module';
   ],
   controllers: [LanguageController],
   providers: [LanguageService],
-  exports: [LanguageService],
+  exports: [LanguageService, TypeOrmModule],
 })
 export class LanguageModule {}

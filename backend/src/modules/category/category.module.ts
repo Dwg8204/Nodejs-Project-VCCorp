@@ -15,6 +15,6 @@ import { UserModule } from 'modules/user/user.module';
   ],
   controllers: [CategoryController],
   providers: [CategoryService],
-  exports: [CategoryService],
+  exports: [CategoryService, TypeOrmModule],
 })
 export class CategoryModule {}

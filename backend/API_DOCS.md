@@ -156,3 +156,109 @@ getProfile(@CurrentUser() user: AuthenticatedUser) {
 
 Người 2 phải dùng các guard/decorator này, không tạo thêm bản sao trong module
 nội dung.
+
+## Profile
+
+```http
+GET /api/profile
+Authorization: Bearer <accessToken>
+```
+
+```http
+PATCH /api/profile
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+```
+
+```json
+{
+  "fullName": "Nguyễn Văn A",
+  "phone": "0912345678",
+  "dateOfBirth": "2000-08-02",
+  "avatar": "https://example.com/avatar.jpg",
+  "coverImage": "https://example.com/cover.jpg"
+}
+```
+
+Tất cả trường đều tùy chọn. Để xóa giá trị có thể truyền `null`.
+
+## Admin users
+
+Tất cả endpoint yêu cầu:
+
+```http
+Authorization: Bearer <SUPER_ADMIN accessToken>
+```
+
+### Danh sách
+
+```http
+GET /api/admin/users?page=1&limit=10&search=&role=BLOG_OWNER&status=ACTIVE&sort=newest
+```
+
+Giá trị sort:
+
+```text
+newest
+oldest
+a-z
+z-a
+```
+
+### Chi tiết
+
+```http
+GET /api/admin/users/:id
+```
+
+### Tạo tài khoản
+
+```http
+POST /api/admin/users
+```
+
+```json
+{
+  "userName": "blogger02",
+  "email": "blogger02@example.com",
+  "fullName": "Blog Owner 02",
+  "phone": "0912345678",
+  "password": "Password123",
+  "role": "BLOG_OWNER"
+}
+```
+
+### Cập nhật thông tin
+
+```http
+PATCH /api/admin/users/:id
+```
+
+```json
+{
+  "fullName": "Tên mới",
+  "phone": "0987654321"
+}
+```
+
+### Đổi role
+
+```http
+PATCH /api/admin/users/:id/role
+```
+
+```json
+{
+  "role": "BLOG_OWNER"
+}
+```
+
+### Khóa và mở khóa
+
+```http
+PATCH /api/admin/users/:id/lock
+PATCH /api/admin/users/:id/unlock
+```
+
+Admin không thể tự khóa hoặc tự đổi role. Hệ thống không cho khóa/hạ quyền Super
+Admin cuối cùng.

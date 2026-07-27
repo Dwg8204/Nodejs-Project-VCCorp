@@ -12,8 +12,10 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnvironment } from 'config/environment';
 import { DatabaseModule } from 'database/database.module';
 import { AuditModule } from 'modules/audit/audit.module';
+import { AdminUsersModule } from 'modules/admin-users/admin-users.module';
 import { InteractionModule } from 'modules/interaction/interaction.module';
 import { PostModule } from 'modules/post/post.module';
+import { ProfileModule } from 'modules/profile/profile.module';
 import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { LanguageModule } from 'modules/language/language.module';
@@ -41,6 +43,8 @@ import { AppController } from './app.controller';
     PostModule,
     InteractionModule,
     AuditModule,
+    ProfileModule,
+    AdminUsersModule,
   ],
   controllers: [AppController],
 })

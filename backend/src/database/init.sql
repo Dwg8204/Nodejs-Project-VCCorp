@@ -19,11 +19,14 @@ DROP TABLE IF EXISTS `post_translations`;
 DROP TABLE IF EXISTS `posts`;
 DROP TABLE IF EXISTS `category_translation`;
 DROP TABLE IF EXISTS `categories`;
+-- Dọn các bảng của thiết kế cũ; schema mới không tạo lại các bảng này.
 DROP TABLE IF EXISTS `ui_translations`;
 DROP TABLE IF EXISTS `ui_translation_keys`;
 DROP TABLE IF EXISTS `user_preferences`;
 DROP TABLE IF EXISTS `system_settings`;
 DROP TABLE IF EXISTS `languages`;
+DROP TABLE IF EXISTS `password_reset_tokens`;
+DROP TABLE IF EXISTS `refresh_tokens`;
 DROP TABLE IF EXISTS `users`;
 DROP TABLE IF EXISTS `role`;
 
@@ -48,16 +51,19 @@ CREATE TABLE `users` (
   `full_name` VARCHAR(255) DEFAULT NULL,
   `phone` VARCHAR(20) DEFAULT NULL,
   -- MEDIUMTEXT hỗ trợ cả URL lẫn data URL/base64 đang được giao diện HTML tạo ra.
-  `avatar` MEDIUMTEXT DEFAULT NULL,
-  `cover_image` MEDIUMTEXT DEFAULT NULL,
+  `avatar` VARCHAR(2048) DEFAULT NULL,
+  `cover_image` VARCHAR(2048) DEFAULT NULL,
   `date_of_birth` DATE DEFAULT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `password_hash` VARCHAR(255) DEFAULT NULL,
   `email_verified` TINYINT(1) NOT NULL DEFAULT 0,
   `role_id` INT UNSIGNED NOT NULL,
-  `otp_code` VARCHAR(10) DEFAULT NULL,
-  `otp_created_at` TIMESTAMP NULL DEFAULT NULL,
-  `otp_ttl_seconds` INT UNSIGNED NOT NULL DEFAULT 180,
+  `otp_code_hash` CHAR(64) DEFAULT NULL COMMENT 'SHA-256 của OTP kết hợp secret phía server',
+  `otp_purpose` VARCHAR(30) DEFAULT NULL COMMENT 'PASSWORD_RESET hoặc EMAIL_VERIFICATION',
+  `otp_expires_at` TIMESTAMP NULL DEFAULT NULL,
+  `otp_attempt_count` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `otp_last_sent_at` TIMESTAMP NULL DEFAULT NULL,
+  `password_changed_at` TIMESTAMP NULL DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -65,24 +71,26 @@ CREATE TABLE `users` (
   UNIQUE KEY `uq_users_email` (`email`),
   KEY `idx_users_role_active` (`role_id`, `is_active`),
   KEY `idx_users_created_at` (`created_at`),
+  CONSTRAINT `chk_users_otp_purpose`
+    CHECK (`otp_purpose` IS NULL OR `otp_purpose` IN ('PASSWORD_RESET', 'EMAIL_VERIFICATION')),
   CONSTRAINT `fk_users_role`
     FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
--- 2. NGÔN NGỮ, CÀI ĐẶT HỆ THỐNG VÀ TÙY CHỌN NGƯỜI DÙNG
+-- 2. NGÔN NGỮ VÀ CÀI ĐẶT HỆ THỐNG
 -- =============================================================================
 
 CREATE TABLE `languages` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `code` VARCHAR(10) NOT NULL COMMENT 'Mã BCP 47 ngắn: vi, en, ja...',
+  `code` VARCHAR(35) NOT NULL COMMENT 'Mã BCP 47: vi, en, zh-Hans...',
   `name` VARCHAR(255) NOT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `is_system_language` TINYINT(1) NOT NULL DEFAULT 0,
   `fallback_language_id` INT UNSIGNED DEFAULT NULL,
   `translation_status` VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
-  `flag` VARCHAR(500) DEFAULT NULL COMMENT 'URL, emoji hoặc mã tài nguyên cờ',
+  `flag` VARCHAR(2048) DEFAULT NULL COMMENT 'URL, emoji hoặc mã tài nguyên cờ',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` TIMESTAMP NULL DEFAULT NULL,
@@ -94,84 +102,6 @@ CREATE TABLE `languages` (
     CHECK (`translation_status` IN ('DRAFT', 'TRANSLATING', 'READY', 'DISABLED')),
   CONSTRAINT `fk_languages_fallback`
     FOREIGN KEY (`fallback_language_id`) REFERENCES `languages` (`id`)
-    ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `ui_translation_keys` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `translation_key` VARCHAR(191) NOT NULL,
-  `description` VARCHAR(500) DEFAULT NULL,
-  `is_required` TINYINT(1) NOT NULL DEFAULT 1,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_ui_translation_keys_key` (`translation_key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `ui_translations` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `language_id` INT UNSIGNED NOT NULL,
-  `translation_key_id` BIGINT UNSIGNED NOT NULL,
-  `translated_value` TEXT NOT NULL,
-  `is_auto_translated` TINYINT(1) NOT NULL DEFAULT 0,
-  `is_reviewed` TINYINT(1) NOT NULL DEFAULT 0,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_ui_translations_language_key` (`language_id`, `translation_key_id`),
-  KEY `idx_ui_translations_key_language` (`translation_key_id`, `language_id`),
-  CONSTRAINT `fk_ui_translations_language`
-    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_ui_translations_key`
-    FOREIGN KEY (`translation_key_id`) REFERENCES `ui_translation_keys` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Chỉ dùng một bản ghi id = 1 cho cài đặt toàn hệ thống.
-CREATE TABLE `system_settings` (
-  `id` TINYINT UNSIGNED NOT NULL DEFAULT 1,
-  `default_language_id` INT UNSIGNED NOT NULL,
-  `posts_per_page` SMALLINT UNSIGNED NOT NULL DEFAULT 5,
-  `require_post_approval` TINYINT(1) NOT NULL DEFAULT 1,
-  `auto_translate_categories` TINYINT(1) NOT NULL DEFAULT 1,
-  `auto_translate_posts` TINYINT(1) NOT NULL DEFAULT 1,
-  `default_theme` VARCHAR(20) NOT NULL DEFAULT 'system',
-  `reduce_motion` TINYINT(1) NOT NULL DEFAULT 0,
-  `updated_by` INT UNSIGNED DEFAULT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  CONSTRAINT `chk_system_settings_singleton` CHECK (`id` = 1),
-  CONSTRAINT `chk_system_settings_page_size` CHECK (`posts_per_page` BETWEEN 1 AND 100),
-  CONSTRAINT `chk_system_settings_theme` CHECK (`default_theme` IN ('system', 'light', 'dark')),
-  CONSTRAINT `fk_settings_language`
-    FOREIGN KEY (`default_language_id`) REFERENCES `languages` (`id`)
-    ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `fk_settings_updated_by`
-    FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`)
-    ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Ghi đè lựa chọn riêng của mỗi tài khoản; NULL nghĩa là dùng mặc định hệ thống.
-CREATE TABLE `user_preferences` (
-  `user_id` INT UNSIGNED NOT NULL,
-  `language_id` INT UNSIGNED DEFAULT NULL,
-  `posts_per_page` SMALLINT UNSIGNED DEFAULT NULL,
-  `theme` VARCHAR(20) DEFAULT NULL,
-  `reduce_motion` TINYINT(1) DEFAULT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `chk_user_preferences_page_size`
-    CHECK (`posts_per_page` IS NULL OR `posts_per_page` BETWEEN 1 AND 100),
-  CONSTRAINT `chk_user_preferences_theme`
-    CHECK (`theme` IS NULL OR `theme` IN ('system', 'light', 'dark')),
-  CONSTRAINT `fk_preferences_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_preferences_language`
-    FOREIGN KEY (`language_id`) REFERENCES `languages` (`id`)
     ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -222,7 +152,7 @@ CREATE TABLE `posts` (
   `category_id` INT UNSIGNED NOT NULL,
   `source_language_id` INT UNSIGNED DEFAULT NULL,
   -- Giao diện hiện tại đọc ảnh bằng FileReader nên có thể nhận data URL/base64 lớn.
-  `thumbnail` MEDIUMTEXT NOT NULL,
+  `thumbnail` VARCHAR(2048) NOT NULL,
   `status` VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
   `rejection_reason` TEXT DEFAULT NULL,
   `submitted_at` TIMESTAMP NULL DEFAULT NULL,
@@ -321,22 +251,6 @@ CREATE TABLE `post_likes` (
     ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `post_bookmarks` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `post_id` BIGINT UNSIGNED NOT NULL,
-  `user_id` INT UNSIGNED NOT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_post_bookmarks_post_user` (`post_id`, `user_id`),
-  KEY `idx_post_bookmarks_user_created` (`user_id`, `created_at`),
-  CONSTRAINT `fk_post_bookmarks_post`
-    FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_post_bookmarks_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- =============================================================================
 -- 6. NHẬT KÝ HOẠT ĐỘNG
 -- =============================================================================
@@ -402,35 +316,6 @@ INSERT INTO `languages` (
 UPDATE `languages` SET `fallback_language_id` = 2 WHERE `id` = 1;
 UPDATE `languages` SET `fallback_language_id` = 1 WHERE `id` = 2;
 
-INSERT INTO `ui_translation_keys` (`id`, `translation_key`, `description`) VALUES
-  (1, 'nav.home', 'Trang chủ'), (2, 'nav.profile', 'Hồ sơ'),
-  (3, 'nav.dashboard', 'Bảng điều khiển'), (4, 'nav.managePosts', 'Quản lý bài viết'),
-  (5, 'nav.manageUsers', 'Quản lý người dùng'), (6, 'nav.manageCategories', 'Quản lý danh mục'),
-  (7, 'nav.manageLanguages', 'Quản lý ngôn ngữ'), (8, 'nav.backToBlog', 'Về trang Blog'),
-  (9, 'action.search', 'Tìm kiếm'), (10, 'action.signIn', 'Đăng nhập'),
-  (11, 'action.getStarted', 'Bắt đầu'), (12, 'action.logout', 'Đăng xuất'),
-  (13, 'action.cancel', 'Hủy'), (14, 'action.confirm', 'Xác nhận');
-
-INSERT INTO `ui_translations`
-  (`language_id`, `translation_key_id`, `translated_value`, `is_auto_translated`, `is_reviewed`)
-VALUES
-  (1,1,'Home',0,1),(1,2,'Profile',0,1),(1,3,'Dashboard',0,1),
-  (1,4,'Manage posts',0,1),(1,5,'Manage users',0,1),(1,6,'Manage categories',0,1),
-  (1,7,'Manage languages',0,1),(1,8,'Back to Blog',0,1),(1,9,'Search...',0,1),
-  (1,10,'Sign In',0,1),(1,11,'Get Started',0,1),(1,12,'Logout',0,1),
-  (1,13,'Cancel',0,1),(1,14,'Confirm',0,1),
-  (2,1,'Trang chủ',0,1),(2,2,'Hồ sơ',0,1),(2,3,'Bảng điều khiển',0,1),
-  (2,4,'Quản lý bài viết',0,1),(2,5,'Quản lý người dùng',0,1),(2,6,'Quản lý danh mục',0,1),
-  (2,7,'Quản lý ngôn ngữ',0,1),(2,8,'Về trang Blog',0,1),(2,9,'Tìm kiếm...',0,1),
-  (2,10,'Đăng nhập',0,1),(2,11,'Bắt đầu',0,1),(2,12,'Đăng xuất',0,1),
-  (2,13,'Hủy',0,1),(2,14,'Xác nhận',0,1);
-
-INSERT INTO `system_settings` (
-  `id`, `default_language_id`, `posts_per_page`, `require_post_approval`,
-  `auto_translate_categories`, `auto_translate_posts`, `default_theme`,
-  `reduce_motion`, `updated_by`
-) VALUES (1, 2, 5, 1, 1, 1, 'system', 0, 1);
-
 -- =============================================================================
 -- 8. KIỂM TRA NHANH SAU KHI CHẠY SCRIPT
 -- =============================================================================
@@ -438,4 +323,3 @@ INSERT INTO `system_settings` (
 SELECT 'schema_ready' AS `status`, DATABASE() AS `database_name`;
 SELECT `id`, `name_role` FROM `role` ORDER BY `id`;
 SELECT `id`, `code`, `name` FROM `languages` ORDER BY `id`;
-SELECT * FROM `system_settings` WHERE `id` = 1;

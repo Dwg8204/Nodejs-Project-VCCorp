@@ -13,6 +13,7 @@ import { validateEnvironment } from 'config/environment';
 import { DatabaseModule } from 'database/database.module';
 import { AuditModule } from 'modules/audit/audit.module';
 import { AdminUsersModule } from 'modules/admin-users/admin-users.module';
+import { AdminLanguagesModule } from 'modules/admin-languages/admin-languages.module';
 import { InteractionModule } from 'modules/interaction/interaction.module';
 import { PostModule } from 'modules/post/post.module';
 import { ProfileModule } from 'modules/profile/profile.module';
@@ -45,6 +46,7 @@ import { AppController } from './app.controller';
     AuditModule,
     ProfileModule,
     AdminUsersModule,
+    AdminLanguagesModule,
   ],
   controllers: [AppController],
 })

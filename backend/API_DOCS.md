@@ -262,3 +262,94 @@ PATCH /api/admin/users/:id/unlock
 
 Admin không thể tự khóa hoặc tự đổi role. Hệ thống không cho khóa/hạ quyền Super
 Admin cuối cùng.
+
+## Admin languages
+
+Tất cả endpoint yêu cầu access token của `SUPER_ADMIN`.
+
+### Danh sách
+
+```http
+GET /api/admin/languages?page=1&limit=10&search=&translationStatus=READY&isActive=true&records=active&sort=newest
+```
+
+`records` nhận:
+
+```text
+active
+deleted
+all
+```
+
+### Chi tiết
+
+```http
+GET /api/admin/languages/:id
+```
+
+### Tạo ngôn ngữ
+
+```http
+POST /api/admin/languages
+```
+
+```json
+{
+  "code": "ja",
+  "name": "日本語",
+  "flag": "https://flagcdn.com/jp.svg",
+  "fallbackLanguageId": 1,
+  "isActive": true,
+  "translationStatus": "DRAFT"
+}
+```
+
+### Cập nhật thông tin/fallback
+
+```http
+PATCH /api/admin/languages/:id
+```
+
+```json
+{
+  "name": "日本語",
+  "fallbackLanguageId": 1
+}
+```
+
+Truyền `fallbackLanguageId: null` để bỏ fallback.
+
+### Đổi trạng thái
+
+```http
+PATCH /api/admin/languages/:id/status
+```
+
+Ngôn ngữ hoạt động không được có trạng thái `DISABLED`:
+
+```json
+{
+  "isActive": true,
+  "translationStatus": "READY"
+}
+```
+
+Ngôn ngữ không hoạt động phải có trạng thái `DISABLED`:
+
+```json
+{
+  "isActive": false,
+  "translationStatus": "DISABLED"
+}
+```
+
+### Xóa mềm và khôi phục
+
+```http
+DELETE /api/admin/languages/:id
+PATCH  /api/admin/languages/:id/restore
+```
+
+Ngôn ngữ hệ thống (`isSystemLanguage=true`) không được xóa. Ngôn ngữ đang được
+dùng làm fallback hoặc là ngôn ngữ hoạt động cuối cùng không được vô hiệu hóa.
+Ngôn ngữ khôi phục trở lại ở trạng thái `DRAFT` và chưa active.

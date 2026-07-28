@@ -263,6 +263,47 @@ PATCH /api/admin/users/:id/unlock
 Admin không thể tự khóa hoặc tự đổi role. Hệ thống không cho khóa/hạ quyền Super
 Admin cuối cùng.
 
+## Admin audit logs
+
+Các API bên dưới chỉ cho phép `SUPER_ADMIN` truy cập và chỉ có quyền đọc.
+
+### Danh sách và tìm kiếm
+
+```http
+GET /api/admin/logs?page=1&limit=20&search=&actorId=&action=&entityType=&entityId=&fromDate=2026-07-01&toDate=2026-07-28&sort=newest
+```
+
+Các bộ lọc:
+
+- `search`: tìm trong tên người thực hiện, nhãn đối tượng, action và loại đối tượng.
+- `actorId`: ID người thực hiện.
+- `action`: mã action chính xác, ví dụ `AUTH_LOGIN_SUCCEEDED`.
+- `entityType`: loại đối tượng chính xác, ví dụ `USER`, `POST`, `CATEGORY`.
+- `entityId`: ID đối tượng.
+- `fromDate`, `toDate`: ngày dạng `YYYY-MM-DD` hoặc ISO 8601. Ngày kết thúc được tính trọn ngày theo múi giờ `+07:00`.
+- `sort`: `newest` hoặc `oldest`.
+
+Khoảng ngày tối đa cho một truy vấn là 365 ngày. API danh sách không trả về `beforeData`,
+`afterData`, `metadata` và `userAgent` để giảm dữ liệu đọc từ MySQL và dữ liệu truyền về frontend.
+
+### Dữ liệu cho các dropdown bộ lọc
+
+```http
+GET /api/admin/logs/filter-options
+```
+
+Kết quả gồm các `actions`, `entityTypes` và `actors` thực sự đang có trong bảng `audit_logs`.
+
+### Chi tiết một log
+
+```http
+GET /api/admin/logs/:id
+```
+
+API chi tiết trả thêm `beforeData`, `afterData`, `metadata` và `userAgent`. Các trường nhạy cảm
+như mật khẩu, OTP, token, cookie, authorization và secret luôn được thay bằng `[REDACTED]`
+trước khi gửi về frontend.
+
 ## Admin languages
 
 Tất cả endpoint yêu cầu access token của `SUPER_ADMIN`.

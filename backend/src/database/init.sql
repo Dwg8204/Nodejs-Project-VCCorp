@@ -151,7 +151,7 @@ CREATE TABLE `posts` (
   `author_id` INT UNSIGNED NOT NULL,
   `category_id` INT UNSIGNED NOT NULL,
   `source_language_id` INT UNSIGNED DEFAULT NULL,
-  -- Giao diện hiện tại đọc ảnh bằng FileReader nên có thể nhận data URL/base64 lớn.
+  -- Chỉ lưu URL HTTPS của ảnh đã upload lên Cloudinary; không lưu file/base64.
   `thumbnail` VARCHAR(2048) NOT NULL,
   `status` VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
   `rejection_reason` TEXT DEFAULT NULL,

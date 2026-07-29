@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { createHmac, randomInt, timingSafeEqual } from 'crypto';
 import { OtpPurpose, RoleName } from 'common/enums/database.enums';
 import { AuditService } from 'modules/audit/services/audit.service';
+import { MailService } from 'modules/mail/services/mail.service';
 import { Role } from 'modules/user/models/role';
 import { User } from 'modules/user/models/user';
 import { Repository } from 'typeorm';
@@ -48,6 +49,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly auditService: AuditService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto, context: RequestContext) {
@@ -205,7 +207,7 @@ export class AuthService {
     const genericResponse = {
       success: true,
       message: 'AUTH_RESET_INSTRUCTIONS_SENT',
-      data: null as null | { developmentOtp: string },
+      data: null,
     };
     const normalizedEmail = dto.email.trim().toLowerCase();
     const user = await this.userRepository
@@ -240,6 +242,12 @@ export class AuthService {
     const otpCodeHash = this.hashOtp(user.id, OtpPurpose.PasswordReset, otp);
     const now = new Date();
 
+    await this.mailService.sendPasswordResetOtp({
+      recipient: user.email,
+      displayName: user.fullName ?? user.userName,
+      otp,
+      expiresInSeconds,
+    });
     await this.userRepository.update(user.id, {
       otpCodeHash,
       otpPurpose: OtpPurpose.PasswordReset,
@@ -259,10 +267,6 @@ export class AuthService {
       userAgent: context.userAgent,
     });
 
-    // Chỉ phục vụ kiểm thử local cho đến khi tích hợp nhà cung cấp email.
-    if (this.config.getOrThrow<string>('NODE_ENV') !== 'production') {
-      genericResponse.data = { developmentOtp: otp };
-    }
     return genericResponse;
   }
 

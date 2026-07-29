@@ -61,6 +61,13 @@ export class ApiErrorService {
     if (typeof message === 'string' && /^[A-Z][A-Z0-9_]+$/.test(message)) {
       return message;
     }
+    if (
+      Array.isArray(message)
+      && message.length === 1
+      && /^[A-Z][A-Z0-9_]+$/.test(message[0])
+    ) {
+      return message[0];
+    }
     return `HTTP_${status || 0}`;
   }
 

@@ -28,6 +28,7 @@ export class ApiClientService {
     return this.http.get<ApiResponse<T>>(this.url(path), {
       context: options.context,
       params: this.params(options.query),
+      withCredentials: true,
     });
   }
 
@@ -39,6 +40,7 @@ export class ApiClientService {
     return this.http.post<ApiResponse<T>>(this.url(path), body, {
       context: options.context,
       params: this.params(options.query),
+      withCredentials: true,
     });
   }
 
@@ -50,6 +52,7 @@ export class ApiClientService {
     return this.http.patch<ApiResponse<T>>(this.url(path), body, {
       context: options.context,
       params: this.params(options.query),
+      withCredentials: true,
     });
   }
 
@@ -60,6 +63,7 @@ export class ApiClientService {
     return this.http.delete<ApiResponse<T>>(this.url(path), {
       context: options.context,
       params: this.params(options.query),
+      withCredentials: true,
     });
   }
 

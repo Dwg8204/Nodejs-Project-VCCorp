@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'modules/user/models/user';
 import { Repository } from 'typeorm';
@@ -18,19 +19,18 @@ import {
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly config: ConfigService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authorization = request.headers.authorization;
-
-    if (!authorization?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('AUTH_TOKEN_REQUIRED');
-    }
-
-    const token = authorization.slice(7).trim();
+    const token =
+      this.readCookie(
+        request.headers.cookie,
+        this.config.getOrThrow<string>('AUTH_COOKIE_NAME'),
+      ) ?? this.readBearerToken(request.headers.authorization);
     if (!token) {
       throw new UnauthorizedException('AUTH_TOKEN_REQUIRED');
     }
@@ -74,5 +74,27 @@ export class JwtAuthGuard implements CanActivate {
     };
     request.user = authenticatedUser;
     return true;
+  }
+
+  private readBearerToken(authorization?: string): string | null {
+    if (!authorization?.startsWith('Bearer ')) return null;
+    return authorization.slice(7).trim() || null;
+  }
+
+  private readCookie(header: string | undefined, name: string): string | null {
+    if (!header) return null;
+    for (const entry of header.split(';')) {
+      const separator = entry.indexOf('=');
+      if (separator < 0) continue;
+      const key = entry.slice(0, separator).trim();
+      if (key !== name) continue;
+      const value = entry.slice(separator + 1).trim();
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return value;
+      }
+    }
+    return null;
   }
 }

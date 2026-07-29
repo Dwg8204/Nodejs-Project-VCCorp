@@ -62,6 +62,18 @@ const packs = {
     'dashboard.lastDays': '{count} ngày qua',
     'pagination.summary': 'Hiển thị {from}–{to} trong tổng số {total}',
     'field.email': 'Email',
+    'auth.error.AUTH_INVALID_CREDENTIALS': 'Email hoặc mật khẩu không đúng.',
+    'auth.error.AUTH_ACCOUNT_LOCKED': 'Tài khoản đã bị khóa.',
+    'auth.error.AUTH_EMAIL_ALREADY_EXISTS': 'Email đã được sử dụng.',
+    'auth.error.AUTH_USERNAME_ALREADY_EXISTS': 'Tên người dùng đã được sử dụng.',
+    'auth.error.AUTH_PASSWORD_CONFIRMATION_MISMATCH': 'Mật khẩu xác nhận không khớp.',
+    'auth.error.AUTH_PASSWORD_COMPLEXITY_REQUIRED': 'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.',
+    'auth.error.AUTH_OTP_INVALID_OR_EXPIRED': 'Mã OTP không đúng hoặc đã hết hạn.',
+    'auth.error.AUTH_OTP_ATTEMPTS_EXCEEDED': 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới.',
+    'auth.error.AUTH_RESET_TOKEN_INVALID_OR_EXPIRED': 'Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.',
+    'auth.error.AUTH_RESET_EMAIL_NOT_CONFIGURED': 'Hệ thống chưa được cấu hình email gửi mã OTP.',
+    'auth.error.AUTH_RESET_EMAIL_SEND_FAILED': 'Không thể gửi email OTP. Vui lòng thử lại sau.',
+    'auth.error.generic': 'Không thể hoàn tất yêu cầu.',
   },
   en: {
     ...existingPack('en'),
@@ -83,12 +95,36 @@ const packs = {
     'dashboard.lastDays': 'Last {count} days',
     'pagination.summary': 'Showing {from}–{to} of {total}',
     'field.email': 'Email',
+    'auth.error.AUTH_INVALID_CREDENTIALS': 'The email or password is incorrect.',
+    'auth.error.AUTH_ACCOUNT_LOCKED': 'This account has been locked.',
+    'auth.error.AUTH_EMAIL_ALREADY_EXISTS': 'This email is already in use.',
+    'auth.error.AUTH_USERNAME_ALREADY_EXISTS': 'This username is already in use.',
+    'auth.error.AUTH_PASSWORD_CONFIRMATION_MISMATCH': 'The passwords do not match.',
+    'auth.error.AUTH_PASSWORD_COMPLEXITY_REQUIRED': 'Use at least 8 characters with uppercase, lowercase and a number.',
+    'auth.error.AUTH_OTP_INVALID_OR_EXPIRED': 'The OTP is invalid or has expired.',
+    'auth.error.AUTH_OTP_ATTEMPTS_EXCEEDED': 'Too many invalid OTP attempts. Please request a new code.',
+    'auth.error.AUTH_RESET_TOKEN_INVALID_OR_EXPIRED': 'The password reset session is invalid or has expired.',
+    'auth.error.AUTH_RESET_EMAIL_NOT_CONFIGURED': 'The OTP email service has not been configured.',
+    'auth.error.AUTH_RESET_EMAIL_SEND_FAILED': 'Unable to send the OTP email. Please try again later.',
+    'auth.error.generic': 'Unable to complete the request.',
   },
   zh: {
     ...existingPack('zh'),
     'dashboard.lastDays': '过去 {count} 天',
     'pagination.summary': '显示第 {from}–{to} 项，共 {total} 项',
     'field.email': '电子邮箱',
+    'auth.error.AUTH_INVALID_CREDENTIALS': '电子邮箱或密码不正确。',
+    'auth.error.AUTH_ACCOUNT_LOCKED': '此账户已被锁定。',
+    'auth.error.AUTH_EMAIL_ALREADY_EXISTS': '此电子邮箱已被使用。',
+    'auth.error.AUTH_USERNAME_ALREADY_EXISTS': '此用户名已被使用。',
+    'auth.error.AUTH_PASSWORD_CONFIRMATION_MISMATCH': '两次输入的密码不一致。',
+    'auth.error.AUTH_PASSWORD_COMPLEXITY_REQUIRED': '密码至少 8 个字符，并包含大写字母、小写字母和数字。',
+    'auth.error.AUTH_OTP_INVALID_OR_EXPIRED': '验证码无效或已过期。',
+    'auth.error.AUTH_OTP_ATTEMPTS_EXCEEDED': '验证码错误次数过多，请重新获取验证码。',
+    'auth.error.AUTH_RESET_TOKEN_INVALID_OR_EXPIRED': '密码重置会话无效或已过期。',
+    'auth.error.AUTH_RESET_EMAIL_NOT_CONFIGURED': '验证码邮件服务尚未配置。',
+    'auth.error.AUTH_RESET_EMAIL_SEND_FAILED': '无法发送验证码邮件，请稍后重试。',
+    'auth.error.generic': '无法完成请求。',
   },
 };
 
@@ -178,12 +214,68 @@ const chineseOverrides = {
   'Logged out': '已退出登录',
   Drafts: '草稿',
   Deactivate: '停用',
+  'Verify OTP': '验证一次性验证码',
+  'Sending…': '正在发送…',
+  'John Smith': '张伟',
+  'Resend code': '重新发送验证码',
+  'Email is required.': '请输入电子邮箱。',
+  'At least 8 characters with uppercase, lowercase and a number.':
+    '至少 8 个字符，并包含大写字母、小写字母和数字。',
+  'Create a new password for your account.': '为你的账户创建新密码。',
+  'Recover password': '找回密码',
+  'Creating account…': '正在创建账户…',
+  'Enter the six-digit OTP sent to you.': '请输入发送给你的六位验证码。',
+  'The OTP must contain exactly six digits.': '验证码必须正好为六位数字。',
+  'New accounts use the authenticated user role.': '新账户将使用已认证用户角色。',
+  'Change email': '更改电子邮箱',
+  'No account yet?': '还没有账户？',
+  'Create an account': '创建账户',
+  Hide: '隐藏',
+  'Forgot password?': '忘记密码？',
+  'OTP code': '验证码',
+  'Use at least 8 characters with uppercase, lowercase and a number.':
+    '请使用至少 8 个字符，并包含大写字母、小写字母和数字。',
+  'Your password has been reset. You can now sign in with the new password.':
+    '密码已重置，现在可以使用新密码登录。',
+  'The passwords do not match.': '两次输入的密码不一致。',
+  'Passwords do not match.': '两次输入的密码不一致。',
+  'At least 8 characters': '至少 8 个字符',
+  'Username must contain 2–50 characters.': '用户名必须包含 2–50 个字符。',
+  'This field is required.': '此字段为必填项。',
+  'Signing in…': '正在登录…',
+  'Join the community': '加入社区',
+  'Enter your registered email to receive a password reset OTP.':
+    '请输入注册邮箱以接收密码重置验证码。',
+  'Password is required.': '请输入密码。',
+  Show: '显示',
+  'By registering, you agree to the system terms of use.':
+    '注册即表示你同意系统使用条款。',
+  'Send OTP': '发送验证码',
+  'Email is invalid.': '电子邮箱格式无效。',
+  'Welcome back': '欢迎回来',
+  'Updating…': '正在更新…',
+  'Continue reading, writing and managing your content.':
+    '继续阅读、创作和管理你的内容。',
+  'Create account': '创建账户',
+  'Quick test accounts': '快速测试账户',
+  'Already have an account?': '已有账户？',
+  'Back to sign in': '返回登录',
+  'Create one': '立即注册',
+  'Reset password': '重置密码',
+  'New password': '新密码',
+  'Sign in': '登录',
+  'Verifying…': '正在验证…',
+  'Enter a valid email address.': '请输入有效的电子邮箱地址。',
 };
 
 const choosePattern =
   /language\.choose\(\s*(['"`])((?:\\.|(?!\1)[\s\S])*?)\1\s*,\s*(['"`])((?:\\.|(?!\3)[\s\S])*?)\3\s*\)/g;
 const bilingualObjectPattern =
   /\bvi\s*:\s*(['"`])((?:\\.|(?!\1)[\s\S])*?)\1\s*,\s*en\s*:\s*(['"`])((?:\\.|(?!\3)[\s\S])*?)\3/g;
+const chooseObjectPattern =
+  /language\.chooseObject\(\s*\{([\s\S]*?)\}\s*,\s*\{([\s\S]*?)\}\s*\)/g;
+const objectPropertyPattern =
+  /([A-Za-z_$][\w$]*)\s*:\s*(['"`])((?:\\.|(?!\2)[\s\S])*?)\2/g;
 
 for (const file of walk(appRoot)) {
   const source = fs.readFileSync(file, 'utf8');
@@ -196,6 +288,28 @@ for (const file of walk(appRoot)) {
     packs.vi[key] = vietnamese;
     packs.en[key] = english;
     packs.zh[key] ??= english;
+    }
+  }
+  for (const match of source.matchAll(chooseObjectPattern)) {
+    const vietnamese = Object.fromEntries(
+      Array.from(match[1].matchAll(objectPropertyPattern), (property) => [
+        property[1],
+        decode(property[2], property[3]),
+      ]),
+    );
+    const english = Object.fromEntries(
+      Array.from(match[2].matchAll(objectPropertyPattern), (property) => [
+        property[1],
+        decode(property[2], property[3]),
+      ]),
+    );
+    for (const [name, englishMessage] of Object.entries(english)) {
+      const vietnameseMessage = vietnamese[name];
+      if (!vietnameseMessage || !englishMessage) continue;
+      const key = `runtime.${hash(englishMessage)}`;
+      packs.vi[key] = vietnameseMessage;
+      packs.en[key] = englishMessage;
+      packs.zh[key] ??= englishMessage;
     }
   }
 }

@@ -30,7 +30,11 @@ export class LoginComponent {
     this.loading.set(true); this.errorMessage.set('');
     this.auth.login(this.form.getRawValue()).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: ({ data }) => this.navigateAfterLogin(data.user.role.nameRole),
-      error: (error: unknown) => this.errorMessage.set(error instanceof Error ? error.message : 'Không thể đăng nhập.'),
+      error: (error: unknown) => this.errorMessage.set(
+        error instanceof Error
+          ? error.message
+          : this.language.translate('auth.error.generic'),
+      ),
     });
   }
 

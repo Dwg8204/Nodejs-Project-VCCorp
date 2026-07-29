@@ -25,7 +25,6 @@ import { CategoryModule } from 'modules/category/category.module';
 import { DashboardModule } from 'modules/dashboard/dashboard.module';
 import { UploadModule } from 'modules/upload/upload.module';
 import { AppController } from './app.controller';
-import { UploadModule } from 'modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -52,6 +51,7 @@ import { UploadModule } from 'modules/upload/upload.module';
     AdminUsersModule,
     AdminLanguagesModule,
     AdminAuditLogsModule,
+    DashboardModule,
     UploadModule,
   ],
   controllers: [AppController],

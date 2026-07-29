@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "i18n:generate": "node scripts/generate-i18n-json.mjs",
+    "i18n:audit": "node scripts/audit-i18n.mjs",
     "build:github": "ng build --configuration production --base-href /Nodejs-Project-VCCorp/",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"

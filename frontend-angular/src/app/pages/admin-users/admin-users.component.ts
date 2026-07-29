@@ -90,10 +90,7 @@ export class AdminUsersComponent implements OnInit {
     const total = this.total();
     const from = total ? (this.page() - 1) * this.pageSize() + 1 : 0;
     const to = Math.min(this.page() * this.pageSize(), total);
-    return this.language.choose(
-      `Hiển thị ${from}–${to} trong tổng số ${total}`,
-      `Showing ${from}–${to} of ${total}`,
-    );
+    return this.language.translate('pagination.summary',{from,to,total});
   });
 
   ngOnInit(): void {
@@ -110,9 +107,13 @@ export class AdminUsersComponent implements OnInit {
   }
 
   protected roleName(role: UserRole): string {
-    if (role === USER_ROLES.SUPER_ADMIN) return 'Super Admin';
-    if (role === USER_ROLES.BLOG_OWNER) return 'Blog Owner';
-    return 'Authenticated User';
+    if (role === USER_ROLES.SUPER_ADMIN) {
+      return this.language.choose('Quản trị viên cấp cao', 'Super Admin');
+    }
+    if (role === USER_ROLES.BLOG_OWNER) {
+      return this.language.choose('Chủ blog', 'Blog Owner');
+    }
+    return this.language.choose('Người dùng đã xác thực', 'Authenticated User');
   }
 
   protected date(value: string): string {

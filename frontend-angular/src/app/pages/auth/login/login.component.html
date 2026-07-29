@@ -1,4 +1,4 @@
-<div class="auth-topbar">
+﻿<div class="auth-topbar">
   <a routerLink="/" class="logo">Medium</a>
   <div class="auth-topbar-actions">
     <button class="language-mini" type="button" (click)="language.toggleLocale()">{{ language.locale().toUpperCase() }}</button>
@@ -11,11 +11,11 @@
   <h1>{{ copy().eyebrow }}</h1>
   @if(errorMessage()){<div class="auth-alert" role="alert">{{ errorMessage() }}</div>}
   <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-    <div class="form-group"><label for="login-email">Email</label><input id="login-email" type="email" class="form-control" formControlName="email" placeholder="you@example.com" autocomplete="email">@if(form.controls.email.touched&&form.controls.email.invalid){<span class="field-error">{{ form.controls.email.hasError('required')?copy().emailRequired:copy().emailInvalid }}</span>}</div>
+    <div class="form-group"><label for="login-email">{{language.translate('field.email')}}</label><input id="login-email" type="email" class="form-control" formControlName="email" placeholder="you@example.com" autocomplete="email">@if(form.controls.email.touched&&form.controls.email.invalid){<span class="field-error">{{ form.controls.email.hasError('required')?copy().emailRequired:copy().emailInvalid }}</span>}</div>
     <div class="form-group"><label for="login-password">{{ copy().password }}</label><div class="password-wrap"><input id="login-password" [type]="showPassword()?'text':'password'" class="form-control" formControlName="password" placeholder="••••••••" autocomplete="current-password"><button class="password-toggle" type="button" (click)="showPassword.set(!showPassword())">{{ showPassword()?copy().hide:copy().show }}</button></div>@if(form.controls.password.touched&&form.controls.password.invalid){<span class="field-error">{{ copy().passwordRequired }}</span>}</div>
     <a routerLink="/forgot-password" class="forgot-link">{{ copy().forgot }}</a>
     <button type="submit" class="btn-primary-block" [disabled]="loading()">{{ loading()?copy().submitting:copy().submit }}</button>
   </form>
-  <div class="quick-login"><div class="quick-login-title">{{ copy().quick }} (123456)</div><button type="button" class="btn btn-outline" (click)="quickLogin('admin@blogproject.com')">Admin (Super Admin)</button><button type="button" class="btn btn-outline" (click)="quickLogin('blogger1@gmail.com')">Blogger (Chủ Blog)</button><button type="button" class="btn btn-outline" (click)="quickLogin('reader1@gmail.com')">User (Khách Đăng Nhập)</button></div>
+  <div class="quick-login"><div class="quick-login-title">{{ copy().quick }} (123456)</div><button type="button" class="btn btn-outline" (click)="quickLogin('admin@blogproject.com')">{{language.choose('Quản trị viên (Super Admin)','Admin (Super Admin)')}}</button><button type="button" class="btn btn-outline" (click)="quickLogin('blogger1@gmail.com')">{{language.choose('Blogger (Chủ Blog)','Blogger (Blog Owner)')}}</button><button type="button" class="btn btn-outline" (click)="quickLogin('reader1@gmail.com')">{{language.choose('Người dùng (Đã đăng nhập)','User (Authenticated)')}}</button></div>
   <div class="auth-footer-text">{{ copy().noAccount }} <a routerLink="/register">{{ copy().register }}</a></div>
 </div>

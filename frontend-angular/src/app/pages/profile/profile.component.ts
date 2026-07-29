@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -125,7 +125,7 @@ export class ProfileComponent implements OnInit {
     this.revision();
     const user = this.user();
     if (!user) return [];
-    const languageId = this.language.languageId();
+    const languageId = this.language.contentLanguageId();
     const translations = this.database.table('post_translations');
     const likes = this.database.table('post_likes');
     const comments = this.database.table('comments');
@@ -235,9 +235,9 @@ export class ProfileComponent implements OnInit {
   protected roleLabel(): string {
     const role = this.user()?.role_id;
     return role === 1
-      ? 'Super Admin'
+      ? this.language.choose('Quản trị viên cấp cao', 'Super Admin')
       : role === 2
-        ? 'Blogger'
+        ? this.language.choose('Chủ blog', 'Blogger')
         : this.language.choose('Thành viên', 'Member');
   }
 

@@ -21,16 +21,8 @@ export const MOCK_DATABASE_SEED: MockDatabase = {
   languages: [
     { id: 1, code: 'en', name: 'English', flag: 'https://flagcdn.com/w40/gb.png', is_active: true, is_system_language: true, fallback_language_id: 2, translation_status: 'READY', created_at: now, updated_at: now, deleted_at: null },
     { id: 2, code: 'vi', name: 'Tiếng Việt', flag: 'https://flagcdn.com/w40/vn.png', is_active: true, is_system_language: true, fallback_language_id: 1, translation_status: 'READY', created_at: now, updated_at: now, deleted_at: null },
+    { id: 3, code: 'zh', name: '中文', flag: 'https://flagcdn.com/w40/cn.png', is_active: true, is_system_language: true, fallback_language_id: null, translation_status: 'READY', created_at: now, updated_at: now, deleted_at: null },
   ],
-  ui_translation_keys: [
-    'nav.home', 'nav.profile', 'nav.dashboard', 'nav.managePosts', 'nav.manageUsers',
-    'nav.manageCategories', 'nav.manageLanguages', 'nav.backToBlog', 'action.search',
-    'action.signIn', 'action.getStarted', 'action.logout', 'action.cancel', 'action.confirm',
-  ].map((translation_key, index) => ({ id: index + 1, translation_key, description: null, is_required: true, created_at: now, updated_at: now })),
-  ui_translations: [
-    ['Home','Profile','Dashboard','Manage posts','Manage users','Manage categories','Manage languages','Back to Blog','Search...','Sign In','Get Started','Logout','Cancel','Confirm'],
-    ['Trang chủ','Hồ sơ','Bảng điều khiển','Quản lý bài viết','Quản lý người dùng','Quản lý danh mục','Quản lý ngôn ngữ','Về trang Blog','Tìm kiếm...','Đăng nhập','Bắt đầu','Đăng xuất','Hủy','Xác nhận'],
-  ].flatMap((values, languageIndex) => values.map((translated_value, keyIndex) => ({ id: languageIndex * 14 + keyIndex + 1, language_id: languageIndex + 1, translation_key_id: keyIndex + 1, translated_value, is_auto_translated: false, is_reviewed: true, created_at: now, updated_at: now }))),
   system_settings: [{ id: 1, default_language_id: 2, posts_per_page: 5, require_post_approval: true, auto_translate_categories: true, auto_translate_posts: true, default_theme: 'system', reduce_motion: false, updated_by: 1, created_at: now, updated_at: now }],
   user_preferences: [],
   categories: [
@@ -42,6 +34,8 @@ export const MOCK_DATABASE_SEED: MockDatabase = {
     { id: 2, category_id: 1, language_id: 1, name: 'UX Design', des: 'User experience and interface design', is_auto_translated: true, created_at: now, updated_at: now },
     { id: 3, category_id: 2, language_id: 2, name: 'Lập trình', des: 'Phát triển phần mềm', is_auto_translated: false, created_at: now, updated_at: now },
     { id: 4, category_id: 2, language_id: 1, name: 'Programming', des: 'Software development', is_auto_translated: true, created_at: now, updated_at: now },
+    { id: 5, category_id: 1, language_id: 3, name: '用户体验设计', des: '用户体验与界面设计', is_auto_translated: true, created_at: now, updated_at: now },
+    { id: 6, category_id: 2, language_id: 3, name: '编程', des: '软件开发', is_auto_translated: true, created_at: now, updated_at: now },
   ],
   posts: [
     { id: 1, author_id: 2, category_id: 1, source_language_id: 2, thumbnail: 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=900', status: 'PUBLISHED', rejection_reason: null, submitted_at: '2026-07-05T08:00:00.000Z', reviewed_by: 1, reviewed_at: '2026-07-05T09:00:00.000Z', published_at: '2026-07-05T09:00:00.000Z', created_at: '2026-07-05T08:00:00.000Z', updated_at: '2026-07-05T09:00:00.000Z', deleted_at: null },

@@ -40,7 +40,7 @@ export class AdminLogsComponent {
   protected readonly totalPages=computed(()=>Math.max(1,Math.ceil(this.filtered().length/this.pageSize())));
   protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));
   protected readonly visible=computed(()=>this.filtered().slice((this.page()-1)*this.pageSize(),this.page()*this.pageSize()));
-  protected readonly summary=computed(()=>{const total=this.filtered().length;const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.choose(`Hiển thị ${from}–${to} trong tổng số ${total}`,`Showing ${from}–${to} of ${total}`);});
+  protected readonly summary=computed(()=>{const total=this.filtered().length;const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
 
   protected update(kind:'search'|'action'|'entity'|'from'|'to',value:string):void {
     if(kind==='search')this.search.set(value);if(kind==='action')this.action.set(value);if(kind==='entity')this.entity.set(value);if(kind==='from')this.dateFrom.set(value);if(kind==='to')this.dateTo.set(value);this.changePage(1);

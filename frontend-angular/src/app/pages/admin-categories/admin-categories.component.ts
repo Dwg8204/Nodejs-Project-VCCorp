@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
@@ -111,9 +111,13 @@ export class AdminCategoriesComponent {
     const query = this.search().trim().toLocaleLowerCase();
     const translations = this.db.table('category_translation');
     const posts = this.db.table('posts').filter((post) => !post.deleted_at);
+    const localeCode = this.language.currentLanguage()?.code?.toLowerCase();
+    const displayLanguageId = this.languages.find(
+      (item) => item.code.toLowerCase() === localeCode,
+    )?.id ?? this.language.contentLanguageId();
     return this.db.table('categories').filter((category) => !category.deleted_at).map((category) => ({
       category,
-      translation: translations.find((item) => item.category_id === category.id && item.language_id === this.language.languageId())
+      translation: translations.find((item) => item.category_id === category.id && item.language_id === displayLanguageId)
         ?? translations.find((item) => item.category_id === category.id),
       posts: posts.filter((post) => post.category_id === category.id).length,
     })).filter((row) => !query || row.translation?.name.toLocaleLowerCase().includes(query));
@@ -123,7 +127,7 @@ export class AdminCategoriesComponent {
   protected readonly visibleRows = computed(() => this.rows().slice((this.page() - 1) * this.pageSize(), this.page() * this.pageSize()));
   protected readonly summary = computed(() => {
     const total=this.rows().length; const from=total?(this.page()-1)*this.pageSize()+1:0; const to=Math.min(this.page()*this.pageSize(),total);
-    return this.language.choose(`Hiển thị ${from}–${to} trong tổng số ${total}`,`Showing ${from}–${to} of ${total}`);
+    return this.language.translate('pagination.summary',{from,to,total});
   });
   protected readonly sourceLanguage = computed(() => this.languages.find((item) => item.id === this.sourceLanguageId()) ?? this.languages[0]);
   protected readonly formCopy = computed<CategoryFormCopy>(() => {
@@ -140,14 +144,15 @@ export class AdminCategoriesComponent {
   protected applyPage():void {this.changePage(this.pageInput());}
   protected applyPageSize():void {const size=Math.min(100,Math.max(1,Math.trunc(this.sizeInput()||1)));this.pageSize.set(size);this.sizeInput.set(size);this.changePage(1);}
   protected openAdd(): void {
-    const defaultLanguageId = Number(this.db.table('system_settings')[0]?.default_language_id);
-    const validDefault = this.languages.some((item) => item.id === defaultLanguageId);
-    this.editingId.set(null); this.sourceLanguageId.set(validDefault ? defaultLanguageId : this.language.languageId()); this.name.set(''); this.description.set('');
+    const localeCode = this.language.currentLanguage()?.code?.toLowerCase();
+    const localeLanguageId = this.languages.find((item) => item.code.toLowerCase() === localeCode)?.id;
+    this.editingId.set(null); this.sourceLanguageId.set(localeLanguageId ?? this.language.contentLanguageId()); this.name.set(''); this.description.set('');
     this.retranslate.set(false); this.error.set(''); this.modal.set('add');
     requestAnimationFrame(() => this.synchronizeSourceLanguageSelect());
   }
   protected openEdit(row: CategoryView): void {
-    const sourceId = this.language.languageId();
+    const localeCode = this.language.currentLanguage()?.code?.toLowerCase();
+    const sourceId = this.languages.find((item) => item.code.toLowerCase() === localeCode)?.id ?? this.language.contentLanguageId();
     const translation = this.db.table('category_translation').find((item) => item.category_id === row.category.id && item.language_id === sourceId) ?? row.translation;
     this.editingId.set(row.category.id); this.sourceLanguageId.set(sourceId); this.name.set(translation?.name ?? '');
     this.description.set(translation?.des ?? ''); this.retranslate.set(false); this.error.set(''); this.modal.set('edit');

@@ -19,7 +19,13 @@ export class UiSelectService {
           record.addedNodes.forEach((node) => {
             if (node instanceof Element) this.enhanceTree(node);
           });
-          const select = record.target instanceof Element ? record.target.closest('select') as EnhancedSelect | null : null;
+          const mutationElement =
+            record.target instanceof Element
+              ? record.target
+              : record.target.parentElement;
+          const select = mutationElement?.closest(
+            'select',
+          ) as EnhancedSelect | null;
           if (select?._uiSelectWrapper) this.refresh(select);
         }
       });

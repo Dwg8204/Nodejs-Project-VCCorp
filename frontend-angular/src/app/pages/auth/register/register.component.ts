@@ -38,7 +38,11 @@ export class RegisterComponent {
     this.loading.set(true); this.errorMessage.set('');
     this.auth.register(this.form.getRawValue()).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: () => void this.router.navigate(['/']),
-      error: (error: unknown) => this.errorMessage.set(error instanceof Error ? error.message : 'Không thể đăng ký.'),
+      error: (error: unknown) => this.errorMessage.set(
+        error instanceof Error
+          ? error.message
+          : this.language.translate('auth.error.generic'),
+      ),
     });
   }
 }

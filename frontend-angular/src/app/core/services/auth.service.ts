@@ -23,6 +23,7 @@ import {
 import { ApiResponse, NormalizedApiError } from '../models/api.model';
 import { ApiErrorService } from './api-error.service';
 import { AuthSessionStore } from './auth-session.store';
+import { LanguageService } from './language.service';
 import { StorageService } from './storage.service';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +32,7 @@ export class AuthService {
   private readonly storage = inject(StorageService);
   private readonly apiErrors = inject(ApiErrorService);
   private readonly session = inject(AuthSessionStore);
+  private readonly language = inject(LanguageService);
   private readonly sessionReadyState = signal(false);
 
   readonly currentUser = this.session.user;
@@ -131,48 +133,10 @@ export class AuthService {
   }
 
   private authErrorMessage(error: NormalizedApiError): string {
-    const vi: Record<string, string> = {
-      AUTH_INVALID_CREDENTIALS: 'Email hoặc mật khẩu không đúng.',
-      AUTH_ACCOUNT_LOCKED: 'Tài khoản đã bị khóa.',
-      AUTH_EMAIL_ALREADY_EXISTS: 'Email đã được sử dụng.',
-      AUTH_USERNAME_ALREADY_EXISTS: 'Tên người dùng đã được sử dụng.',
-      AUTH_PASSWORD_CONFIRMATION_MISMATCH: 'Mật khẩu xác nhận không khớp.',
-      AUTH_PASSWORD_COMPLEXITY_REQUIRED:
-        'Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.',
-      AUTH_OTP_INVALID_OR_EXPIRED: 'Mã OTP không đúng hoặc đã hết hạn.',
-      AUTH_OTP_ATTEMPTS_EXCEEDED:
-        'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu mã mới.',
-      AUTH_RESET_TOKEN_INVALID_OR_EXPIRED:
-        'Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.',
-      AUTH_RESET_EMAIL_NOT_CONFIGURED:
-        'Hệ thống chưa được cấu hình email gửi mã OTP.',
-      AUTH_RESET_EMAIL_SEND_FAILED:
-        'Không thể gửi email OTP. Vui lòng thử lại sau.',
-    };
-    const en: Record<string, string> = {
-      AUTH_INVALID_CREDENTIALS: 'The email or password is incorrect.',
-      AUTH_ACCOUNT_LOCKED: 'This account has been locked.',
-      AUTH_EMAIL_ALREADY_EXISTS: 'This email is already in use.',
-      AUTH_USERNAME_ALREADY_EXISTS: 'This username is already in use.',
-      AUTH_PASSWORD_CONFIRMATION_MISMATCH: 'The passwords do not match.',
-      AUTH_PASSWORD_COMPLEXITY_REQUIRED:
-        'Use at least 8 characters with uppercase, lowercase and a number.',
-      AUTH_OTP_INVALID_OR_EXPIRED: 'The OTP is invalid or has expired.',
-      AUTH_OTP_ATTEMPTS_EXCEEDED:
-        'Too many invalid OTP attempts. Please request a new code.',
-      AUTH_RESET_TOKEN_INVALID_OR_EXPIRED:
-        'The password reset session is invalid or has expired.',
-      AUTH_RESET_EMAIL_NOT_CONFIGURED:
-        'The OTP email service has not been configured.',
-      AUTH_RESET_EMAIL_SEND_FAILED:
-        'Unable to send the OTP email. Please try again later.',
-    };
-    const locale = this.storage.get<string>('blog-lang') ?? 'vi';
-    const messages = locale === 'vi' ? vi : en;
-    return messages[error.code]
-      ?? error.messages[0]
-      ?? (locale === 'vi'
-        ? 'Không thể hoàn tất yêu cầu.'
-        : 'Unable to complete the request.');
+    const key = `auth.error.${error.code}`;
+    const translated = this.language.translate(key);
+    return translated !== key
+      ? translated
+      : error.messages[0] ?? this.language.translate('auth.error.generic');
   }
 }

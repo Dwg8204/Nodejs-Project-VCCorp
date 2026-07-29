@@ -19,7 +19,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [guestGuard],
-    loadComponent: () => import('./layout/auth-layout/auth-layout.component').then((c) => c.AuthLayoutComponent),
+    loadComponent: () => import('./layout/public-layout/public-layout.component').then((c) => c.PublicLayoutComponent),
     children: [
       { path: 'login', title: 'Đăng nhập | VCCorp Blog', loadComponent: () => import('./pages/auth/login/login.component').then((c) => c.LoginComponent) },
       { path: 'register', title: 'Đăng ký | VCCorp Blog', loadComponent: () => import('./pages/auth/register/register.component').then((c) => c.RegisterComponent) },

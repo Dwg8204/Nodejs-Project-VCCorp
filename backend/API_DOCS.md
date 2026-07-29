@@ -23,6 +23,15 @@ POST /api/uploads/images
 Hai API profile cập nhật URL vào `users.avatar` hoặc `users.coverImage`.
 `/uploads/images` dùng chung cho thumbnail và ảnh chèn trong editor.
 
+## Public languages
+
+```http
+GET /api/languages
+```
+
+Trả về các ngôn ngữ chưa xóa, đang hoạt động và có trạng thái `READY`. Endpoint
+này không yêu cầu đăng nhập và được Angular dùng cho bộ chọn ngôn ngữ ở topbar.
+
 ## Authentication
 
 ### Register

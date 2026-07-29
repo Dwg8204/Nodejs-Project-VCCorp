@@ -80,12 +80,22 @@ export class MockDatabaseService {
   }
 
   private migrateDynamicLanguages(): void {
-    const database = this.storage.get<MockDatabase>(DATABASE_KEY) as MockDatabase & {
-      ui_translation_keys?: MockDatabase['ui_translation_keys'];
-      ui_translations?: MockDatabase['ui_translations'];
-    };
-    database.ui_translation_keys ??= structuredClone(MOCK_DATABASE_SEED.ui_translation_keys);
-    database.ui_translations ??= structuredClone(MOCK_DATABASE_SEED.ui_translations);
+    const database = this.storage.get<MockDatabase>(DATABASE_KEY) as MockDatabase;
+    if (!database.languages.some((language) => /^zh(?:-|$)/i.test(language.code))) {
+      database.languages.push({
+        id: Math.max(0, ...database.languages.map((language) => language.id)) + 1,
+        code: 'zh',
+        name: '中文',
+        flag: 'https://flagcdn.com/w40/cn.png',
+        is_active: true,
+        is_system_language: true,
+        fallback_language_id: null,
+        translation_status: 'READY',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      });
+    }
     database.languages = database.languages.map((language) => ({
       ...language,
       is_active: language.is_active ?? true,

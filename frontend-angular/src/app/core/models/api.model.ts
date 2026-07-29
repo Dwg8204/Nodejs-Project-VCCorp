@@ -1,6 +1,6 @@
 export interface ApiResponse<T> {
   success: boolean;
-  message: string;
+  message?: string;
   data: T;
 }
 
@@ -10,16 +10,27 @@ export interface PaginationQuery {
   search?: string;
 }
 
-export interface PaginatedData<T> {
-  items: T[];
-  total: number;
+export interface PaginationMeta {
   page: number;
   limit: number;
+  total: number;
   totalPages: number;
+}
+
+export interface PaginatedData<T> {
+  items: T[];
+  pagination: PaginationMeta;
 }
 
 export interface ApiErrorPayload {
   statusCode?: number;
   message?: string | string[];
   error?: string;
+}
+
+export interface NormalizedApiError {
+  status: number;
+  code: string;
+  messages: string[];
+  originalError: unknown;
 }

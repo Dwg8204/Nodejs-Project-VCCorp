@@ -2,7 +2,6 @@ import {
   IsDateString,
   IsOptional,
   IsString,
-  IsUrl,
   Matches,
   MaxLength,
   MinLength,
@@ -24,13 +23,9 @@ export class UpdateProfileDto {
   @IsDateString()
   dateOfBirth?: string | null;
 
-  @IsOptional()
-  @IsUrl({ require_protocol: true })
-  @MaxLength(2048)
-  avatar?: string | null;
+}
 
-  @IsOptional()
-  @IsUrl({ require_protocol: true })
-  @MaxLength(2048)
-  coverImage?: string | null;
+export enum ProfileImageType {
+  Avatar = 'avatar',
+  Cover = 'cover',
 }

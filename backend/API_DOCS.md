@@ -8,6 +8,21 @@ http://localhost:3000/api
 
 Backend trả message/error code ổn định để Angular dịch bằng JSON giao diện.
 
+## Cloudinary image upload
+
+Các API upload yêu cầu đăng nhập bằng cookie, dùng `multipart/form-data` và
+field ảnh tên `file`. Chỉ nhận JPEG, PNG, WebP, tối đa 5 MB. Database chỉ lưu
+URL HTTPS do Cloudinary trả về.
+
+```http
+POST /api/profile/images/avatar
+POST /api/profile/images/cover
+POST /api/uploads/images
+```
+
+Hai API profile cập nhật URL vào `users.avatar` hoặc `users.coverImage`.
+`/uploads/images` dùng chung cho thumbnail và ảnh chèn trong editor.
+
 ## Authentication
 
 ### Register
@@ -50,8 +65,7 @@ Response:
   "success": true,
   "message": "AUTH_LOGIN_SUCCEEDED",
   "data": {
-    "user": {},
-    "accessToken": "..."
+    "user": {}
   }
 }
 ```
@@ -60,19 +74,18 @@ Response:
 
 ```http
 GET /api/auth/me
-Authorization: Bearer <accessToken>
+Cookie: vccorp_access_token=<HttpOnly JWT>
 ```
 
 ### Logout
 
 ```http
 POST /api/auth/logout
-Authorization: Bearer <accessToken>
+Cookie: vccorp_access_token=<HttpOnly JWT>
 ```
 
-Không có refresh token/blacklist. Logout ghi audit log, còn Angular chịu trách
-nhiệm xóa access token. Token hết hiệu lực khi hết hạn hoặc sau khi mật khẩu
-người dùng được đổi.
+Không có refresh token/blacklist. Logout ghi audit log và backend xóa cookie
+`HttpOnly`. Angular không lưu hoặc đọc JWT.
 
 ## Password reset
 
@@ -89,9 +102,8 @@ Content-Type: application/json
 }
 ```
 
-Ở `NODE_ENV=development`, response có `developmentOtp` để kiểm thử local. Ở
-production, API không trả OTP; cần nối `OtpDeliveryService` với nhà cung cấp
-email trước khi deploy.
+OTP được gửi đến email người dùng bằng Gmail SMTP. API không trả OTP về Angular;
+database chỉ lưu OTP dưới dạng hash.
 
 ### Verify OTP
 

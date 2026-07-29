@@ -1,24 +1,75 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, signal, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, afterNextRender, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, signal, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 import { MockDatabaseService } from '../../data/mock/mock-database.service';
 import { PostRow } from '../../data/mock/mock-schema.model';
+import { firstValueFrom } from 'rxjs';
+import { ImageUploadService } from '../../core/services/image-upload.service';
 declare const Quill:any;
 
 @Component({selector:'app-post-form',standalone:true,imports:[RouterLink],templateUrl:'./post-form.component.html',styleUrl:'./post-form.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class PostFormComponent implements AfterViewInit{
-  private readonly database=inject(MockDatabaseService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);
+  private readonly database=inject(MockDatabaseService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly imageUpload=inject(ImageUploadService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);
   @ViewChild('editor') editorRef!:ElementRef<HTMLElement>; private editor:any;
-  protected readonly editId=signal<number|null>(null);protected readonly title=signal('');protected readonly content=signal('');protected readonly thumbnail=signal('');protected readonly sourceLanguageId=signal(2);protected readonly categoryId=signal(1);protected readonly previewOpen=signal(false);protected readonly previewLanguageId=signal(2);protected readonly translateTargets=signal<number[]>([]);protected readonly error=signal('');protected readonly translatedPreview=signal<{title:string;content:string}|null>(null);protected readonly translating=signal(false);private readonly translators=new Map<string,any>();
+  protected readonly editId=signal<number|null>(null);protected readonly title=signal('');protected readonly content=signal('');protected readonly thumbnail=signal('');protected readonly sourceLanguageId=signal(2);protected readonly categoryId=signal(1);protected readonly previewOpen=signal(false);protected readonly previewLanguageId=signal(2);protected readonly translateTargets=signal<number[]>([]);protected readonly error=signal('');protected readonly translatedPreview=signal<{title:string;content:string}|null>(null);protected readonly translating=signal(false);protected readonly uploadingImage=signal(false);private readonly translators=new Map<string,any>();
   protected readonly languages=computed(()=>this.database.table('languages').filter(row=>!row.deleted_at));
   protected readonly categories=computed(()=>{const rows=this.database.table('categories').filter(row=>!row.deleted_at);const trans=this.database.table('category_translation');return rows.map(row=>({id:row.id,name:trans.find(t=>t.category_id===row.id&&t.language_id===this.sourceLanguageId())?.name??trans.find(t=>t.category_id===row.id)?.name??`#${row.id}`}));});
   protected readonly previewTitle=computed(()=>this.previewLanguageId()===this.sourceLanguageId()?this.title():(this.translatedPreview()?.title??this.title()));
   protected readonly previewLanguageName=computed(()=>this.languages().find(item=>item.id===this.previewLanguageId())?.name??'');
   protected readonly previewContent=computed(()=>this.previewLanguageId()===this.sourceLanguageId()?this.content():(this.translatedPreview()?.content??this.content()));
+  constructor(){afterNextRender(()=>this.editor?.getModule('toolbar')?.addHandler('image',()=>this.selectEditorImage()));}
   ngAfterViewInit():void{this.editor=new Quill(this.editorRef.nativeElement,{theme:'snow',placeholder:'Viết nội dung ở đây...',modules:{toolbar:[[{header:[2,3,false]}],['bold','italic','underline','strike'],['blockquote','code-block'],[{list:'ordered'},{list:'bullet'}],['link','image'],['clean']]}});this.editor.on('text-change',()=>this.content.set(this.editor.root.innerHTML));const raw=this.route.snapshot.paramMap.get('id');if(raw)this.loadPost(Number(raw));}
   private loadPost(id:number):void{const post=this.database.table('posts').find(row=>row.id===id&&row.author_id===this.auth.currentUser()?.id);if(!post)return;const trans=this.database.table('post_translations').find(row=>row.post_id===id&&row.language_id===(post.source_language_id??2));this.editId.set(id);this.sourceLanguageId.set(post.source_language_id??2);this.previewLanguageId.set(post.source_language_id??2);this.categoryId.set(post.category_id);this.thumbnail.set(post.thumbnail);this.title.set(trans?.title??'');this.content.set(trans?.content??'');this.editor.root.innerHTML=trans?.content??'';this.translateTargets.set(this.database.table('post_translations').filter(row=>row.post_id===id&&row.language_id!==post.source_language_id).map(row=>row.language_id));}
-  protected handleThumbnail(event:Event):void{const file=(event.target as HTMLInputElement).files?.[0];if(!file)return;if(file.size>5*1024*1024){this.error.set('Ảnh không được vượt quá 5 MB.');return;}const reader=new FileReader();reader.onload=()=>this.thumbnail.set(String(reader.result??''));reader.readAsDataURL(file);}
+  protected async uploadThumbnail(event:Event):Promise<void>{
+    const input=event.target as HTMLInputElement;
+    const file=input.files?.[0];
+    input.value='';
+    if(!file||!this.validateImage(file))return;
+    this.uploadingImage.set(true);
+    this.error.set('');
+    try{
+      const uploaded=await firstValueFrom(this.imageUpload.upload(file));
+      this.thumbnail.set(uploaded.url);
+    }catch{
+      this.error.set(this.language.choose('Không thể tải ảnh lên Cloudinary. Vui lòng thử lại.','Could not upload the image to Cloudinary. Please try again.'));
+    }finally{
+      this.uploadingImage.set(false);
+    }
+  }
+  private async uploadEditorImage(file:File):Promise<void>{
+    if(!this.validateImage(file))return;
+    this.uploadingImage.set(true);
+    this.error.set('');
+    try{
+      const uploaded=await firstValueFrom(this.imageUpload.upload(file));
+      const range=this.editor.getSelection(true);
+      this.editor.insertEmbed(range.index,'image',uploaded.url,'user');
+      this.editor.setSelection(range.index+1,0,'silent');
+    }catch{
+      this.error.set(this.language.choose('Không thể tải ảnh lên Cloudinary. Vui lòng thử lại.','Could not upload the image to Cloudinary. Please try again.'));
+    }finally{
+      this.uploadingImage.set(false);
+    }
+  }
+  private selectEditorImage():void{
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='image/jpeg,image/png,image/webp';
+    input.onchange=()=>{const file=input.files?.[0];if(file)void this.uploadEditorImage(file);};
+    input.click();
+  }
+  private validateImage(file:File):boolean{
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+      this.error.set(this.language.choose('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.','Only JPG, PNG or WebP images are accepted.'));
+      return false;
+    }
+    if(file.size>5*1024*1024){
+      this.error.set(this.language.choose('Ảnh không được vượt quá 5 MB.','The image must not exceed 5 MB.'));
+      return false;
+    }
+    return true;
+  }
   protected toggleTranslation(id:number,checked:boolean):void{this.translateTargets.update(rows=>checked?[...new Set([...rows,id])]:rows.filter(row=>row!==id));}
   protected changeSourceLanguage(id:number):void{this.sourceLanguageId.set(id);this.previewLanguageId.set(id);this.translateTargets.update(rows=>rows.filter(row=>row!==id));this.translatedPreview.set(null);this.error.set('');}
   protected async setPreviewLanguage(id:number):Promise<void>{this.previewLanguageId.set(id);this.translatedPreview.set(null);if(id===this.sourceLanguageId())return;this.translating.set(true);try{this.translatedPreview.set(await this.translateDraft(this.title(),this.content(),id));}catch{this.error.set(this.language.choose('Trình duyệt này chưa hỗ trợ mô hình dịch trực tiếp trên thiết bị.','On-device translation is not available in this browser yet.'));}finally{this.translating.set(false);}}

@@ -18,6 +18,8 @@ export interface User {
   email: string;
   phone: string | null;
   avatar: string | null;
+  coverImage?: string | null;
+  dateOfBirth?: string | null;
   isActive: boolean;
   emailVerified: boolean;
   role: Role;
@@ -40,5 +42,23 @@ export interface RegisterRequest {
 
 export interface AuthData {
   user: User;
-  token: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyOtpData {
+  resetToken: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+  confirmPassword: string;
 }

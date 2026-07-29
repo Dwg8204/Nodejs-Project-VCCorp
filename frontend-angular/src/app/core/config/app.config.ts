@@ -1,8 +1,10 @@
+import { environment } from '../../../environments/environment';
+
 export const APP_CONFIG = {
   appName: 'VCCorp Blog',
   defaultLocale: 'vi',
   defaultPageSize: 5,
-  apiBaseUrl: 'http://localhost:3000/api',
+  apiBaseUrl: environment.apiBaseUrl.replace(/\/+$/, ''),
 } as const;
 
 export type AppLocale = string;

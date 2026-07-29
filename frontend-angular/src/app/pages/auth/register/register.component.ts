@@ -20,15 +20,15 @@ export class RegisterComponent {
   protected readonly errorMessage = signal('');
   protected readonly showPassword = signal(false);
   protected readonly copy = computed(() => this.language.chooseObject({
-    eyebrow: 'Tham gia cộng đồng', title: 'Tạo tài khoản', subtitle: 'Tài khoản mới được tạo với vai trò người dùng đã xác thực.', fullName: 'Họ và tên', userName: 'Tên người dùng', password: 'Mật khẩu', confirm: 'Xác nhận mật khẩu', submit: 'Đăng ký', submitting: 'Đang tạo tài khoản…', hasAccount: 'Đã có tài khoản?', login: 'Đăng nhập', required: 'Trường này là bắt buộc.', invalidEmail: 'Email không hợp lệ.', username: 'Tên người dùng cần từ 2 đến 50 ký tự.', passwordRule: 'Ít nhất 6 ký tự, gồm chữ hoa, chữ thường và số.', mismatch: 'Mật khẩu xác nhận không khớp.', terms: 'Bằng việc đăng ký, bạn đồng ý sử dụng dữ liệu mock trên trình duyệt này.'
+    eyebrow: 'Tham gia cộng đồng', title: 'Tạo tài khoản', subtitle: 'Tài khoản mới được tạo với vai trò người dùng đã xác thực.', fullName: 'Họ và tên', userName: 'Tên người dùng', password: 'Mật khẩu', confirm: 'Xác nhận mật khẩu', submit: 'Đăng ký', submitting: 'Đang tạo tài khoản…', hasAccount: 'Đã có tài khoản?', login: 'Đăng nhập', required: 'Trường này là bắt buộc.', invalidEmail: 'Email không hợp lệ.', username: 'Tên người dùng cần từ 2 đến 50 ký tự.', passwordRule: 'Ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.', mismatch: 'Mật khẩu xác nhận không khớp.', terms: 'Bằng việc đăng ký, bạn đồng ý với điều khoản sử dụng của hệ thống.'
   }, {
-    eyebrow: 'Join the community', title: 'Create an account', subtitle: 'New accounts use the authenticated user role.', fullName: 'Full name', userName: 'Username', password: 'Password', confirm: 'Confirm password', submit: 'Create account', submitting: 'Creating account…', hasAccount: 'Already have an account?', login: 'Sign in', required: 'This field is required.', invalidEmail: 'Email is invalid.', username: 'Username must contain 2–50 characters.', passwordRule: 'At least 6 characters with uppercase, lowercase and a number.', mismatch: 'Passwords do not match.', terms: 'By registering, you agree to use mock data stored in this browser.'
+    eyebrow: 'Join the community', title: 'Create an account', subtitle: 'New accounts use the authenticated user role.', fullName: 'Full name', userName: 'Username', password: 'Password', confirm: 'Confirm password', submit: 'Create account', submitting: 'Creating account…', hasAccount: 'Already have an account?', login: 'Sign in', required: 'This field is required.', invalidEmail: 'Email is invalid.', username: 'Username must contain 2–50 characters.', passwordRule: 'At least 8 characters with uppercase, lowercase and a number.', mismatch: 'Passwords do not match.', terms: 'By registering, you agree to the system terms of use.'
   }));
   protected readonly form = this.formBuilder.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(255)]],
     userName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)]],
+    password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(72), Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/)]],
     confirmPassword: ['', Validators.required],
   }, { validators: passwordMatch });
 

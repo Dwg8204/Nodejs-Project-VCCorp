@@ -11,7 +11,7 @@ export const routes: Routes = [
     loadComponent: () => import('./layout/public-layout/public-layout.component').then((c) => c.PublicLayoutComponent),
     children: [
       { path: 'article/:id', title: 'Article | VCCorp Blog', loadComponent: () => import('./pages/article/article.component').then((c) => c.ArticleComponent) },
-      { path: 'profile', title: 'Profile | VCCorp Blog', loadComponent: () => import('./pages/profile/profile.component').then((c) => c.ProfileComponent) },
+      { path: 'profile', canActivate: [authGuard], title: 'Profile | VCCorp Blog', loadComponent: () => import('./pages/profile/profile.component').then((c) => c.ProfileComponent) },
       { path: 'profile/:id', title: 'Profile | VCCorp Blog', loadComponent: () => import('./pages/profile/profile.component').then((c) => c.ProfileComponent) },
       { path: '', title: 'Trang chủ | VCCorp Blog', loadComponent: () => import('./pages/home/home.component').then((c) => c.HomeComponent) },
     ],

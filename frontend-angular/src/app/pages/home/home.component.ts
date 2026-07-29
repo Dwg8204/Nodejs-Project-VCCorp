@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -30,14 +30,14 @@ export class HomeComponent {
   protected readonly pageInput=signal(1);
   protected readonly sizeInput=signal(5);
   protected readonly categories=computed<FeedCategory[]>(()=>{
-    const languageId=this.language.languageId();
+    const languageId=this.language.contentLanguageId();
     const rows=this.database.table('categories').filter(row=>!row.deleted_at);
     const translations=this.database.table('category_translation');
     return [{id:'all',name:this.language.choose('Tất cả','All')},...rows.map(row=>({id:row.id,name:translations.find(t=>t.category_id===row.id&&t.language_id===languageId)?.name??''})).filter(item=>item.name)];
   });
   protected readonly posts=computed<FeedPost[]>(()=>{
     this.revision();
-    const languageId=this.language.languageId();
+    const languageId=this.language.contentLanguageId();
     const currentUser = this.auth.currentUser();
     const users=this.database.table('users'); const roles=this.database.table('role'); void roles;
     const categories=this.database.table('category_translation'); const translations=this.database.table('post_translations');
@@ -52,7 +52,7 @@ export class HomeComponent {
   protected readonly totalPages=computed(()=>Math.max(1,Math.ceil(this.filteredPosts().length/this.pageSize())));
   protected readonly pageNumbers=computed(()=>buildPaginationItems(this.currentPage(),this.totalPages()));
   protected readonly visiblePosts=computed(()=>{const page=Math.min(this.currentPage(),this.totalPages());return this.filteredPosts().slice((page-1)*this.pageSize(),page*this.pageSize());});
-  protected readonly summary=computed(()=>{const total=this.filteredPosts().length;const from=total?(this.currentPage()-1)*this.pageSize()+1:0;const to=Math.min(this.currentPage()*this.pageSize(),total);return this.language.choose(`Hiển thị ${from}–${to} trong tổng số ${total}`,`Showing ${from}–${to} of ${total}`);});
+  protected readonly summary=computed(()=>{const total=this.filteredPosts().length;const from=total?(this.currentPage()-1)*this.pageSize()+1:0;const to=Math.min(this.currentPage()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
   @HostListener('click',['$event']) protected openArticle(event:MouseEvent):void{const element=event.target as HTMLElement;const authorLink=element.closest('.author-name-wrapper a');if(authorLink){event.preventDefault();const id=this.hoveredAuthorId();if(id!==null)void this.router.navigate(['/profile',id]);return;}const target=element.closest('.article-title,.article-thumb');if(!target)return;event.preventDefault();const card=target.closest('.article-card');const root=card?.parentElement;if(!card||!root)return;const index=Array.from(root.children).indexOf(card);const post=this.visiblePosts()[index];if(post)void this.router.navigate(['/article',post.id]);}
   protected readonly staffPicks=computed(()=>[...this.posts()].sort((a,b)=>(b.likes+b.comments)-(a.likes+a.comments)).slice(0,3));
   protected readonly hoveredAuthor=computed<AuthorHover|null>(()=>{

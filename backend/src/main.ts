@@ -17,14 +17,35 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Bật CORS
+  const allowedOrigins = config
+    .getOrThrow<string>('CORS_ORIGIN')
+    .split(',')
+    .map((origin) => origin.trim());
   app.enableCors({
-    origin: config
-      .getOrThrow<string>('CORS_ORIGIN')
-      .split(',')
-      .map((origin) => origin.trim()),
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
+  });
+
+  // Cookie authentication needs explicit Origin validation for state-changing
+  // browser requests, especially when production uses SameSite=None.
+  app.use((request, response, next) => {
+    const safeMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
+    const origin = request.headers.origin;
+    if (
+      !safeMethods.has(request.method)
+      && origin
+      && !allowedOrigins.includes(origin)
+    ) {
+      response.status(403).json({
+        message: 'AUTH_ORIGIN_FORBIDDEN',
+        error: 'Forbidden',
+        statusCode: 403,
+      });
+      return;
+    }
+    next();
   });
 
   // ValidationPipe toàn cục - tự động validate DTO

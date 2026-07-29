@@ -7,12 +7,12 @@
   <div class="dashboard-period-control" [class.open]="periodOpen()">
     <iconify-icon icon="solar:calendar-linear"></iconify-icon>
     <button type="button" class="dashboard-period-trigger" aria-haspopup="listbox" [attr.aria-expanded]="periodOpen()" (click)="periodOpen.set(!periodOpen())">
-      <span>{{ language.choose(period() + ' ngày qua','Last ' + period() + ' days') }}</span>
+      <span>{{ language.translate('dashboard.lastDays',{count:period()}) }}</span>
       <iconify-icon icon="solar:alt-arrow-down-linear"></iconify-icon>
     </button>
     @if (periodOpen()) {
       <div class="dashboard-period-menu" style="display:block" role="listbox">
-        @for (value of [7, 30, 90]; track value) { <button type="button" role="option" [class.active]="period() === value" (click)="selectPeriod(value)">{{ language.choose(value + ' ngày qua','Last ' + value + ' days') }}</button> }
+        @for (value of [7, 30, 90]; track value) { <button type="button" role="option" [class.active]="period() === value" (click)="selectPeriod(value)">{{ language.translate('dashboard.lastDays',{count:value}) }}</button> }
       </div>
     }
   </div>

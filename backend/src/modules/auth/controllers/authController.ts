@@ -5,8 +5,10 @@ import {
   Headers,
   Ip,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import {
@@ -14,6 +16,7 @@ import {
   RequestContext,
 } from '../interfaces/auth-user.interface';
 import { AuthService } from '../services/authService';
+import { AuthCookieService } from '../services/auth-cookie.service';
 import {
   ForgotPasswordDto,
   LoginDto,
@@ -24,30 +27,45 @@ import {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly authCookie: AuthCookieService,
+  ) {}
 
   @Post('register')
-  register(
+  async register(
     @Body() dto: RegisterDto,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent?: string,
+    @Res({ passthrough: true }) response?: Response,
   ) {
-    return this.authService.register(
+    const result = await this.authService.register(
       dto,
       this.requestContext(ipAddress, userAgent),
     );
+    this.authCookie.set(response, result.data.accessToken);
+    return {
+      ...result,
+      data: { user: result.data.user },
+    };
   }
 
   @Post('login')
-  login(
+  async login(
     @Body() dto: LoginDto,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent?: string,
+    @Res({ passthrough: true }) response?: Response,
   ) {
-    return this.authService.login(
+    const result = await this.authService.login(
       dto,
       this.requestContext(ipAddress, userAgent),
     );
+    this.authCookie.set(response, result.data.accessToken);
+    return {
+      ...result,
+      data: { user: result.data.user },
+    };
   }
 
   @Get('me')
@@ -58,15 +76,18 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
-  logout(
+  async logout(
     @CurrentUser() user: AuthenticatedUser,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent?: string,
+    @Res({ passthrough: true }) response?: Response,
   ) {
-    return this.authService.logout(
+    const result = await this.authService.logout(
       user,
       this.requestContext(ipAddress, userAgent),
     );
+    this.authCookie.clear(response);
+    return result;
   }
 
   @Post('forgot-password')

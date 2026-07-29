@@ -2,7 +2,16 @@ import { Injectable } from '@angular/core';
 import { delay, Observable, of, throwError } from 'rxjs';
 
 import { ApiResponse } from '../../core/models/api.model';
-import { AuthData, LoginRequest, RegisterRequest, User } from '../../core/models/auth.model';
+import {
+  AuthData,
+  ForgotPasswordRequest,
+  LoginRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  User,
+  VerifyOtpData,
+  VerifyOtpRequest,
+} from '../../core/models/auth.model';
 import { AuthRepository } from '../contracts/auth.repository';
 import { MOCK_SEED_PASSWORD } from './mock.seed';
 import { RoleRow, UserRow } from './mock-schema.model';
@@ -36,9 +45,8 @@ export class MockAuthRepository implements AuthRepository {
     }
 
     const mappedUser = this.mapUser(user);
-    const token = `mock.${btoa(JSON.stringify({ id: user.id, role: mappedUser.role.nameRole }))}.signature`;
     this.writeAudit(user, 'AUTH_LOGIN_SUCCEEDED', 'AUTH', user.id, user.email, null);
-    return of({ success: true, message: 'Đăng nhập thành công', data: { user: mappedUser, token } }).pipe(delay(450));
+    return of({ success: true, message: 'Đăng nhập thành công', data: { user: mappedUser } }).pipe(delay(450));
   }
 
   register(request: RegisterRequest): Observable<ApiResponse<AuthData>> {
@@ -70,21 +78,41 @@ export class MockAuthRepository implements AuthRepository {
     this.writeAudit(row, 'USER_CREATED', 'USER', row.id, row.full_name ?? row.user_name, { source: 'SELF_REGISTRATION' });
 
     const user = this.mapUser(row);
-    const token = `mock.${btoa(JSON.stringify({ id: row.id, role: user.role.nameRole }))}.signature`;
-    return of({ success: true, message: 'Đăng ký thành công', data: { user, token } }).pipe(delay(550));
+    return of({ success: true, message: 'Đăng ký thành công', data: { user } }).pipe(delay(550));
   }
 
-  getProfile(userId: number): Observable<ApiResponse<{ user: User }>> {
-    const row = this.database.table('users').find((user) => user.id === userId);
+  getCurrentUser(): Observable<ApiResponse<{ user: User }>> {
+    const row = this.database.table('users')[0];
     return row
       ? of({ success: true, message: 'Lấy hồ sơ thành công', data: { user: this.mapUser(row) } }).pipe(delay(250))
       : throwError(() => new MockAuthError('Không tìm thấy người dùng.', 404));
   }
 
-  logout(user: User | null): void {
-    if (!user) return;
+  logout(user: User | null = null): Observable<ApiResponse<null>> {
+    if (!user) return of({ success: true, data: null });
     const row = this.database.table('users').find((item) => item.id === user.id) ?? null;
     this.writeAudit(row, 'AUTH_LOGOUT', 'AUTH', user.id, user.email, null);
+    return of({ success: true, data: null });
+  }
+
+  forgotPassword(
+    _request: ForgotPasswordRequest,
+  ): Observable<ApiResponse<null>> {
+    return of({ success: true, data: null });
+  }
+
+  verifyOtp(
+    request: VerifyOtpRequest,
+  ): Observable<ApiResponse<VerifyOtpData>> {
+    return request.otp === '123456'
+      ? of({ success: true, data: { resetToken: 'mock-reset-token' } })
+      : throwError(() => new MockAuthError('OTP invalid.', 400));
+  }
+
+  resetPassword(
+    _request: ResetPasswordRequest,
+  ): Observable<ApiResponse<null>> {
+    return of({ success: true, data: null });
   }
 
   private mapUser(row: UserRow): User {

@@ -10,10 +10,25 @@ export interface EnvironmentVariables {
   DB_LOGGING: boolean;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  AUTH_COOKIE_NAME: string;
+  AUTH_COOKIE_MAX_AGE_SECONDS: number;
+  AUTH_COOKIE_SECURE: boolean;
+  AUTH_COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
+  AUTH_COOKIE_DOMAIN: string;
   BCRYPT_SALT_ROUNDS: number;
   OTP_EXPIRES_IN_SECONDS: number;
   OTP_MAX_ATTEMPTS: number;
   OTP_RESEND_COOLDOWN_SECONDS: number;
+  SMTP_HOST: string;
+  SMTP_PORT: number;
+  SMTP_SECURE: boolean;
+  SMTP_USER: string;
+  SMTP_APP_PASSWORD: string;
+  SMTP_FROM: string;
+  CLOUDINARY_CLOUD_NAME: string;
+  CLOUDINARY_API_KEY: string;
+  CLOUDINARY_API_SECRET: string;
+  CLOUDINARY_FOLDER: string;
 }
 
 function parseInteger(
@@ -33,9 +48,13 @@ export function validateEnvironment(
 ): EnvironmentVariables {
   const value = raw as Record<string, string | undefined>;
   const jwtSecret = value.JWT_SECRET?.trim();
+  const cookieSameSite = value.AUTH_COOKIE_SAME_SITE ?? 'lax';
 
   if (!jwtSecret || jwtSecret.length < 32) {
     throw new Error('JWT_SECRET phải có ít nhất 32 ký tự');
+  }
+  if (!['lax', 'strict', 'none'].includes(cookieSameSite)) {
+    throw new Error('AUTH_COOKIE_SAME_SITE phải là lax, strict hoặc none');
   }
 
   return {
@@ -50,6 +69,15 @@ export function validateEnvironment(
     DB_LOGGING: value.DB_LOGGING === 'true',
     JWT_SECRET: jwtSecret,
     JWT_EXPIRES_IN: value.JWT_EXPIRES_IN ?? '1h',
+    AUTH_COOKIE_NAME: value.AUTH_COOKIE_NAME ?? 'vccorp_access_token',
+    AUTH_COOKIE_MAX_AGE_SECONDS: parseInteger(
+      value.AUTH_COOKIE_MAX_AGE_SECONDS,
+      3600,
+      'AUTH_COOKIE_MAX_AGE_SECONDS',
+    ),
+    AUTH_COOKIE_SECURE: value.AUTH_COOKIE_SECURE === 'true',
+    AUTH_COOKIE_SAME_SITE: cookieSameSite as 'lax' | 'strict' | 'none',
+    AUTH_COOKIE_DOMAIN: value.AUTH_COOKIE_DOMAIN?.trim() ?? '',
     BCRYPT_SALT_ROUNDS: parseInteger(
       value.BCRYPT_SALT_ROUNDS,
       10,
@@ -70,5 +98,15 @@ export function validateEnvironment(
       60,
       'OTP_RESEND_COOLDOWN_SECONDS',
     ),
+    SMTP_HOST: value.SMTP_HOST ?? 'smtp.gmail.com',
+    SMTP_PORT: parseInteger(value.SMTP_PORT, 465, 'SMTP_PORT'),
+    SMTP_SECURE: value.SMTP_SECURE !== 'false',
+    SMTP_USER: value.SMTP_USER?.trim() ?? '',
+    SMTP_APP_PASSWORD: value.SMTP_APP_PASSWORD?.replace(/\s+/g, '') ?? '',
+    SMTP_FROM: value.SMTP_FROM?.trim() ?? value.SMTP_USER?.trim() ?? '',
+    CLOUDINARY_CLOUD_NAME: value.CLOUDINARY_CLOUD_NAME?.trim() ?? '',
+    CLOUDINARY_API_KEY: value.CLOUDINARY_API_KEY?.trim() ?? '',
+    CLOUDINARY_API_SECRET: value.CLOUDINARY_API_SECRET?.trim() ?? '',
+    CLOUDINARY_FOLDER: value.CLOUDINARY_FOLDER?.trim() ?? 'vccorp-blog',
   };
 }

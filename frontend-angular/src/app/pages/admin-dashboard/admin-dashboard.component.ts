@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
+﻿import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LanguageService } from '../../core/services/language.service';
@@ -54,7 +54,7 @@ export class AdminDashboardComponent {
   });
 
   protected readonly topPosts = computed(() => {
-    const localeId = this.language.languageId();
+    const localeId = this.language.contentLanguageId();
     const likes = this.database.table('post_likes');
     const comments = this.database.table('comments');
     const translations = this.database.table('post_translations');
@@ -70,7 +70,7 @@ export class AdminDashboardComponent {
   protected readonly translationCoverage = computed(() => {
     const posts=this.database.table('posts').filter(row=>!row.deleted_at); const translations=this.database.table('post_translations'); const total=Math.max(posts.length,1);
     const languageIds=this.database.table('languages').filter(row=>row.is_active&&row.is_system_language&&!row.deleted_at).map(row=>row.id);
-    const currentId=this.language.languageId();
+    const currentId=this.language.contentLanguageId();
     const all=posts.filter(post=>languageIds.every(id=>translations.some(t=>t.post_id===post.id&&t.language_id===id))).length;
     const currentOnly=posts.filter(post=>translations.some(t=>t.post_id===post.id&&t.language_id===currentId)&&translations.filter(t=>t.post_id===post.id).length===1).length;
     const missingCurrent=posts.filter(post=>!translations.some(t=>t.post_id===post.id&&t.language_id===currentId)).length;
@@ -78,14 +78,14 @@ export class AdminDashboardComponent {
     return [{vi:'Có đủ mọi ngôn ngữ',en:'Available in all languages',value:all,tone:'coverage-both'},{vi:'Chỉ có ngôn ngữ hiện tại',en:'Current language only',value:currentOnly,tone:'coverage-vi'},{vi:'Thiếu ngôn ngữ hiện tại',en:'Missing current language',value:missingCurrent,tone:'coverage-en'},{vi:'Có bản dịch tự động',en:'Auto-translated',value:auto,tone:'coverage-auto'}].map(row=>({...row,percent:row.value/total*100}));
   });
   protected readonly categoryStats = computed(() => {
-    const languageId=this.language.languageId(); const posts=this.database.table('posts'); const translations=this.database.table('category_translation');
+    const languageId=this.language.contentLanguageId(); const posts=this.database.table('posts'); const translations=this.database.table('category_translation');
     const rows=this.database.table('categories').filter(c=>!c.deleted_at).map(category=>({name:translations.find(t=>t.category_id===category.id&&t.language_id===languageId)?.name??`#${category.id}`,value:posts.filter(p=>p.category_id===category.id&&p.status==='PUBLISHED'&&!p.deleted_at).length})).sort((a,b)=>b.value-a.value);
     const max=Math.max(1,...rows.map(row=>row.value)); return rows.map(row=>({...row,percent:row.value/max*100}));
   });
   protected readonly recentActivity = computed(() => {
     const logs=this.database.table('audit_logs');
     if(logs.length)return [...logs].sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime()).slice(0,6).map(log=>({text:`${this.activityAction(log.action)}: ${log.entity_label||'#'+(log.entity_id||'')}`,date:log.created_at,icon:log.entity_type==='POST'?'solar:document-text-bold-duotone':log.entity_type==='CATEGORY'?'solar:folder-bold-duotone':'solar:shield-check-bold-duotone',tone:log.entity_type==='CATEGORY'?'purple':'blue'}));
-    const translations=this.database.table('post_translations'); return this.database.table('posts').slice(0,4).map(post=>({text:`${this.language.choose('Bài viết mới','New post')}: ${translations.find(t=>t.post_id===post.id&&t.language_id===(this.language.languageId()))?.title||'#'+post.id}`,date:post.created_at,icon:'solar:document-add-bold-duotone',tone:'blue'}));
+    const translations=this.database.table('post_translations'); return this.database.table('posts').slice(0,4).map(post=>({text:`${this.language.choose('Bài viết mới','New post')}: ${translations.find(t=>t.post_id===post.id&&t.language_id===(this.language.contentLanguageId()))?.title||'#'+post.id}`,date:post.created_at,icon:'solar:document-add-bold-duotone',tone:'blue'}));
   });
 
   protected formatActivityDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{day:'2-digit',month:'short',year:'numeric'}).format(new Date(value));}

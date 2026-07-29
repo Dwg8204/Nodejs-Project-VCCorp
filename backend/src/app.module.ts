@@ -12,8 +12,12 @@ import { ConfigModule } from '@nestjs/config';
 import { validateEnvironment } from 'config/environment';
 import { DatabaseModule } from 'database/database.module';
 import { AuditModule } from 'modules/audit/audit.module';
+import { AdminUsersModule } from 'modules/admin-users/admin-users.module';
+import { AdminLanguagesModule } from 'modules/admin-languages/admin-languages.module';
+import { AdminAuditLogsModule } from 'modules/admin-audit-logs/admin-audit-logs.module';
 import { InteractionModule } from 'modules/interaction/interaction.module';
 import { PostModule } from 'modules/post/post.module';
+import { ProfileModule } from 'modules/profile/profile.module';
 import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { LanguageModule } from 'modules/language/language.module';
@@ -21,6 +25,7 @@ import { CategoryModule } from 'modules/category/category.module';
 import { DashboardModule } from 'modules/dashboard/dashboard.module';
 import { UploadModule } from 'modules/upload/upload.module';
 import { AppController } from './app.controller';
+import { UploadModule } from 'modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -43,7 +48,10 @@ import { AppController } from './app.controller';
     PostModule,
     InteractionModule,
     AuditModule,
-    DashboardModule,
+    ProfileModule,
+    AdminUsersModule,
+    AdminLanguagesModule,
+    AdminAuditLogsModule,
     UploadModule,
   ],
   controllers: [AppController],

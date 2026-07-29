@@ -9,11 +9,14 @@ import { AuthService } from './services/authService';
 import { AuditModule } from 'modules/audit/audit.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { MailModule } from 'modules/mail/mail.module';
+import { AuthCookieService } from './services/auth-cookie.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Role]),
     AuditModule,
+    MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -26,7 +29,7 @@ import { RolesGuard } from './guards/roles.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard],
+  providers: [AuthService, AuthCookieService, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard, TypeOrmModule],
 })
 export class AuthModule {}

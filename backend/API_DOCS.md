@@ -8,6 +8,30 @@ http://localhost:3000/api
 
 Backend trả message/error code ổn định để Angular dịch bằng JSON giao diện.
 
+## Cloudinary image upload
+
+Các API upload yêu cầu đăng nhập bằng cookie, dùng `multipart/form-data` và
+field ảnh tên `file`. Chỉ nhận JPEG, PNG, WebP, tối đa 5 MB. Database chỉ lưu
+URL HTTPS do Cloudinary trả về.
+
+```http
+POST /api/profile/images/avatar
+POST /api/profile/images/cover
+POST /api/uploads/images
+```
+
+Hai API profile cập nhật URL vào `users.avatar` hoặc `users.coverImage`.
+`/uploads/images` dùng chung cho thumbnail và ảnh chèn trong editor.
+
+## Public languages
+
+```http
+GET /api/languages
+```
+
+Trả về các ngôn ngữ chưa xóa, đang hoạt động và có trạng thái `READY`. Endpoint
+này không yêu cầu đăng nhập và được Angular dùng cho bộ chọn ngôn ngữ ở topbar.
+
 ## Authentication
 
 ### Register
@@ -50,8 +74,7 @@ Response:
   "success": true,
   "message": "AUTH_LOGIN_SUCCEEDED",
   "data": {
-    "user": {},
-    "accessToken": "..."
+    "user": {}
   }
 }
 ```
@@ -60,19 +83,18 @@ Response:
 
 ```http
 GET /api/auth/me
-Authorization: Bearer <accessToken>
+Cookie: vccorp_access_token=<HttpOnly JWT>
 ```
 
 ### Logout
 
 ```http
 POST /api/auth/logout
-Authorization: Bearer <accessToken>
+Cookie: vccorp_access_token=<HttpOnly JWT>
 ```
 
-Không có refresh token/blacklist. Logout ghi audit log, còn Angular chịu trách
-nhiệm xóa access token. Token hết hiệu lực khi hết hạn hoặc sau khi mật khẩu
-người dùng được đổi.
+Không có refresh token/blacklist. Logout ghi audit log và backend xóa cookie
+`HttpOnly`. Angular không lưu hoặc đọc JWT.
 
 ## Password reset
 
@@ -89,9 +111,8 @@ Content-Type: application/json
 }
 ```
 
-Ở `NODE_ENV=development`, response có `developmentOtp` để kiểm thử local. Ở
-production, API không trả OTP; cần nối `OtpDeliveryService` với nhà cung cấp
-email trước khi deploy.
+OTP được gửi đến email người dùng bằng Gmail SMTP. API không trả OTP về Angular;
+database chỉ lưu OTP dưới dạng hash.
 
 ### Verify OTP
 
@@ -157,488 +178,240 @@ getProfile(@CurrentUser() user: AuthenticatedUser) {
 Người 2 phải dùng các guard/decorator này, không tạo thêm bản sao trong module
 nội dung.
 
----
-
-## API Người 2 – Content Module
-
-> Script dev: `npm run dev` (watch mode) hoặc `npm run start` (một lần).  
-> Base URL local: `http://localhost:3000/api`
-
-### Cách test nhanh
-
-1. **Đảm bảo MySQL đang chạy** (XAMPP → Start Apache + MySQL).
-2. **Chạy migration** (lần đầu): `npm run migration:run`
-3. **Khởi động server**: `npm run dev`
-4. **Dùng Postman / Thunder Client / curl** để gọi API.
-5. **Lấy token**: gọi `POST /api/auth/login` → copy `accessToken` → dán vào header `Authorization: Bearer <token>`.
-
----
-
-## Public – Languages
-
-### Lấy danh sách ngôn ngữ (tạm thời)
+## Profile
 
 ```http
-GET /api/public/languages
+GET /api/profile
+Authorization: Bearer <accessToken>
 ```
-
-> ⚠️ Route tạm thời. Sau khi Người 1 tách `/api/languages` thành public/admin,
-> sẽ chuyển về `GET /api/languages`.
-
-Query params (tuỳ chọn):
-
-```text
-page    – số trang (mặc định 1)
-limit   – số bản ghi/trang (mặc định 10)
-search  – tìm theo code hoặc name
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "languages": [],
-    "pagination": { "page": 1, "limit": 10, "total": 0, "totalPages": 0 }
-  }
-}
-```
-
----
-
-## Public – Categories
-
-### Lấy danh sách danh mục (tạm thời)
 
 ```http
-GET /api/public/categories
-```
-
-> ⚠️ Route tạm thời. Sau khi Người 1 tách `/api/categories` thành public/admin,
-> sẽ chuyển về `GET /api/categories`.
-
-Query params (tuỳ chọn):
-
-```text
-page     – số trang (mặc định 1)
-limit    – số bản ghi/trang (mặc định 10)
-search   – tìm theo tên bản dịch
-```
-
----
-
-## Public – Posts
-
-### Danh sách bài viết
-
-```http
-GET /api/posts
-```
-
-Chỉ trả bài `PUBLISHED`. Query params:
-
-```text
-page        – số trang (mặc định 1)
-limit       – tối đa 50 (mặc định 10)
-language    – mã ngôn ngữ, ví dụ: vi, en, zh
-categoryId  – lọc theo danh mục
-search      – tìm trong tiêu đề bản dịch
-sort        – newest | oldest | popular (mặc định newest)
-```
-
-Response mẫu:
-
-```json
-{
-  "success": true,
-  "data": {
-    "items": [
-      {
-        "id": "1",
-        "thumbnail": "https://...",
-        "status": "PUBLISHED",
-        "publishedAt": "2026-07-28T...",
-        "translations": [...],
-        "category": {...},
-        "author": { "id": 1, "fullName": "Nguyễn Văn A", "avatar": null },
-        "likesCount": 12,
-        "commentsCount": 3
-      }
-    ],
-    "pagination": { "page": 1, "limit": 10, "total": 1, "totalPages": 1 }
-  }
-}
-```
-
-### Chi tiết bài viết
-
-```http
-GET /api/posts/:id
-```
-
-Trả bài `PUBLISHED` kèm translations, category, author, likesCount, commentsCount.
-
----
-
-## Public – Comments
-
-### Danh sách bình luận của bài viết
-
-```http
-GET /api/posts/:id/comments
-```
-
-Trả root comments (không có `parentId`), kèm `repliesCount`. Query params:
-
-```text
-page   – mặc định 1
-limit  – mặc định 20
-```
-
-### Đăng bình luận
-
-```http
-POST /api/posts/:id/comments
+PATCH /api/profile
 Authorization: Bearer <accessToken>
 Content-Type: application/json
 ```
 
 ```json
 {
-  "content": "Bài viết rất hay!",
-  "parentId": null
+  "fullName": "Nguyễn Văn A",
+  "phone": "0912345678",
+  "dateOfBirth": "2000-08-02",
+  "avatar": "https://example.com/avatar.jpg",
+  "coverImage": "https://example.com/cover.jpg"
 }
 ```
 
-Để trả lời một bình luận khác, truyền `parentId` là id của comment cha.
+Tất cả trường đều tùy chọn. Để xóa giá trị có thể truyền `null`.
 
-Response:
+## Admin users
 
-```json
-{
-  "success": true,
-  "message": "COMMENT_CREATED",
-  "data": { "id": "1", "content": "...", "userId": 2, "postId": "1" }
-}
-```
-
----
-
-## Public – Likes
-
-### Like / Unlike bài viết
+Tất cả endpoint yêu cầu:
 
 ```http
-POST /api/posts/:id/likes
-Authorization: Bearer <accessToken>
+Authorization: Bearer <SUPER_ADMIN accessToken>
 ```
 
-Gọi lần đầu → like. Gọi lại → unlike (toggle).
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "POST_LIKED",
-  "data": { "liked": true, "totalLikes": 13 }
-}
-```
-
----
-
-## Blog Owner – Quản lý bài viết của mình
-
-> Yêu cầu: `Authorization: Bearer <token>` với tài khoản có role `BLOG_OWNER`.
-
-### Danh sách bài của tôi
+### Danh sách
 
 ```http
-GET /api/owner/posts
-Authorization: Bearer <accessToken>
+GET /api/admin/users?page=1&limit=10&search=&role=BLOG_OWNER&status=ACTIVE&sort=newest
 ```
 
-Query params:
+Giá trị sort:
 
 ```text
-page    – mặc định 1
-limit   – mặc định 10
-status  – DRAFT | PENDING | PUBLISHED | REJECTED
-search  – tìm trong tiêu đề
+newest
+oldest
+a-z
+z-a
 ```
 
-### Chi tiết bài của tôi
+### Chi tiết
 
 ```http
-GET /api/owner/posts/:id
-Authorization: Bearer <accessToken>
+GET /api/admin/users/:id
 ```
 
-### Tạo bài viết mới
+### Tạo tài khoản
 
 ```http
-POST /api/owner/posts
-Authorization: Bearer <accessToken>
-Content-Type: application/json
+POST /api/admin/users
 ```
 
 ```json
 {
-  "thumbnail": "https://example.com/thumb.jpg",
-  "categoryId": 1,
-  "sourceLanguageId": 1,
-  "translations": [
-    {
-      "languageId": 1,
-      "title": "Tiêu đề bài viết",
-      "content": "<p>Nội dung bài viết...</p>"
-    },
-    {
-      "languageId": 2,
-      "title": "Article Title",
-      "content": "<p>Content...</p>"
-    }
-  ]
+  "userName": "blogger02",
+  "email": "blogger02@example.com",
+  "fullName": "Blog Owner 02",
+  "phone": "0912345678",
+  "password": "Password123",
+  "role": "BLOG_OWNER"
 }
 ```
 
-Bài tạo mới luôn có `status = DRAFT`.
+### Cập nhật thông tin
 
-Response:
+```http
+PATCH /api/admin/users/:id
+```
 
 ```json
 {
-  "success": true,
-  "message": "POST_CREATED",
-  "data": { "id": "1", "status": "DRAFT", ... }
+  "fullName": "Tên mới",
+  "phone": "0987654321"
 }
 ```
 
-### Cập nhật bài viết
+### Đổi role
 
 ```http
-PATCH /api/owner/posts/:id
-Authorization: Bearer <accessToken>
-Content-Type: application/json
+PATCH /api/admin/users/:id/role
 ```
-
-Chỉ cho phép khi bài ở trạng thái `DRAFT` hoặc `REJECTED`. Body giống Create, tất cả field đều optional.
-
-Lỗi nếu sai trạng thái:
 
 ```json
 {
-  "success": false,
-  "error": { "code": "POST_CANNOT_EDIT", "message": "Only DRAFT or REJECTED posts can be edited" }
+  "role": "BLOG_OWNER"
 }
 ```
 
-### Xoá bài viết
+### Khóa và mở khóa
 
 ```http
-DELETE /api/owner/posts/:id
-Authorization: Bearer <accessToken>
+PATCH /api/admin/users/:id/lock
+PATCH /api/admin/users/:id/unlock
 ```
 
-Soft delete – bài vẫn còn trong DB, chỉ gán `deleted_at`.
+Admin không thể tự khóa hoặc tự đổi role. Hệ thống không cho khóa/hạ quyền Super
+Admin cuối cùng.
 
-### Nộp bài chờ duyệt
+## Admin audit logs
+
+Các API bên dưới chỉ cho phép `SUPER_ADMIN` truy cập và chỉ có quyền đọc.
+
+### Danh sách và tìm kiếm
 
 ```http
-POST /api/owner/posts/:id/submit
-Authorization: Bearer <accessToken>
+GET /api/admin/logs?page=1&limit=20&search=&actorId=&action=&entityType=&entityId=&fromDate=2026-07-01&toDate=2026-07-28&sort=newest
 ```
 
-Chuyển trạng thái `DRAFT` hoặc `REJECTED` → `PENDING`.
+Các bộ lọc:
 
-```json
-{
-  "success": true,
-  "message": "POST_SUBMITTED",
-  "data": { "id": "1", "status": "PENDING", "submittedAt": "..." }
-}
-```
+- `search`: tìm trong tên người thực hiện, nhãn đối tượng, action và loại đối tượng.
+- `actorId`: ID người thực hiện.
+- `action`: mã action chính xác, ví dụ `AUTH_LOGIN_SUCCEEDED`.
+- `entityType`: loại đối tượng chính xác, ví dụ `USER`, `POST`, `CATEGORY`.
+- `entityId`: ID đối tượng.
+- `fromDate`, `toDate`: ngày dạng `YYYY-MM-DD` hoặc ISO 8601. Ngày kết thúc được tính trọn ngày theo múi giờ `+07:00`.
+- `sort`: `newest` hoặc `oldest`.
 
-Lỗi nếu bài đã pending:
+Khoảng ngày tối đa cho một truy vấn là 365 ngày. API danh sách không trả về `beforeData`,
+`afterData`, `metadata` và `userAgent` để giảm dữ liệu đọc từ MySQL và dữ liệu truyền về frontend.
 
-```json
-{
-  "success": false,
-  "error": { "code": "POST_ALREADY_SUBMITTED", "message": "Post is already waiting for approval" }
-}
-```
-
----
-
-## Admin – Kiểm duyệt bài viết
-
-> Yêu cầu: role `SUPER_ADMIN`.
-
-### Danh sách tất cả bài viết
+### Dữ liệu cho các dropdown bộ lọc
 
 ```http
-GET /api/admin/posts
-Authorization: Bearer <adminToken>
+GET /api/admin/logs/filter-options
 ```
 
-Query params:
+Kết quả gồm các `actions`, `entityTypes` và `actors` thực sự đang có trong bảng `audit_logs`.
+
+### Chi tiết một log
+
+```http
+GET /api/admin/logs/:id
+```
+
+API chi tiết trả thêm `beforeData`, `afterData`, `metadata` và `userAgent`. Các trường nhạy cảm
+như mật khẩu, OTP, token, cookie, authorization và secret luôn được thay bằng `[REDACTED]`
+trước khi gửi về frontend.
+
+## Admin languages
+
+Tất cả endpoint yêu cầu access token của `SUPER_ADMIN`.
+
+### Danh sách
+
+```http
+GET /api/admin/languages?page=1&limit=10&search=&translationStatus=READY&isActive=true&records=active&sort=newest
+```
+
+`records` nhận:
 
 ```text
-page        – mặc định 1
-limit       – mặc định 10
-status      – DRAFT | PENDING | PUBLISHED | REJECTED
-authorId    – lọc theo tác giả
-categoryId  – lọc theo danh mục
-search      – tìm trong tiêu đề
+active
+deleted
+all
 ```
 
-### Chi tiết bài viết (admin)
+### Chi tiết
 
 ```http
-GET /api/admin/posts/:id
-Authorization: Bearer <adminToken>
+GET /api/admin/languages/:id
 ```
 
-### Duyệt bài
+### Tạo ngôn ngữ
 
 ```http
-POST /api/admin/posts/:id/approve
-Authorization: Bearer <adminToken>
+POST /api/admin/languages
 ```
-
-Chỉ cho phép khi bài đang `PENDING`. Ghi audit log `POST_APPROVED`.
 
 ```json
 {
-  "success": true,
-  "message": "POST_APPROVED",
-  "data": { "id": "1", "status": "PUBLISHED", "publishedAt": "..." }
+  "code": "ja",
+  "name": "日本語",
+  "flag": "https://flagcdn.com/jp.svg",
+  "fallbackLanguageId": 1,
+  "isActive": true,
+  "translationStatus": "DRAFT"
 }
 ```
 
-### Từ chối bài
+### Cập nhật thông tin/fallback
 
 ```http
-POST /api/admin/posts/:id/reject
-Authorization: Bearer <adminToken>
-Content-Type: application/json
+PATCH /api/admin/languages/:id
 ```
 
 ```json
 {
-  "reason": "Nội dung không phù hợp với chính sách đăng tải."
+  "name": "日本語",
+  "fallbackLanguageId": 1
 }
 ```
 
-Ghi audit log `POST_REJECTED`.
+Truyền `fallbackLanguageId: null` để bỏ fallback.
 
-```json
-{
-  "success": true,
-  "message": "POST_REJECTED",
-  "data": { "id": "1", "status": "REJECTED", "rejectionReason": "..." }
-}
-```
-
----
-
-## Admin – Dashboard
-
-### Thống kê tổng quan
+### Đổi trạng thái
 
 ```http
-GET /api/admin/dashboard
-Authorization: Bearer <adminToken>
+PATCH /api/admin/languages/:id/status
 ```
 
-Response:
+Ngôn ngữ hoạt động không được có trạng thái `DISABLED`:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "posts": {
-      "draft": 5,
-      "pending": 2,
-      "published": 30,
-      "rejected": 1,
-      "total": 38
-    },
-    "interactions": {
-      "comments": 120,
-      "likes": 340
-    },
-    "users": {
-      "total": 15
-    },
-    "topPosts": [...]
-  }
+  "isActive": true,
+  "translationStatus": "READY"
 }
 ```
 
----
+Ngôn ngữ không hoạt động phải có trạng thái `DISABLED`:
 
-## Upload ảnh
+```json
+{
+  "isActive": false,
+  "translationStatus": "DISABLED"
+}
+```
 
-### Upload image
+### Xóa mềm và khôi phục
 
 ```http
-POST /api/upload/image
-Authorization: Bearer <accessToken>
-Content-Type: multipart/form-data
+DELETE /api/admin/languages/:id
+PATCH  /api/admin/languages/:id/restore
 ```
 
-Field: `file` – file ảnh (jpg/jpeg/png/gif), tối đa 5MB.
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "FILE_UPLOADED",
-  "data": {
-    "url": "/uploads/file-1234567890.jpg"
-  }
-}
-```
-
-Lỗi sai format:
-
-```json
-{
-  "success": false,
-  "error": { "code": "FILE_REQUIRED", "message": "File is required" }
-}
-```
-
-> **Lưu ý**: URL trả về dùng để lưu vào DB (`thumbnail`, `avatar`, `coverImage`).
-> Không lưu base64 vào DB.
-
----
-
-## Luồng trạng thái bài viết
-
-```
-DRAFT ──submit──► PENDING ──approve──► PUBLISHED
-                     │
-                  reject
-                     │
-                     ▼
-                  REJECTED ──submit──► PENDING (resubmit)
-```
-
-## Error codes phổ biến (Người 2)
-
-| Code | HTTP | Ý nghĩa |
-|------|------|---------|
-| `POST_NOT_FOUND` | 404 | Không tìm thấy bài viết |
-| `POST_CANNOT_EDIT` | 403 | Bài không ở trạng thái cho phép sửa |
-| `POST_ALREADY_SUBMITTED` | 400 | Bài đang chờ duyệt |
-| `POST_ALREADY_PUBLISHED` | 400 | Bài đã được đăng |
-| `POST_NOT_PENDING` | 400 | Bài không ở trạng thái PENDING |
-| `POST_NOT_PUBLISHED` | 400 | Không thể comment bài chưa đăng |
-| `COMMENT_CREATED` | 201 | Tạo bình luận thành công |
-| `PARENT_COMMENT_NOT_FOUND` | 404 | Không tìm thấy comment cha |
-| `POST_LIKED` / `POST_UNLIKED` | 200 | Like / Unlike thành công |
-| `FILE_REQUIRED` | 400 | Thiếu file upload |
+Ngôn ngữ hệ thống (`isSystemLanguage=true`) không được xóa. Ngôn ngữ đang được
+dùng làm fallback hoặc là ngôn ngữ hoạt động cuối cùng không được vô hiệu hóa.
+Ngôn ngữ khôi phục trở lại ở trạng thái `DRAFT` và chưa active.

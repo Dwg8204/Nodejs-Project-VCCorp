@@ -18,6 +18,8 @@ import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { LanguageModule } from 'modules/language/language.module';
 import { CategoryModule } from 'modules/category/category.module';
+import { DashboardModule } from 'modules/dashboard/dashboard.module';
+import { UploadModule } from 'modules/upload/upload.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -41,6 +43,8 @@ import { AppController } from './app.controller';
     PostModule,
     InteractionModule,
     AuditModule,
+    DashboardModule,
+    UploadModule,
   ],
   controllers: [AppController],
 })

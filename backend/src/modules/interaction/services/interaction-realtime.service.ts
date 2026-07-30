@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
 
 export interface InteractionChangedEvent {
-  type: 'LIKE_CHANGED' | 'COMMENT_CREATED';
+  type: 'LIKE_CHANGED' | 'COMMENT_CREATED' | 'COMMENT_DELETED';
   postId: string;
   occurredAt: string;
 }

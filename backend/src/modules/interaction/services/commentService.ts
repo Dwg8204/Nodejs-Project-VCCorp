@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from 'modules/interaction/models/comment';
@@ -123,6 +123,43 @@ export class CommentService {
       success: true,
       message: 'COMMENT_CREATED',
       data: { item: comment },
+    };
+  }
+
+  async remove(userId: number, postId: string, commentId: string) {
+    const comment = await this.commentRepository.findOne({
+      where: { id: commentId, postId, deletedAt: null },
+    });
+    if (!comment) {
+      throw new NotFoundException({
+        success: false,
+        error: { code: 'COMMENT_NOT_FOUND', message: 'Comment not found' },
+      });
+    }
+    if (comment.userId !== userId) {
+      throw new ForbiddenException({
+        success: false,
+        error: {
+          code: 'COMMENT_DELETE_FORBIDDEN',
+          message: 'You can only delete your own comments',
+        },
+      });
+    }
+
+    const deleteResult = comment.parentId === null
+      ? await this.commentRepository
+          .createQueryBuilder()
+          .softDelete()
+          .where('post_id = :postId', { postId })
+          .andWhere('(id = :commentId OR parent_id = :commentId)', { commentId })
+          .execute()
+      : await this.commentRepository.softDelete(comment.id);
+    const deletedCount = deleteResult.affected ?? 1;
+    this.realtime.publish('COMMENT_DELETED', postId);
+    return {
+      success: true,
+      message: 'COMMENT_DELETED',
+      data: { deletedCount },
     };
   }
 }

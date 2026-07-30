@@ -21,6 +21,8 @@ export class ArticleComponent {
   protected readonly replyTo=signal<number|null>(null);
   protected readonly replyText=signal('');
   protected readonly expandedReplies=signal<Set<number>>(new Set());
+  protected readonly commentPendingDelete=signal<CommentView|null>(null);
+  protected readonly deletingComment=signal(false);
   protected readonly id=signal(Number(this.route.snapshot.paramMap.get('id')));
   private readonly preview=this.route.snapshot.queryParamMap.get('preview')==='1';
   private readonly post=signal<ContentPost|null>(null);
@@ -100,6 +102,22 @@ export class ArticleComponent {
   protected visibleReplies(group:CommentGroup):CommentView[]{return this.expandedReplies().has(group.root.id)?group.replies:group.replies.slice(-2);}
   protected hiddenReplyCount(group:CommentGroup):number{return Math.max(0,group.replies.length-2);}
   protected toggleReplies(rootId:number):void{this.expandedReplies.update(current=>{const next=new Set(current);next.has(rootId)?next.delete(rootId):next.add(rootId);return next;});}
+  protected requestDeleteComment(comment:CommentView):void{if(comment.userId===this.auth.currentUser()?.id)this.commentPendingDelete.set(comment);}
+  protected cancelDeleteComment():void{if(!this.deletingComment())this.commentPendingDelete.set(null);}
+  protected confirmDeleteComment():void{
+    const comment=this.commentPendingDelete();
+    if(!comment||this.deletingComment())return;
+    this.deletingComment.set(true);
+    this.api.deleteComment(String(this.id()),String(comment.id)).subscribe({
+      next:response=>{
+        this.commentPendingDelete.set(null);
+        this.deletingComment.set(false);
+        this.loadComments();
+        this.post.update(post=>post?{...post,commentsCount:Math.max(0,Number(post.commentsCount??0)-response.data.deletedCount)}:post);
+      },
+      error:()=>this.deletingComment.set(false),
+    });
+  }
   protected focusComment():void{document.querySelector<HTMLElement>('.responses-section')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.querySelector<HTMLTextAreaElement>('.comment-input .comment-textarea')?.focus());}
   @HostListener('click',['$event']) protected openAuthor(event:MouseEvent):void{const target=(event.target as HTMLElement).closest('.byline .author-name,.byline .author-avatar');if(!target)return;event.preventDefault();const id=this.article()?.authorId;if(id)void this.router.navigate(['/profile',id]);}
 

@@ -19,7 +19,7 @@ export class ArticleComponent {
   protected readonly commentText=signal('');
   protected readonly replyTo=signal<number|null>(null);
   protected readonly replyText=signal('');
-  protected readonly id=Number(this.route.snapshot.paramMap.get('id'));
+  protected readonly id=signal(Number(this.route.snapshot.paramMap.get('id')));
   private readonly preview=this.route.snapshot.queryParamMap.get('preview')==='1';
   private readonly post=signal<ContentPost|null>(null);
   private readonly commentRows=signal<ContentComment[]>([]);
@@ -27,17 +27,19 @@ export class ArticleComponent {
   protected readonly liked=signal(false);
 
   constructor(){
+    this.route.paramMap.subscribe(params=>this.id.set(Number(params.get('id'))));
     effect(()=>{
+      const id=this.id();
       const language=this.language.locale();
       const request=this.preview
-        ?(this.auth.role()==='SUPER_ADMIN'?this.api.adminPost(String(this.id)):this.api.ownerPost(String(this.id)))
-        :this.api.post(String(this.id));
+        ?(this.auth.role()==='SUPER_ADMIN'?this.api.adminPost(String(id)):this.api.ownerPost(String(id)))
+        :this.api.post(String(id));
       request.subscribe({
         next:response=>{this.post.set(response.data.item);if(!this.preview)this.loadRelated(response.data.item.categoryId,language);},
         error:()=>this.post.set(null),
       });
       if(!this.preview)this.loadComments();
-      if(!this.preview&&this.auth.isAuthenticated())this.api.myLike(String(this.id)).subscribe({next:response=>this.liked.set(response.data.liked)});
+      if(!this.preview&&this.auth.isAuthenticated())this.api.myLike(String(id)).subscribe({next:response=>this.liked.set(response.data.liked)});
     },{allowSignalWrites:true});
   }
 
@@ -48,7 +50,7 @@ export class ArticleComponent {
     const author=post.author?.fullName||post.author?.userName||'Anonymous';
     return{id:Number(post.id),authorId:post.authorId,categoryId:post.categoryId,title:translation?.title??'',content:translation?.content??'',thumbnail:post.thumbnail,category:categoryTranslation?.name??'',author,avatar:post.author?.avatar??null,date:post.publishedAt??post.createdAt,likes:Number(post.likesCount??0),comments:Number(post.commentsCount??this.commentRows().length)};
   });
-  protected readonly related=computed<RelatedView[]>(()=>this.relatedRows().filter(row=>Number(row.id)!==this.id).slice(0,3).map(row=>{const translation=this.translation(row);const category=row.category.translations.find(item=>item.languageId===this.language.languageId())??row.category.translations[0];return{id:Number(row.id),title:translation?.title??'',thumbnail:row.thumbnail,category:category?.name??'',author:row.author?.fullName||row.author?.userName||'',date:row.publishedAt??row.createdAt};}));
+  protected readonly related=computed<RelatedView[]>(()=>this.relatedRows().filter(row=>Number(row.id)!==this.id()).slice(0,3).map(row=>{const translation=this.translation(row);const category=row.category.translations.find(item=>item.languageId===this.language.languageId())??row.category.translations[0];return{id:Number(row.id),title:translation?.title??'',thumbnail:row.thumbnail,category:category?.name??'',author:row.author?.fullName||row.author?.userName||'',date:row.publishedAt??row.createdAt};}));
   protected readonly comments=computed<CommentView[]>(()=>{
     const rows=this.commentRows();
     const roots=rows.filter(row=>row.parentId===null);
@@ -78,14 +80,14 @@ export class ArticleComponent {
   });
 
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));}
-  protected toggleLike():void{if(!this.auth.isAuthenticated()){void this.router.navigate(['/login']);return;}this.api.toggleLike(String(this.id)).subscribe({next:response=>{this.liked.set(response.data.liked);this.post.update(post=>post?{...post,likesCount:response.data.totalLikes}:post);}});}
-  protected submitComment(parentId:number|null):void{if(!this.auth.isAuthenticated())return;const value=(parentId===null?this.commentText():this.replyText()).trim();if(!value)return;this.api.createComment(String(this.id),value,parentId===null?null:String(parentId)).subscribe({next:()=>{this.commentText.set('');this.replyText.set('');this.replyTo.set(null);this.loadComments();this.post.update(post=>post?{...post,commentsCount:Number(post.commentsCount??0)+1}:post);}});}
+  protected toggleLike():void{if(!this.auth.isAuthenticated()){void this.router.navigate(['/login']);return;}this.api.toggleLike(String(this.id())).subscribe({next:response=>{this.liked.set(response.data.liked);this.post.update(post=>post?{...post,likesCount:response.data.totalLikes}:post);}});}
+  protected submitComment(parentId:number|null):void{if(!this.auth.isAuthenticated())return;const value=(parentId===null?this.commentText():this.replyText()).trim();if(!value)return;this.api.createComment(String(this.id()),value,parentId===null?null:String(parentId)).subscribe({next:()=>{this.commentText.set('');this.replyText.set('');this.replyTo.set(null);this.loadComments();this.post.update(post=>post?{...post,commentsCount:Number(post.commentsCount??0)+1}:post);}});}
   protected keySubmit(event:KeyboardEvent,parentId:number|null):void{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.submitComment(parentId);}}
   protected replyPlaceholder(commentId:number):string{const name=this.comments().find(comment=>comment.id===commentId)?.name??'';return `@${name} ${this.language.choose('Viết phản hồi...','Write a reply...')}`;}
   protected focusComment():void{document.querySelector<HTMLElement>('.responses-section')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.querySelector<HTMLTextAreaElement>('.comment-input .comment-textarea')?.focus());}
   @HostListener('click',['$event']) protected openAuthor(event:MouseEvent):void{const target=(event.target as HTMLElement).closest('.byline .author-name,.byline .author-avatar');if(!target)return;event.preventDefault();const id=this.article()?.authorId;if(id)void this.router.navigate(['/profile',id]);}
 
-  private loadComments():void{this.api.comments(String(this.id),{page:1,limit:100}).subscribe({next:response=>this.commentRows.set(response.data.items),error:()=>this.commentRows.set([])});}
+  private loadComments():void{this.api.comments(String(this.id()),{page:1,limit:100}).subscribe({next:response=>this.commentRows.set(response.data.items),error:()=>this.commentRows.set([])});}
   private loadRelated(categoryId:number,language:string):void{this.api.posts({page:1,limit:4,categoryId,language,sort:'newest'}).subscribe({next:response=>this.relatedRows.set(response.data.items),error:()=>this.relatedRows.set([])});}
   private translation(post:ContentPost){return post.translations.find(item=>item.languageId===this.language.languageId())??post.translations[0];}
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { AuditJson, AuditLog } from '../models/auditLog';
 
 export interface RecordAuditInput {
@@ -25,8 +25,14 @@ export class AuditService {
     private readonly auditRepository: Repository<AuditLog>,
   ) {}
 
-  async record(input: RecordAuditInput): Promise<AuditLog> {
-    const log = this.auditRepository.create({
+  async record(
+    input: RecordAuditInput,
+    manager?: EntityManager,
+  ): Promise<AuditLog> {
+    const repository = manager
+      ? manager.getRepository(AuditLog)
+      : this.auditRepository;
+    const log = repository.create({
       actorId: input.actorId ?? null,
       actorName: input.actorName ?? null,
       actorRole: input.actorRole ?? null,
@@ -43,6 +49,6 @@ export class AuditService {
       ipAddress: input.ipAddress ?? null,
       userAgent: input.userAgent?.slice(0, 500) ?? null,
     });
-    return this.auditRepository.save(log);
+    return repository.save(log);
   }
 }

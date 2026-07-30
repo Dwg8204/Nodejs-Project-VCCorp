@@ -10,6 +10,10 @@ import {
   IsString,
   IsNumber,
   IsArray,
+  ArrayMinSize,
+  IsBoolean,
+  IsInt,
+  IsIn,
   ValidateNested,
   MaxLength,
   Min,
@@ -32,13 +36,22 @@ export class TranslationItemDto {
   @IsOptional()
   @IsString()
   des?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAutoTranslated?: boolean;
 }
 
 // =============================================================
 // DTO cho tạo danh mục mới
 // =============================================================
 export class CreateCategoryDto {
+  @IsInt()
+  @Min(1)
+  sourceLanguageId: number;
+
   @IsArray({ message: 'translations phải là một mảng' })
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TranslationItemDto)
   translations: TranslationItemDto[];
@@ -49,7 +62,13 @@ export class CreateCategoryDto {
 // =============================================================
 export class UpdateCategoryDto {
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  sourceLanguageId?: number;
+
+  @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TranslationItemDto)
   translations?: TranslationItemDto[];
@@ -59,15 +78,25 @@ export class UpdateCategoryDto {
 // DTO cho query params (phân trang + tìm kiếm)
 // =============================================================
 export class QueryCategoryDto {
+  @Type(() => Number)
   @IsOptional()
   @IsNumber()
   @Min(1)
   page?: number = 1;
 
+  @Type(() => Number)
   @IsOptional()
   @IsNumber()
   @Min(1)
   limit?: number = 10;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
+
+  @IsOptional()
+  @IsIn(['newest', 'oldest', 'name-asc', 'name-desc'])
+  sort?: 'newest' | 'oldest' | 'name-asc' | 'name-desc' = 'newest';
 
   @IsOptional()
   @IsString()

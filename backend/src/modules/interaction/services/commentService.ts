@@ -96,8 +96,16 @@ export class CommentService {
       // Replying to another reply still points to the original root comment.
       parentId = repliedComment.parentId ?? repliedComment.id;
       const repliedUserName = repliedComment.user?.fullName?.trim();
-      if (repliedUserName && !content.startsWith(`@${repliedUserName}`)) {
-        content = `@${repliedUserName} ${content}`;
+      if (repliedUserName) {
+        const mentionPrefix = `@${repliedUserName}`;
+        if (repliedComment.userId === userId) {
+          // A user replying to their own comment must not mention themselves.
+          if (content.startsWith(mentionPrefix)) {
+            content = content.slice(mentionPrefix.length).trimStart();
+          }
+        } else if (!content.startsWith(mentionPrefix)) {
+          content = `${mentionPrefix} ${content}`;
+        }
       }
     }
 

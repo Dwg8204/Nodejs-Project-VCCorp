@@ -15,6 +15,11 @@ export interface UpdateProfilePayload {
   phone?: string | null;
   dateOfBirth?: string | null;
 }
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 export type ProfileImageType = 'avatar' | 'cover';
 
@@ -67,6 +72,10 @@ export class ProfileApiService {
     return this.api
       .patch<{ user: ApiProfileUser }>('profile', payload)
       .pipe(map((response) => this.mapUserResponse(response)));
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<ApiResponse<null>> {
+    return this.api.patch<null>('profile/password', payload);
   }
 
   uploadImage(

@@ -87,6 +87,45 @@ export class PostAdminService {
     return this.review(user, postId, PostStatus.Rejected, dto.reason, ip, agent);
   }
 
+  async unapprove(user: AuthenticatedUser, id: string, ip: string, agent?: string) {
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Post);
+      const post = await repo.findOne({
+        where: { id, deletedAt: IsNull() },
+        relations: ['translations'],
+      });
+      if (!post) throw this.notFound();
+      if (post.status !== PostStatus.Published) {
+        throw new BadRequestException({
+          code: 'POST_NOT_PUBLISHED',
+          message: 'Only an approved post can have its approval revoked',
+        });
+      }
+      const before = structuredClone(post);
+      post.status = PostStatus.Pending;
+      post.rejectionReason = null;
+      post.reviewedBy = null;
+      post.reviewedAt = null;
+      post.publishedAt = null;
+      await repo.save(post);
+      await this.record(
+        manager,
+        user,
+        'POST_APPROVAL_REVOKED',
+        post,
+        before,
+        post,
+        ip,
+        agent,
+      );
+      return {
+        success: true,
+        message: 'POST_APPROVAL_REVOKED',
+        data: { item: post },
+      };
+    });
+  }
+
   private async review(user: AuthenticatedUser, id: string, status: PostStatus, reason: string | undefined, ip: string, agent?: string) {
     return this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(Post);

@@ -20,6 +20,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ContentApiService } from '../../core/services/content-api.service';
 import { FeedUiService } from '../../core/services/feed-ui.service';
 import { LanguageService } from '../../core/services/language.service';
+import { buildPaginationItems } from '../../shared/utils/pagination';
 import {
   ProfileApiService,
   ProfileImageType,
@@ -79,7 +80,9 @@ export class ProfileComponent implements OnInit {
 
   protected readonly tab = signal<'home' | 'about'>('home');
   protected readonly page = signal(1);
-  protected readonly pageSize = 5;
+  protected readonly pageSize = signal(5);
+  protected readonly pageInput = signal(1);
+  protected readonly sizeInput = signal(5);
   protected readonly loading = signal(false);
   protected readonly saving = signal(false);
   protected readonly uploading = signal<ProfileImageType | null>(null);
@@ -89,6 +92,10 @@ export class ProfileComponent implements OnInit {
   protected readonly editFullName = signal('');
   protected readonly editPhone = signal('');
   protected readonly editDateOfBirth = signal('');
+  protected readonly currentPassword = signal('');
+  protected readonly newPassword = signal('');
+  protected readonly confirmPassword = signal('');
+  protected readonly passwordMessage = signal('');
 
   private readonly requestedId =
     Number(this.route.snapshot.paramMap.get('id'))
@@ -141,17 +148,23 @@ export class ProfileComponent implements OnInit {
       ?? null,
   );
   protected readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.posts().length / this.pageSize)),
+    Math.max(1, Math.ceil(this.posts().length / this.pageSize())),
   );
   protected readonly pages = computed(() =>
-    Array.from({ length: this.totalPages() }, (_, index) => index + 1),
+    buildPaginationItems(this.page(), this.totalPages()),
   );
   protected readonly visiblePosts = computed(() =>
     this.posts().slice(
-      (this.page() - 1) * this.pageSize,
-      this.page() * this.pageSize,
+      (this.page() - 1) * this.pageSize(),
+      this.page() * this.pageSize(),
     ),
   );
+  protected readonly paginationSummary = computed(() => {
+    const total = this.posts().length;
+    const from = total ? (this.page() - 1) * this.pageSize() + 1 : 0;
+    const to = Math.min(this.page() * this.pageSize(), total);
+    return this.language.translate('pagination.summary', { from, to, total });
+  });
 
   ngOnInit(): void {
     if (this.ownProfile()) this.loadProfile();
@@ -209,12 +222,33 @@ export class ProfileComponent implements OnInit {
         : this.language.choose('Thành viên', 'Member');
   }
 
+  protected changePage(value: number): void {
+    const next = Math.min(Math.max(1, Math.trunc(value || 1)), this.totalPages());
+    this.page.set(next);
+    this.pageInput.set(next);
+  }
+
+  protected applyPage(): void {
+    this.changePage(this.pageInput());
+  }
+
+  protected applyPageSize(): void {
+    const size = Math.min(100, Math.max(1, Math.trunc(this.sizeInput() || 1)));
+    this.pageSize.set(size);
+    this.sizeInput.set(size);
+    this.changePage(1);
+  }
+
   protected openEdit(): void {
     const user = this.user();
     if (!user || !this.ownProfile()) return;
     this.editFullName.set(user.full_name ?? '');
     this.editPhone.set(user.phone ?? '');
     this.editDateOfBirth.set(user.date_of_birth ?? '');
+    this.currentPassword.set('');
+    this.newPassword.set('');
+    this.confirmPassword.set('');
+    this.passwordMessage.set('');
     this.errorMessage.set('');
     this.successMessage.set('');
     this.editOpen.set(true);
@@ -250,6 +284,69 @@ export class ProfileComponent implements OnInit {
             this.language.choose(
               'Đã cập nhật hồ sơ.',
               'Profile updated.',
+            ),
+          );
+        },
+        error: (error: unknown) => this.showError(error),
+      });
+  }
+
+  protected savePassword(): void {
+    if (this.saving()) return;
+    const currentPassword = this.currentPassword();
+    const newPassword = this.newPassword();
+    if (!currentPassword || !newPassword || !this.confirmPassword()) {
+      this.errorMessage.set(
+        this.language.choose(
+          'Vui lòng nhập đầy đủ ba trường mật khẩu.',
+          'Please complete all three password fields.',
+        ),
+      );
+      return;
+    }
+    if (
+      newPassword.length < 8
+      || !/[a-z]/.test(newPassword)
+      || !/[A-Z]/.test(newPassword)
+      || !/\d/.test(newPassword)
+    ) {
+      this.errorMessage.set(
+        this.language.choose(
+          'Mật khẩu mới phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường và số.',
+          'The new password must be at least 8 characters and include upper case, lower case and a number.',
+        ),
+      );
+      return;
+    }
+    if (newPassword !== this.confirmPassword()) {
+      this.errorMessage.set(
+        this.language.choose(
+          'Xác nhận mật khẩu mới không khớp.',
+          'The new password confirmation does not match.',
+        ),
+      );
+      return;
+    }
+
+    this.saving.set(true);
+    this.errorMessage.set('');
+    this.passwordMessage.set('');
+    this.profileApi
+      .changePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword: this.confirmPassword(),
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.currentPassword.set('');
+          this.newPassword.set('');
+          this.confirmPassword.set('');
+          this.passwordMessage.set(
+            this.language.choose(
+              'Mật khẩu đã được cập nhật.',
+              'Password updated successfully.',
             ),
           );
         },
@@ -380,6 +477,22 @@ export class ProfileComponent implements OnInit {
       UPLOAD_IMAGE_TYPE_NOT_ALLOWED: this.language.choose(
         'Định dạng ảnh không được hỗ trợ.',
         'This image format is not supported.',
+      ),
+      PROFILE_CURRENT_PASSWORD_INVALID: this.language.choose(
+        'Mật khẩu hiện tại không chính xác.',
+        'The current password is incorrect.',
+      ),
+      PROFILE_PASSWORD_CONFIRMATION_MISMATCH: this.language.choose(
+        'Xác nhận mật khẩu mới không khớp.',
+        'The new password confirmation does not match.',
+      ),
+      PROFILE_PASSWORD_UNCHANGED: this.language.choose(
+        'Mật khẩu mới phải khác mật khẩu hiện tại.',
+        'The new password must differ from the current password.',
+      ),
+      AUTH_PASSWORD_COMPLEXITY_REQUIRED: this.language.choose(
+        'Mật khẩu mới phải có chữ hoa, chữ thường và số.',
+        'The new password must include upper case, lower case and a number.',
       ),
     };
     this.errorMessage.set(

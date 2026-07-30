@@ -31,6 +31,7 @@ export class AdminContentApiService {
 
   posts(query:ApiQuery={}){return this.api.get<AdminPostsPage>('admin/posts',{query});}
   approve(id:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/approve`,{});}
+  unapprove(id:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/unapprove`,{});}
   reject(id:string,reason:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/reject`,{reason});}
 
   categories(query:ApiQuery={}){return this.api.get<ContentPage<ContentCategory>>('admin/categories',{query});}

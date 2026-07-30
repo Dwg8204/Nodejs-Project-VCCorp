@@ -54,3 +54,5 @@ input:disabled,
     text-overflow: ellipsis;
   }
 }
+app-profile .password-divider{height:1px;background:var(--border);margin:2px 0}app-profile .password-section{display:grid;gap:14px}app-profile .password-section h3{margin:0;font-size:17px}app-profile .password-section>p{margin:-7px 0 2px;color:var(--text-muted);font-size:13px}app-profile .password-save-btn{justify-self:start;padding:9px 15px;border:1px solid var(--border);border-radius:20px;background:var(--text);color:var(--bg);cursor:pointer}app-profile .password-save-btn:disabled{opacity:.55;cursor:not-allowed}app-profile .profile-edit-success{padding:9px 11px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:13px}
+.comment-text .comment-mention{font-weight:800!important}

@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
@@ -23,6 +24,24 @@ export class UpdateProfileDto {
   @IsDateString()
   dateOfBirth?: string | null;
 
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(72)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
+    message: 'AUTH_PASSWORD_COMPLEXITY_REQUIRED',
+  })
+  newPassword: string;
+
+  @IsString()
+  @IsNotEmpty()
+  confirmPassword: string;
 }
 
 export enum ProfileImageType {

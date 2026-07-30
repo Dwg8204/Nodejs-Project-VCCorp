@@ -6,7 +6,8 @@ import { ContentApiService } from '../../core/services/content-api.service';
 import { LanguageService } from '../../core/services/language.service';
 
 interface ArticleView { id:number; authorId:number; categoryId:number; title:string; content:string; thumbnail:string; category:string; author:string; avatar:string|null; date:string; likes:number; comments:number; }
-interface CommentView { id:number; name:string; initial:string; content:string; date:string; depth:0|1; }
+interface CommentView { id:number; userId:number; rootId:number; name:string; initial:string; mention:string|null; content:string; date:string; depth:0|1; }
+interface CommentGroup { root:CommentView;replies:CommentView[]; }
 interface RelatedView { id:number;title:string;thumbnail:string;category:string;author:string;date:string; }
 
 @Component({selector:'app-article',standalone:true,imports:[RouterLink],templateUrl:'./article.component.html',styleUrl:'./article.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
@@ -19,6 +20,7 @@ export class ArticleComponent {
   protected readonly commentText=signal('');
   protected readonly replyTo=signal<number|null>(null);
   protected readonly replyText=signal('');
+  protected readonly expandedReplies=signal<Set<number>>(new Set());
   protected readonly id=signal(Number(this.route.snapshot.paramMap.get('id')));
   private readonly preview=this.route.snapshot.queryParamMap.get('preview')==='1';
   private readonly post=signal<ContentPost|null>(null);
@@ -65,25 +67,39 @@ export class ArticleComponent {
       }
       return current.id;
     };
-    const view=(row:ContentComment,depth:0|1):CommentView=>{
+    const view=(row:ContentComment,depth:0|1,rootIdValue:number):CommentView=>{
       const name=row.user?.fullName||'Anonymous';
-      const repliedUser=depth===1?rows.find(item=>item.id===row.parentId)?.user?.fullName?.trim():null;
-      const content=repliedUser&&!row.content.startsWith('@')?`@${repliedUser} ${row.content}`:row.content;
-      return{id:Number(row.id),name,initial:name.charAt(0).toUpperCase(),content,date:row.createdAt,depth};
+      const repliedUser=depth===1?rows.find(item=>item.id===row.parentId):null;
+      const knownUsers=rows
+        .map(item=>({userId:item.userId,name:item.user?.fullName?.trim()||''}))
+        .filter(item=>item.name)
+        .sort((left,right)=>right.name.length-left.name.length);
+      const storedMention=knownUsers.find(item=>row.content.startsWith(`@${item.name}`));
+      const mention=storedMention
+        ?(storedMention.userId!==row.userId?storedMention.name:null)
+        :(repliedUser&&repliedUser.userId!==row.userId?repliedUser.user?.fullName?.trim()||null:null);
+      const content=storedMention
+        ?row.content.slice(storedMention.name.length+1).trimStart()
+        :row.content;
+      return{id:Number(row.id),userId:row.userId,rootId:rootIdValue,name,initial:name.charAt(0).toUpperCase(),mention,content,date:row.createdAt,depth};
     };
     const output:CommentView[]=[];
     for(const root of roots){
-      output.push(view(root,0));
-      rows.filter(row=>row.parentId!==null&&rootId(row)===root.id).forEach(row=>output.push(view(row,1)));
+      output.push(view(root,0,Number(root.id)));
+      rows.filter(row=>row.parentId!==null&&rootId(row)===root.id).forEach(row=>output.push(view(row,1,Number(root.id))));
     }
     return output;
   });
+  protected readonly commentGroups=computed<CommentGroup[]>(()=>this.comments().filter(comment=>comment.depth===0).map(root=>({root,replies:this.comments().filter(comment=>comment.depth===1&&comment.rootId===root.id)})));
 
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));}
   protected toggleLike():void{if(!this.auth.isAuthenticated()){void this.router.navigate(['/login']);return;}this.api.toggleLike(String(this.id())).subscribe({next:response=>{this.liked.set(response.data.liked);this.post.update(post=>post?{...post,likesCount:response.data.totalLikes}:post);}});}
   protected submitComment(parentId:number|null):void{if(!this.auth.isAuthenticated())return;const value=(parentId===null?this.commentText():this.replyText()).trim();if(!value)return;this.api.createComment(String(this.id()),value,parentId===null?null:String(parentId)).subscribe({next:()=>{this.commentText.set('');this.replyText.set('');this.replyTo.set(null);this.loadComments();this.post.update(post=>post?{...post,commentsCount:Number(post.commentsCount??0)+1}:post);}});}
   protected keySubmit(event:KeyboardEvent,parentId:number|null):void{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.submitComment(parentId);}}
-  protected replyPlaceholder(commentId:number):string{const name=this.comments().find(comment=>comment.id===commentId)?.name??'';return `@${name} ${this.language.choose('Viết phản hồi...','Write a reply...')}`;}
+  protected replyPlaceholder(commentId:number):string{const comment=this.comments().find(item=>item.id===commentId);const prompt=this.language.choose('Viết phản hồi...','Write a reply...');return comment&&comment.userId!==this.auth.currentUser()?.id?`@${comment.name} ${prompt}`:prompt;}
+  protected visibleReplies(group:CommentGroup):CommentView[]{return this.expandedReplies().has(group.root.id)?group.replies:group.replies.slice(-2);}
+  protected hiddenReplyCount(group:CommentGroup):number{return Math.max(0,group.replies.length-2);}
+  protected toggleReplies(rootId:number):void{this.expandedReplies.update(current=>{const next=new Set(current);next.has(rootId)?next.delete(rootId):next.add(rootId);return next;});}
   protected focusComment():void{document.querySelector<HTMLElement>('.responses-section')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.querySelector<HTMLTextAreaElement>('.comment-input .comment-textarea')?.focus());}
   @HostListener('click',['$event']) protected openAuthor(event:MouseEvent):void{const target=(event.target as HTMLElement).closest('.byline .author-name,.byline .author-avatar');if(!target)return;event.preventDefault();const id=this.article()?.authorId;if(id)void this.router.navigate(['/profile',id]);}
 

@@ -1,206 +1,124 @@
-/**
- * =============================================================
- * Category Service - Xử lý logic nghiệp vụ cho Category
- * =============================================================
- */
-
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
-import { Category } from 'modules/category/models/category';
-import { CategoryTranslation } from 'modules/category/models/categoryTranslation';
-import {
-  CreateCategoryDto,
-  UpdateCategoryDto,
-  QueryCategoryDto,
-} from 'modules/category/validations/categoryValidation';
+import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
+import { AuditService } from 'modules/audit/services/audit.service';
+import { AuthenticatedUser } from 'modules/auth/interfaces/auth-user.interface';
+import { Language } from 'modules/language/models/language';
+import { Category } from '../models/category';
+import { CategoryTranslation } from '../models/categoryTranslation';
+import { CreateCategoryDto, QueryCategoryDto, TranslationItemDto, UpdateCategoryDto } from '../validations/categoryValidation';
 
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
-    @InjectRepository(CategoryTranslation)
-    private readonly translationRepository: Repository<CategoryTranslation>,
+    @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
+    private readonly dataSource: DataSource,
+    private readonly auditService: AuditService,
   ) {}
 
-  /**
-   * Tạo danh mục mới kèm bản dịch
-   */
-  async create(createCategoryDto: CreateCategoryDto) {
-    // Tạo category trước
-    const category = this.categoryRepository.create();
-    await this.categoryRepository.save(category);
-
-    // Tạo translations
-    const translations = createCategoryDto.translations.map((t) =>
-      this.translationRepository.create({
-        categoryId: category.id,
-        languageId: t.languageId,
-        name: t.name,
-        des: t.des,
-      }),
-    );
-    await this.translationRepository.save(translations);
-
-    // Load lại để lấy đầy đủ relations
-    const result = await this.categoryRepository.findOne({
-      where: { id: category.id },
+  create(user: AuthenticatedUser, dto: CreateCategoryDto, ip: string, agent?: string) {
+    return this.dataSource.transaction(async (manager) => {
+      await this.validate(manager, dto.sourceLanguageId, dto.translations);
+      const repo = manager.getRepository(Category);
+      const translationRepo = manager.getRepository(CategoryTranslation);
+      const category = await repo.save(repo.create({ sourceLanguageId: dto.sourceLanguageId }));
+      category.translations = await translationRepo.save(dto.translations.map((item) =>
+        translationRepo.create({ categoryId: category.id, languageId: item.languageId, name: item.name.trim(), des: item.des ?? null, isAutoTranslated: item.isAutoTranslated ?? false })));
+      await this.log(manager, user, 'CATEGORY_CREATED', category, null, category, ip, agent);
+      return { success: true, message: 'CATEGORY_CREATED', data: { item: category } };
     });
-
-    return {
-      success: true,
-      message: 'Tạo danh mục thành công',
-      data: { category: result },
-    };
   }
 
-  /**
-   * Lấy danh sách danh mục (chỉ lấy chưa xóa mềm)
-   */
-  async findAll(queryDto: QueryCategoryDto) {
-    const { page = 1, limit = 10, search = '' } = queryDto;
+  async findAll(query: QueryCategoryDto) {
+    const { page = 1, limit = 10, search, language, sort = 'newest' } = query;
     const take = Math.min(limit, 100);
-    const skip = (page - 1) * take;
-
-    const queryBuilder = this.categoryRepository.createQueryBuilder('category')
+    const qb = this.categoryRepository.createQueryBuilder('category')
       .leftJoinAndSelect('category.translations', 'translation')
-      .leftJoinAndSelect('translation.language', 'language')
-      .where('category.deleted_at IS NULL');
-
-    if (search) {
-      queryBuilder.andWhere('translation.name LIKE :search', {
-        search: `%${search}%`,
-      });
-    }
-
-    queryBuilder
-      .orderBy('category.created_at', 'DESC')
-      .skip(skip)
-      .take(take);
-
-    const [categories, total] = await queryBuilder.getManyAndCount();
-
-    return {
-      success: true,
-      data: {
-        categories,
-        pagination: {
-          page,
-          limit: take,
-          total,
-          totalPages: Math.ceil(total / take),
-        },
-      },
-    };
+      .leftJoinAndSelect('translation.language', 'languageEntity')
+      .loadRelationCountAndMap('category.postsCount', 'category.posts', 'post', (sub) => sub.andWhere('post.deletedAt IS NULL'))
+      .where('category.deletedAt IS NULL');
+    if (language) qb.andWhere('languageEntity.code = :language', { language });
+    if (search) qb.andWhere('translation.name LIKE :search', { search: `%${search}%` });
+    if (sort === 'oldest') qb.orderBy('category.createdAt', 'ASC');
+    else if (sort === 'name-asc') qb.orderBy('translation.name', 'ASC');
+    else if (sort === 'name-desc') qb.orderBy('translation.name', 'DESC');
+    else qb.orderBy('category.createdAt', 'DESC');
+    qb.addOrderBy('category.id', 'DESC');
+    const [items, total] = await qb.skip((page - 1) * take).take(take).getManyAndCount();
+    return { success: true, data: { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) } } };
   }
 
-  /**
-   * Lấy danh mục theo ID
-   */
   async findOne(id: number) {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull() },
-    });
-    if (!category) {
-      throw new NotFoundException('Không tìm thấy danh mục');
-    }
-
-    return {
-      success: true,
-      data: { category },
-    };
+    const item = await this.categoryRepository.findOne({ where: { id, deletedAt: IsNull() }, relations: ['translations', 'translations.language'] });
+    if (!item) throw this.notFound();
+    return { success: true, data: { item } };
   }
 
-  /**
-   * Cập nhật danh mục (thay thế toàn bộ translations)
-   */
-  async update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull() },
+  update(user: AuthenticatedUser, id: number, dto: UpdateCategoryDto, ip: string, agent?: string) {
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Category);
+      const translationsRepo = manager.getRepository(CategoryTranslation);
+      const category = await repo.findOne({ where: { id, deletedAt: IsNull() }, relations: ['translations'] });
+      if (!category) throw this.notFound();
+      const before = structuredClone(category);
+      const sourceLanguageId = dto.sourceLanguageId ?? category.sourceLanguageId;
+      const translations = dto.translations ?? category.translations;
+      if (!sourceLanguageId) throw new BadRequestException({ code: 'CATEGORY_SOURCE_LANGUAGE_REQUIRED' });
+      await this.validate(manager, sourceLanguageId, translations);
+      category.sourceLanguageId = sourceLanguageId;
+      await repo.save(category);
+      if (dto.translations) {
+        await translationsRepo.delete({ categoryId: id });
+        category.translations = await translationsRepo.save(dto.translations.map((item) =>
+          translationsRepo.create({ categoryId: id, languageId: item.languageId, name: item.name.trim(), des: item.des ?? null, isAutoTranslated: item.isAutoTranslated ?? false })));
+      }
+      await this.log(manager, user, 'CATEGORY_UPDATED', category, before, category, ip, agent);
+      return { success: true, message: 'CATEGORY_UPDATED', data: { item: category } };
     });
-    if (!category) {
-      throw new NotFoundException('Không tìm thấy danh mục');
-    }
-
-    if (updateCategoryDto.translations && updateCategoryDto.translations.length > 0) {
-      // Xóa translations cũ
-      await this.translationRepository.delete({ categoryId: id });
-
-      // Tạo translations mới
-      const translations = updateCategoryDto.translations.map((t) =>
-        this.translationRepository.create({
-          categoryId: id,
-          languageId: t.languageId,
-          name: t.name,
-          des: t.des,
-        }),
-      );
-      await this.translationRepository.save(translations);
-    }
-
-    // Load lại
-    const result = await this.categoryRepository.findOne({
-      where: { id },
-    });
-
-    return {
-      success: true,
-      message: 'Cập nhật danh mục thành công',
-      data: { category: result },
-    };
   }
 
-  /**
-   * Xóa mềm danh mục
-   */
-  async softDelete(id: number) {
-    const category = await this.categoryRepository.findOne({
-      where: { id, deletedAt: IsNull() },
+  softDelete(user: AuthenticatedUser, id: number, ip: string, agent?: string) {
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Category);
+      const category = await repo.findOne({ where: { id, deletedAt: IsNull() }, relations: ['translations'] });
+      if (!category) throw this.notFound();
+      const before = structuredClone(category);
+      category.deletedAt = new Date();
+      await repo.save(category);
+      await this.log(manager, user, 'CATEGORY_DELETED', category, before, category, ip, agent);
+      return { success: true, message: 'CATEGORY_DELETED' };
     });
-    if (!category) {
-      throw new NotFoundException('Không tìm thấy danh mục');
-    }
-
-    category.deletedAt = new Date();
-    await this.categoryRepository.save(category);
-
-    return {
-      success: true,
-      message: 'Xóa danh mục thành công',
-    };
   }
 
-  /**
-   * Khôi phục danh mục đã xóa mềm
-   */
   async restore(id: number) {
-    const category = await this.categoryRepository.findOne({
-      where: { id },
-    });
-    if (!category) {
-      throw new NotFoundException('Không tìm thấy danh mục');
-    }
-    if (!category.deletedAt) {
-      throw new ConflictException('Danh mục này chưa bị xóa');
-    }
-
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    if (!category) throw this.notFound();
+    if (!category.deletedAt) throw new ConflictException({ code: 'CATEGORY_NOT_DELETED' });
     category.deletedAt = null;
-    await this.categoryRepository.save(category);
+    const item = await this.categoryRepository.save(category);
+    return { success: true, message: 'CATEGORY_RESTORED', data: { item } };
+  }
 
-    // Load lại đầy đủ
-    const result = await this.categoryRepository.findOne({
-      where: { id },
-    });
+  private async validate(manager: EntityManager, sourceId: number, translations: TranslationItemDto[]) {
+    const ids = translations.map((item) => item.languageId);
+    if (new Set(ids).size !== ids.length) throw new ConflictException({ code: 'CATEGORY_LANGUAGE_DUPLICATED' });
+    if (!ids.includes(sourceId)) throw new BadRequestException({ code: 'CATEGORY_SOURCE_TRANSLATION_REQUIRED' });
+    const count = await manager.getRepository(Language).createQueryBuilder('language')
+      .where('language.id IN (:...ids)', { ids }).andWhere('language.isActive = 1')
+      .andWhere('language.deletedAt IS NULL').getCount();
+    if (count !== ids.length) throw new BadRequestException({ code: 'CATEGORY_LANGUAGE_INVALID' });
+  }
 
-    return {
-      success: true,
-      message: 'Khôi phục danh mục thành công',
-      data: { category: result },
-    };
+  private log(manager: EntityManager, user: AuthenticatedUser, action: string, category: Category, before: unknown, after: unknown, ip: string, agent?: string) {
+    return this.auditService.record({
+      actorId: user.id, actorName: user.fullName ?? user.userName, actorRole: user.role,
+      action, entityType: 'CATEGORY', entityId: String(category.id),
+      entityLabel: category.translations?.[0]?.name ?? `#${category.id}`,
+      beforeData: before as never, afterData: after as never, ipAddress: ip, userAgent: agent,
+    }, manager);
+  }
+
+  private notFound() {
+    return new NotFoundException({ code: 'CATEGORY_NOT_FOUND', message: 'Category not found' });
   }
 }

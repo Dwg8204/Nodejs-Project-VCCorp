@@ -24,6 +24,8 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Ip,
+  Headers,
 } from '@nestjs/common';
 import { CategoryService } from 'modules/category/services/categoryService';
 import {
@@ -35,8 +37,10 @@ import { RoleName } from 'common/enums/database.enums';
 import { Roles } from 'modules/auth/decorators/roles.decorator';
 import { JwtAuthGuard } from 'modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'modules/auth/guards/roles.guard';
+import { CurrentUser } from 'modules/auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from 'modules/auth/interfaces/auth-user.interface';
 
-@Controller('categories')
+@Controller('admin/categories')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(RoleName.SuperAdmin)
 export class CategoryController {
@@ -47,8 +51,8 @@ export class CategoryController {
    * POST /api/categories
    */
   @Post()
-  create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateCategoryDto, @Ip() ip: string, @Headers('user-agent') agent?: string) {
+    return this.categoryService.create(user, dto, ip, agent);
   }
 
   /**
@@ -75,10 +79,13 @@ export class CategoryController {
    */
   @Put(':id')
   update(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateCategoryDto: UpdateCategoryDto,
+    @Body() dto: UpdateCategoryDto,
+    @Ip() ip: string,
+    @Headers('user-agent') agent?: string,
   ) {
-    return this.categoryService.update(id, updateCategoryDto);
+    return this.categoryService.update(user, id, dto, ip, agent);
   }
 
   /**
@@ -86,8 +93,8 @@ export class CategoryController {
    * DELETE /api/categories/:id
    */
   @Delete(':id')
-  softDelete(@Param('id', ParseIntPipe) id: number) {
-    return this.categoryService.softDelete(id);
+  softDelete(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseIntPipe) id: number, @Ip() ip: string, @Headers('user-agent') agent?: string) {
+    return this.categoryService.softDelete(user, id, ip, agent);
   }
 
   /**

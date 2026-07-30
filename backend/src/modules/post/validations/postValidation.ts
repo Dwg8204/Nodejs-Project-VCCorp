@@ -1,6 +1,9 @@
 import {
   IsArray,
+  ArrayMinSize,
+  IsBoolean,
   IsEnum,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -25,6 +28,10 @@ export class TranslationItemDto {
   @IsString()
   @IsNotEmpty()
   content: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isAutoTranslated?: boolean;
 }
 
 export class CreatePostDto {
@@ -43,6 +50,7 @@ export class CreatePostDto {
   sourceLanguageId?: number;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TranslationItemDto)
   translations: TranslationItemDto[];
@@ -66,6 +74,7 @@ export class UpdatePostDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TranslationItemDto)
   translations?: TranslationItemDto[];
@@ -98,8 +107,14 @@ export class QueryPostDto {
   search?: string;
 
   @IsOptional()
-  @IsString()
+  @IsIn(['newest', 'oldest', 'popular'])
   sort?: 'newest' | 'oldest' | 'popular' = 'newest';
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  authorId?: number;
 }
 
 export class QueryOwnerPostDto {
@@ -122,6 +137,10 @@ export class QueryOwnerPostDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsIn(['newest', 'oldest', 'title-asc', 'title-desc'])
+  sort?: 'newest' | 'oldest' | 'title-asc' | 'title-desc' = 'newest';
 }
 
 export class QueryAdminPostDto {
@@ -154,10 +173,15 @@ export class QueryAdminPostDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsIn(['newest', 'oldest', 'title-asc', 'title-desc'])
+  sort?: 'newest' | 'oldest' | 'title-asc' | 'title-desc' = 'newest';
 }
 
 export class RejectPostDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(5000)
   reason: string;
 }

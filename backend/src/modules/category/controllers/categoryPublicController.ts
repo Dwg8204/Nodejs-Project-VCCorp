@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { CategoryService } from 'modules/category/services/categoryService';
 import { QueryCategoryDto } from 'modules/category/validations/categoryValidation';
 
-@Controller('public/categories') // Tạm thời dùng public/categories để tránh conflict
+@Controller('categories')
 export class CategoryPublicController {
   constructor(private readonly categoryService: CategoryService) {}
 

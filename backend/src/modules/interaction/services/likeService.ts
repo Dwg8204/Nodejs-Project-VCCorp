@@ -14,6 +14,16 @@ export class LikeService {
     private readonly postRepository: Repository<Post>,
   ) {}
 
+  async getMyLike(userId: number, postId: string) {
+    const like = await this.likeRepository.findOne({
+      where: { userId, postId },
+    });
+    return {
+      success: true,
+      data: { liked: like?.isLiked ?? false },
+    };
+  }
+
   async toggleLike(userId: number, postId: string) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null, status: PostStatus.Published },
@@ -33,16 +43,21 @@ export class LikeService {
     let liked = false;
 
     if (existingLike) {
-      await this.likeRepository.remove(existingLike);
-      liked = false;
+      existingLike.isLiked = !existingLike.isLiked;
+      await this.likeRepository.save(existingLike);
+      liked = existingLike.isLiked;
     } else {
-      const newLike = this.likeRepository.create({ userId, postId });
+      const newLike = this.likeRepository.create({
+        userId,
+        postId,
+        isLiked: true,
+      });
       await this.likeRepository.save(newLike);
       liked = true;
     }
 
     const totalLikes = await this.likeRepository.count({
-      where: { postId },
+      where: { postId, isLiked: true },
     });
 
     return {

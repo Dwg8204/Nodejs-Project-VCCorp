@@ -7,12 +7,14 @@ import { CategoryPublicController } from './controllers/categoryPublicController
 import { CategoryService } from './services/categoryService';
 import { AuthModule } from 'modules/auth/auth.module';
 import { UserModule } from 'modules/user/user.module';
+import { AuditModule } from 'modules/audit/audit.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Category, CategoryTranslation]),
     AuthModule,
     UserModule,
+    AuditModule,
   ],
   controllers: [CategoryController, CategoryPublicController],
   providers: [CategoryService],

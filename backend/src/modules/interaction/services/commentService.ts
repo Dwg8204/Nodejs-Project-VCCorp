@@ -24,12 +24,10 @@ export class CommentService {
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.user', 'user')
       .where('comment.postId = :postId', { postId })
-      .andWhere('comment.parentId IS NULL')
       .andWhere('comment.deletedAt IS NULL');
-
-    queryBuilder.loadRelationCountAndMap('comment.repliesCount', 'comment.replies');
-
-    queryBuilder.orderBy('comment.createdAt', 'DESC');
+    queryBuilder
+      .orderBy('comment.createdAt', 'ASC')
+      .addOrderBy('comment.id', 'ASC');
 
     const [comments, total] = await queryBuilder.skip(skip).take(take).getManyAndCount();
 
@@ -103,7 +101,7 @@ export class CommentService {
     return {
       success: true,
       message: 'COMMENT_CREATED',
-      data: comment,
+      data: { item: comment },
     };
   }
 }

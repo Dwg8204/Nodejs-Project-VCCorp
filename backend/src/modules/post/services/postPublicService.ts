@@ -13,7 +13,15 @@ export class PostPublicService {
   ) {}
 
   async findAll(query: QueryPostDto) {
-    const { page = 1, limit = 10, language, categoryId, search, sort = 'newest' } = query;
+    const {
+      page = 1,
+      limit = 10,
+      language,
+      categoryId,
+      authorId,
+      search,
+      sort = 'newest',
+    } = query;
     const take = Math.min(limit, 50);
     const skip = (page - 1) * take;
 
@@ -36,27 +44,44 @@ export class PostPublicService {
       queryBuilder.andWhere('post.categoryId = :categoryId', { categoryId });
     }
 
+    if (authorId) {
+      queryBuilder.andWhere('post.authorId = :authorId', { authorId });
+    }
+
     if (search) {
       queryBuilder.andWhere('translation.title LIKE :search', { search: `%${search}%` });
     }
 
     // Subqueries for likes and comments count
-    queryBuilder.loadRelationCountAndMap('post.likesCount', 'post.likes');
-    queryBuilder.loadRelationCountAndMap('post.commentsCount', 'post.comments');
+    queryBuilder.loadRelationCountAndMap(
+      'post.likesCount',
+      'post.likes',
+      'activeLike',
+      (likes) => likes.andWhere('activeLike.isLiked = :liked', { liked: true }),
+    );
+    queryBuilder.loadRelationCountAndMap(
+      'post.commentsCount',
+      'post.comments',
+      'activeComment',
+      (comments) => comments.andWhere('activeComment.deletedAt IS NULL'),
+    );
 
     if (sort === 'oldest') {
       queryBuilder.orderBy('post.publishedAt', 'ASC');
     } else if (sort === 'popular') {
-      // TypeORM loadRelationCountAndMap doesn't allow order by mapped count directly in standard ways easily without subquery
-      // To keep it simple, we sort by publishedAt for popular too unless we write a raw subquery.
-      // We will add a raw subquery for order by popular if needed, but for now we fallback to newest, or we add leftJoin likes.
       queryBuilder.addSelect((subQuery) => {
         return subQuery
           .select('COUNT(likes.id)', 'likesCountAlias')
           .from('post_likes', 'likes')
-          .where('likes.post_id = post.id');
+          .where('likes.post_id = post.id')
+          .andWhere('likes.is_liked = 1');
       }, 'likesCountAlias');
-      queryBuilder.orderBy('likesCountAlias', 'DESC');
+      queryBuilder.addSelect((subQuery) => subQuery
+        .select('COUNT(comments.id)', 'commentsCountAlias')
+        .from('comments', 'comments')
+        .where('comments.post_id = post.id')
+        .andWhere('comments.deleted_at IS NULL'), 'commentsCountAlias');
+      queryBuilder.orderBy('likesCountAlias + commentsCountAlias', 'DESC');
     } else {
       queryBuilder.orderBy('post.publishedAt', 'DESC');
     }
@@ -71,6 +96,7 @@ export class PostPublicService {
         author: author ? {
           id: author.id,
           fullName: author.fullName,
+          userName: author.userName,
           avatar: author.avatar,
         } : null
       };
@@ -101,8 +127,18 @@ export class PostPublicService {
       .andWhere('post.status = :status', { status: PostStatus.Published })
       .andWhere('post.deletedAt IS NULL');
 
-    queryBuilder.loadRelationCountAndMap('post.likesCount', 'post.likes');
-    queryBuilder.loadRelationCountAndMap('post.commentsCount', 'post.comments');
+    queryBuilder.loadRelationCountAndMap(
+      'post.likesCount',
+      'post.likes',
+      'activeLike',
+      (likes) => likes.andWhere('activeLike.isLiked = :liked', { liked: true }),
+    );
+    queryBuilder.loadRelationCountAndMap(
+      'post.commentsCount',
+      'post.comments',
+      'activeComment',
+      (comments) => comments.andWhere('activeComment.deletedAt IS NULL'),
+    );
 
     const post = await queryBuilder.getOne();
 
@@ -122,13 +158,14 @@ export class PostPublicService {
       author: author ? {
         id: author.id,
         fullName: author.fullName,
+        userName: author.userName,
         avatar: author.avatar,
       } : null
     };
 
     return {
       success: true,
-      data: mappedPost,
+      data: { item: mappedPost },
     };
   }
 }

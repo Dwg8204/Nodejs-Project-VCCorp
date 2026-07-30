@@ -8,10 +8,14 @@ import { DashboardController } from './controllers/dashboardController';
 import { DashboardService } from './services/dashboardService';
 import { AuthModule } from 'modules/auth/auth.module';
 import { UserModule } from 'modules/user/user.module';
+import { Category } from 'modules/category/models/category';
+import { Language } from 'modules/language/models/language';
+import { PostTranslation } from 'modules/post/models/postTranslation';
+import { AuditLog } from 'modules/audit/models/auditLog';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Post, Comment, PostLike, User]),
+    TypeOrmModule.forFeature([Post, Comment, PostLike, User, Category, Language, PostTranslation, AuditLog]),
     AuthModule,
     UserModule,
   ],

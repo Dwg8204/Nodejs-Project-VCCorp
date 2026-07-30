@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards, Ip, Headers } from '@nestjs/common';
 import { PostOwnerService } from '../services/postOwnerService';
 import { CreatePostDto, UpdatePostDto, QueryOwnerPostDto } from '../validations/postValidation';
 import { JwtAuthGuard } from 'modules/auth/guards/jwt-auth.guard';
@@ -34,8 +34,10 @@ export class PostOwnerController {
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreatePostDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
-    return this.postOwnerService.create(user.id, dto);
+    return this.postOwnerService.create(user, dto, ipAddress, userAgent);
   }
 
   @Patch(':id')
@@ -43,23 +45,29 @@ export class PostOwnerController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdatePostDto,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
-    return this.postOwnerService.update(user.id, id, dto);
+    return this.postOwnerService.update(user, id, dto, ipAddress, userAgent);
   }
 
   @Delete(':id')
   softDelete(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
-    return this.postOwnerService.softDelete(user.id, id);
+    return this.postOwnerService.softDelete(user, id, ipAddress, userAgent);
   }
 
   @Post(':id/submit')
   submit(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
   ) {
-    return this.postOwnerService.submit(user.id, id);
+    return this.postOwnerService.submit(user, id, ipAddress, userAgent);
   }
 }

@@ -25,6 +25,7 @@ import { CategoryModule } from 'modules/category/category.module';
 import { DashboardModule } from 'modules/dashboard/dashboard.module';
 import { UploadModule } from 'modules/upload/upload.module';
 import { AppController } from './app.controller';
+import { AppCacheModule } from 'modules/cache/cache.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AppController } from './app.controller';
       validate: validateEnvironment,
     }),
     DatabaseModule,
+    AppCacheModule,
 
     // =============================================================
     // Import các module nghiệp vụ

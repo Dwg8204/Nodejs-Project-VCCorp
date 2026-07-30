@@ -13,6 +13,7 @@ import {
 } from 'modules/auth/interfaces/auth-user.interface';
 import { Language } from 'modules/language/models/language';
 import { Brackets, IsNull, Repository } from 'typeorm';
+import { AppCacheService } from 'modules/cache/cache.service';
 import {
   ChangeLanguageStatusDto,
   CreateAdminLanguageDto,
@@ -28,6 +29,7 @@ export class AdminLanguagesService {
     @InjectRepository(Language)
     private readonly languageRepository: Repository<Language>,
     private readonly auditService: AuditService,
+    private readonly cache:AppCacheService,
   ) {}
 
   async findAll(dto: QueryAdminLanguagesDto) {
@@ -126,6 +128,7 @@ export class AdminLanguagesService {
       this.toAuditLanguage(language),
       context,
     );
+    await this.cache.invalidatePrefix('languages:');
     return {
       success: true,
       message: 'ADMIN_LANGUAGE_CREATE_SUCCEEDED',
@@ -170,6 +173,7 @@ export class AdminLanguagesService {
       this.toAuditLanguage(language),
       context,
     );
+    await this.cache.invalidatePrefix('languages:');
     return {
       success: true,
       message: 'ADMIN_LANGUAGE_UPDATE_SUCCEEDED',
@@ -200,6 +204,7 @@ export class AdminLanguagesService {
       this.toAuditLanguage(language),
       context,
     );
+    await this.cache.invalidatePrefix('languages:');
     return {
       success: true,
       message: 'ADMIN_LANGUAGE_STATUS_CHANGE_SUCCEEDED',
@@ -230,6 +235,7 @@ export class AdminLanguagesService {
       this.toAuditLanguage(language),
       context,
     );
+    await this.cache.invalidatePrefix('languages:');
     return {
       success: true,
       message: 'ADMIN_LANGUAGE_DELETE_SUCCEEDED',
@@ -259,6 +265,7 @@ export class AdminLanguagesService {
       this.toAuditLanguage(language),
       context,
     );
+    await this.cache.invalidatePrefix('languages:');
     return {
       success: true,
       message: 'ADMIN_LANGUAGE_RESTORE_SUCCEEDED',

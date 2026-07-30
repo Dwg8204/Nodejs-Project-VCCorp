@@ -29,6 +29,12 @@ export interface EnvironmentVariables {
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
   CLOUDINARY_FOLDER: string;
+  REDIS_ENABLED:boolean;
+  REDIS_HOST:string;
+  REDIS_PORT:number;
+  REDIS_PASSWORD:string;
+  REDIS_DB:number;
+  REDIS_KEY_PREFIX:string;
 }
 
 function parseInteger(
@@ -108,5 +114,11 @@ export function validateEnvironment(
     CLOUDINARY_API_KEY: value.CLOUDINARY_API_KEY?.trim() ?? '',
     CLOUDINARY_API_SECRET: value.CLOUDINARY_API_SECRET?.trim() ?? '',
     CLOUDINARY_FOLDER: value.CLOUDINARY_FOLDER?.trim() ?? 'vccorp-blog',
+    REDIS_ENABLED:value.REDIS_ENABLED==='true',
+    REDIS_HOST:value.REDIS_HOST?.trim()??'127.0.0.1',
+    REDIS_PORT:parseInteger(value.REDIS_PORT,6379,'REDIS_PORT'),
+    REDIS_PASSWORD:value.REDIS_PASSWORD??'',
+    REDIS_DB:Number(value.REDIS_DB??0),
+    REDIS_KEY_PREFIX:value.REDIS_KEY_PREFIX?.trim()??'vccorp:',
   };
 }

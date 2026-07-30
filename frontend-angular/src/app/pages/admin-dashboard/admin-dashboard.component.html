@@ -31,38 +31,7 @@
 <div class="analytics-grid analytics-primary">
   <section class="analytics-panel engagement-panel">
     <div class="analytics-panel-head"><div><h2>{{ language.choose('Xu hướng tương tác','Engagement trend') }}</h2><p>{{ language.choose('Lượt thích và bình luận theo thời gian','Likes and comments over time') }}</p></div><div class="chart-legend"><span class="legend-like">{{ language.choose('Lượt thích','Likes') }}</span><span class="legend-comment">{{ language.choose('Bình luận','Comments') }}</span></div></div>
-    <div class="engagement-chart mock-line-chart" aria-label="Engagement chart">
-      @if (engagementSvgPaths(); as chart) {
-        <svg [attr.viewBox]="'0 0 ' + chart.width + ' ' + chart.height" role="img" (mouseleave)="hideTooltip()">
-          <!-- Y Axis Marks -->
-          @for (mark of chart.yAxisMarks; track mark.value) {
-            <text x="5" [attr.y]="mark.y + 4" class="chart-axis-text">{{mark.value}}</text>
-            <line [attr.x1]="chart.paddingX" [attr.y1]="mark.y" [attr.x2]="chart.width - chart.paddingX" [attr.y2]="mark.y" class="chart-grid-line-svg" />
-          }
-          <!-- X Axis Marks -->
-          @for (mark of chart.xAxisMarks; track mark.label) {
-            <text [attr.x]="mark.x" [attr.y]="chart.height - 5" class="chart-axis-text chart-axis-x">{{mark.label}}</text>
-          }
-          <!-- Lines -->
-          <path [attr.d]="chart.likePath" class="analytics-line analytics-like-line"/>
-          <path [attr.d]="chart.commentPath" class="analytics-line analytics-comment-line"/>
-          <!-- Hover Points -->
-          @for (point of chart.points; track point.date) {
-            <circle [attr.cx]="point.x" [attr.cy]="point.ly" r="6" class="chart-point like-point" (mouseenter)="showTooltip(point, $event)"></circle>
-            <circle [attr.cx]="point.x" [attr.cy]="point.cy" r="6" class="chart-point comment-point" (mouseenter)="showTooltip(point, $event)"></circle>
-            <!-- Invisible wide rect for easier hover -->
-            <rect [attr.x]="point.x - 10" [attr.y]="chart.paddingY" width="20" [attr.height]="chart.height - 2*chart.paddingY" fill="transparent" (mouseenter)="showTooltip(point, $event)"></rect>
-          }
-        </svg>
-      }
-      @if (activeTooltip(); as tooltip) {
-        <div class="chart-tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y - 10">
-          <strong>{{tooltip.date}}</strong>
-          <div><span class="dot like-dot"></span> {{language.choose('Lượt thích','Likes')}}: {{tooltip.likes}}</div>
-          <div><span class="dot comment-dot"></span> {{language.choose('Bình luận','Comments')}}: {{tooltip.comments}}</div>
-        </div>
-      }
-    </div>
+    <div class="engagement-chart chartjs-line-chart" aria-label="Engagement chart"><canvas #engagementCanvas></canvas></div>
   </section>
   <section class="analytics-panel status-panel">
     <div class="analytics-panel-head"><div><h2>{{ language.choose('Trạng thái bài viết','Post status') }}</h2><p>{{ language.choose('Phân bố nội dung hiện tại','Current content distribution') }}</p></div></div>

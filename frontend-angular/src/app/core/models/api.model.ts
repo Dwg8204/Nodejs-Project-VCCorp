@@ -24,6 +24,7 @@ export interface PaginatedData<T> {
 
 export interface ApiErrorPayload {
   statusCode?: number;
+  code?: string;
   message?: string | string[];
   error?: string;
 }

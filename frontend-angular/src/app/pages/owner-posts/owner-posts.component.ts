@@ -1,29 +1,63 @@
-﻿import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ContentPost } from '../../core/models/content.model';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
-import { MockDatabaseService } from '../../data/mock/mock-database.service';
-import { PostStatus } from '../../data/mock/mock-schema.model';
+import { NotificationService } from '../../core/services/notification.service';
+import { OwnerPostsApiService, OwnerPostStats } from '../../core/services/owner-posts-api.service';
 
-interface OwnerPost { id:number; title:string; category:string; languages:string[]; status:PostStatus; date:string; rejectionReason:string|null; }
-interface PostPreview { id:number; title:string; content:string; thumbnail:string; category:string; author:string; date:string; status:PostStatus; }
+type PostStatus='DRAFT'|'PENDING'|'PUBLISHED'|'REJECTED';
+interface OwnerPost { id:number; title:string; content:string; thumbnail:string; category:string; languages:string[]; status:PostStatus; date:string; rejectionReason:string|null; }
+interface PostPreview extends OwnerPost { author:string; }
 
 @Component({selector:'app-owner-posts',standalone:true,imports:[RouterLink],templateUrl:'./owner-posts.component.html',styleUrl:'./owner-posts.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class OwnerPostsComponent {
-  private readonly database=inject(MockDatabaseService); protected readonly auth=inject(AuthService); protected readonly language=inject(LanguageService);
+  private readonly api=inject(OwnerPostsApiService);
+  private readonly notifications=inject(NotificationService);
+  protected readonly auth=inject(AuthService);
+  protected readonly language=inject(LanguageService);
   protected readonly previewId=signal<number|null>(null);
-  protected readonly search=signal(''); protected readonly status=signal(''); protected readonly sort=signal('newest'); protected readonly page=signal(1); protected readonly pageSize=5;
-  protected readonly allPosts=computed<OwnerPost[]>(()=>{const userId=this.auth.currentUser()?.id;const languageId=this.language.contentLanguageId();const translations=this.database.table('post_translations');const categoryTranslations=this.database.table('category_translation');const languages=this.database.table('languages');return this.database.table('posts').filter(post=>post.author_id===userId&&!post.deleted_at).map(post=>({id:post.id,title:translations.find(t=>t.post_id===post.id&&t.language_id===languageId)?.title??translations.find(t=>t.post_id===post.id)?.title??'Untitled',category:categoryTranslations.find(t=>t.category_id===post.category_id&&t.language_id===languageId)?.name??'Unknown',languages:translations.filter(t=>t.post_id===post.id).map(t=>languages.find(l=>l.id===t.language_id)?.code.toUpperCase()??String(t.language_id)),status:post.status,date:post.created_at,rejectionReason:post.rejection_reason}));});
-  protected readonly stats=computed(()=>{const rows=this.allPosts();return [{vi:'Tổng bài viết',en:'Total Posts',value:rows.length,danger:false},{vi:'Bản nháp',en:'Drafts',value:rows.filter(p=>p.status==='DRAFT').length,danger:false},{vi:'Đã xuất bản',en:'Published',value:rows.filter(p=>p.status==='PUBLISHED').length,danger:false},{vi:'Chờ duyệt',en:'Pending',value:rows.filter(p=>p.status==='PENDING').length,danger:false},{vi:'Bị từ chối',en:'Rejected',value:rows.filter(p=>p.status==='REJECTED').length,danger:true}];});
-  protected readonly filtered=computed(()=>{const q=this.search().trim().toLocaleLowerCase();const rows=this.allPosts().filter(p=>(!q||p.title.toLocaleLowerCase().includes(q)||p.category.toLocaleLowerCase().includes(q))&&(!this.status()||p.status===this.status()));return rows.sort((a,b)=>this.sort()==='oldest'?+new Date(a.date)-+new Date(b.date):this.sort()==='title-asc'?a.title.localeCompare(b.title):this.sort()==='title-desc'?b.title.localeCompare(a.title):+new Date(b.date)-+new Date(a.date));});
-  protected readonly pages=computed(()=>Array.from({length:Math.max(1,Math.ceil(this.filtered().length/this.pageSize))},(_,i)=>i+1));
-  protected readonly visible=computed(()=>this.filtered().slice((this.page()-1)*this.pageSize,this.page()*this.pageSize));
-  protected readonly previewPost=computed<PostPreview|null>(()=>{const id=this.previewId();if(id===null)return null;const post=this.database.table('posts').find(row=>row.id===id&&row.author_id===this.auth.currentUser()?.id);if(!post)return null;const languageId=this.language.contentLanguageId();const translations=this.database.table('post_translations');const translation=translations.find(row=>row.post_id===id&&row.language_id===languageId)??translations.find(row=>row.post_id===id);const categoryTranslations=this.database.table('category_translation');const author=this.database.table('users').find(row=>row.id===post.author_id);return{id:post.id,title:translation?.title??'Untitled',content:translation?.content??'',thumbnail:post.thumbnail,category:categoryTranslations.find(row=>row.category_id===post.category_id&&row.language_id===languageId)?.name??categoryTranslations.find(row=>row.category_id===post.category_id)?.name??'',author:author?.full_name||author?.user_name||'Anonymous',date:post.created_at,status:post.status};});
+  protected readonly search=signal('');
+  protected readonly status=signal('');
+  protected readonly sort=signal('newest');
+  protected readonly page=signal(1);
+  protected readonly pageSize=5;
+  protected readonly allPosts=signal<OwnerPost[]>([]);
+  protected readonly totalPages=signal(1);
+  protected readonly serverStats=signal<OwnerPostStats>({total:0,DRAFT:0,PENDING:0,PUBLISHED:0,REJECTED:0});
+  protected readonly visible=computed(()=>this.allPosts());
+  protected readonly pages=computed(()=>Array.from({length:this.totalPages()},(_,index)=>index+1));
+  protected readonly stats=computed(()=>{const value=this.serverStats();return [{vi:'Tổng bài viết',en:'Total Posts',value:value.total,danger:false},{vi:'Bản nháp',en:'Drafts',value:value.DRAFT,danger:false},{vi:'Đã xuất bản',en:'Published',value:value.PUBLISHED,danger:false},{vi:'Chờ duyệt',en:'Pending',value:value.PENDING,danger:false},{vi:'Bị từ chối',en:'Rejected',value:value.REJECTED,danger:true}];});
+  protected readonly previewPost=computed<PostPreview|null>(()=>{const post=this.allPosts().find(item=>item.id===this.previewId());if(!post)return null;const user=this.auth.currentUser();return{...post,author:user?.fullName||user?.userName||'Anonymous'};});
+
+  constructor(){
+    effect(()=>{this.language.locale();this.loadPosts(this.page(),this.search(),this.status(),this.sort());},{allowSignalWrites:true});
+  }
+
   protected label(row:{vi:string;en:string}):string{return this.language.choose(row.vi,row.en);}
   protected setFilter(target:'search'|'status'|'sort',value:string):void{if(target==='search')this.search.set(value);if(target==='status')this.status.set(value);if(target==='sort')this.sort.set(value);this.page.set(1);}
+  protected goToPage(value:number):void{this.page.set(value);}
   protected statusLabel(status:PostStatus):string{const vi={DRAFT:'Bản nháp',PUBLISHED:'Đã xuất bản',PENDING:'Chờ duyệt',REJECTED:'Bị từ chối'};const en={DRAFT:'Draft',PUBLISHED:'Published',PENDING:'Pending',REJECTED:'Rejected'};return this.language.chooseObject(vi,en)[status];}
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale()).format(new Date(value));}
-  protected deletePost(id:number):void{const posts=this.database.table('posts');const post=posts.find(row=>row.id===id);if(!post)return;const title=this.allPosts().find(row=>row.id===id)?.title??`#${id}`;this.database.write('posts',posts.filter(row=>row.id!==id));this.database.write('post_translations',this.database.table('post_translations').filter(row=>row.post_id!==id));const actor=this.auth.currentUser();this.database.appendAuditLog({id:this.database.nextId('audit_logs'),actor_id:actor?.id??null,actor_name:actor?.fullName??actor?.userName??null,actor_role:actor?.role.nameRole??null,action:'POST_DELETED',entity_type:'POST',entity_id:id,entity_label:title,before_data:structuredClone(post),after_data:null,metadata:{hard_delete:true},ip_address:null,user_agent:navigator.userAgent,created_at:new Date().toISOString()});}
+  protected deletePost(id:number):void{this.api.delete(String(id)).subscribe({next:()=>{this.notifications.success('Đã xóa bài viết.','Post deleted.');if(this.allPosts().length===1&&this.page()>1)this.page.update(value=>value-1);else this.loadPosts(this.page(),this.search(),this.status(),this.sort());},error:error=>this.notifications.fromApi(error)});}
   @HostListener('click',['$event']) protected openPreview(event:MouseEvent):void{const button=(event.target as HTMLElement).closest('.view-btn,.post-title-cell');if(!button)return;const row=button.closest('tr');const body=row?.parentElement;if(!row||!body)return;const index=Array.from(body.children).indexOf(row);const post=this.visible()[index];if(post)this.previewId.set(post.id);}
   protected closePreview():void{this.previewId.set(null);}
+
+  private loadPosts(page:number,search:string,status:string,sort:string):void{
+    this.api.list({page,limit:this.pageSize,search:search.trim()||undefined,status:status||undefined,sort}).subscribe({
+      next:response=>{
+        this.allPosts.set(response.data.items.map(post=>this.mapPost(post)));
+        this.serverStats.set(response.data.stats);
+        this.totalPages.set(Math.max(1,response.data.pagination.totalPages));
+        if(page>Math.max(1,response.data.pagination.totalPages))this.page.set(Math.max(1,response.data.pagination.totalPages));
+      },
+      error:error=>{this.allPosts.set([]);this.notifications.fromApi(error);},
+    });
+  }
+  private mapPost(post:ContentPost):OwnerPost{
+    const translation=post.translations.find(item=>item.languageId===this.language.languageId())??post.translations[0];
+    const category=post.category?.translations.find(item=>item.languageId===this.language.languageId())??post.category?.translations[0];
+    const languageCodes=post.translations.map(item=>this.language.availableLanguages().find(language=>language.id===item.languageId)?.code.toUpperCase()??String(item.languageId));
+    return{id:Number(post.id),title:translation?.title??'Untitled',content:translation?.content??'',thumbnail:post.thumbnail,category:category?.name??'',languages:languageCodes,status:post.status,date:post.createdAt,rejectionReason:post.rejectionReason};
+  }
 }

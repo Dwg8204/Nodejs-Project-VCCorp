@@ -1,79 +1,50 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, inject, signal, ViewEncapsulation } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal, ViewEncapsulation } from '@angular/core';
+import { AdminAuditLogsApiService, AuditLogDetail, AuditLogListItem } from '../../core/services/admin-audit-logs-api.service';
 import { LanguageService } from '../../core/services/language.service';
-import { AuditLogRow } from '../../data/mock/mock-schema.model';
-import { MockDatabaseService } from '../../data/mock/mock-database.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
 
-const ACTIONS: Record<string, { vi: string; en: string }> = {
+interface AuditLogView {
+  id:string;actor_name:string|null;actor_role:string|null;action:string;entity_type:string;entity_id:string|null;
+  entity_label:string|null;ip_address:string|null;created_at:string;before_data:unknown;after_data:unknown;metadata:unknown;user_agent:string|null;
+}
+const ACTIONS:Record<string,{vi:string;en:string}>={
   POST_CREATED:{vi:'Tạo bài viết',en:'Post created'},POST_UPDATED:{vi:'Sửa bài viết',en:'Post updated'},POST_SUBMITTED:{vi:'Gửi bài duyệt',en:'Post submitted'},POST_APPROVED:{vi:'Duyệt bài viết',en:'Post approved'},POST_REJECTED:{vi:'Từ chối bài viết',en:'Post rejected'},POST_DELETED:{vi:'Xóa bài viết',en:'Post deleted'},
   CATEGORY_CREATED:{vi:'Tạo danh mục',en:'Category created'},CATEGORY_UPDATED:{vi:'Sửa danh mục',en:'Category updated'},CATEGORY_TRANSLATED:{vi:'Dịch danh mục',en:'Category translated'},CATEGORY_DELETED:{vi:'Xóa danh mục',en:'Category deleted'},
   USER_CREATED:{vi:'Tạo người dùng',en:'User created'},USER_LOCKED:{vi:'Khóa người dùng',en:'User locked'},USER_UNLOCKED:{vi:'Mở khóa người dùng',en:'User unlocked'},USER_ROLE_CHANGED:{vi:'Đổi vai trò',en:'Role changed'},
   LANGUAGE_CREATED:{vi:'Thêm ngôn ngữ',en:'Language created'},LANGUAGE_UPDATED:{vi:'Sửa ngôn ngữ',en:'Language updated'},LANGUAGE_DELETED:{vi:'Xóa ngôn ngữ',en:'Language deleted'},LANGUAGE_DEFAULT_CHANGED:{vi:'Đổi ngôn ngữ mặc định',en:'Default language changed'},
-  SETTINGS_UPDATED:{vi:'Thay đổi cài đặt',en:'Settings updated'},SETTINGS_RESTORED:{vi:'Khôi phục cài đặt',en:'Settings restored'},
   AUTH_LOGIN_SUCCEEDED:{vi:'Đăng nhập thành công',en:'Login succeeded'},AUTH_LOGIN_FAILED:{vi:'Đăng nhập thất bại',en:'Login failed'},AUTH_LOGOUT:{vi:'Đăng xuất',en:'Logout'},AUTH_ACCESS_DENIED:{vi:'Truy cập bị từ chối',en:'Access denied'},
+  PROFILE_UPDATED:{vi:'Cập nhật hồ sơ',en:'Profile updated'},PROFILE_AVATAR_UPDATED:{vi:'Cập nhật ảnh đại diện',en:'Avatar updated'},PROFILE_COVER_UPDATED:{vi:'Cập nhật ảnh bìa',en:'Cover updated'},
 };
 
-@Component({
-  selector:'app-admin-logs', standalone:true, templateUrl:'./admin-logs.component.html',
-  styleUrl:'./admin-logs.component.scss', changeDetection:ChangeDetectionStrategy.OnPush,
-  encapsulation:ViewEncapsulation.None, schemas:[CUSTOM_ELEMENTS_SCHEMA],
-})
+@Component({selector:'app-admin-logs',standalone:true,templateUrl:'./admin-logs.component.html',styleUrl:'./admin-logs.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class AdminLogsComponent {
-  private readonly database=inject(MockDatabaseService);
+  private readonly api=inject(AdminAuditLogsApiService);private readonly notifications=inject(NotificationService);
   protected readonly language=inject(LanguageService);
-  protected readonly search=signal(''); protected readonly action=signal(''); protected readonly entity=signal('');
-  protected readonly dateFrom=signal(''); protected readonly dateTo=signal('');
-  protected readonly page=signal(1); protected readonly pageSize=signal(5); protected readonly pageInput=signal(1); protected readonly sizeInput=signal(5);
-  protected readonly detail=signal<AuditLogRow|null>(null);
-  protected readonly logs=computed(()=>this.database.table('audit_logs').sort((a,b)=>+new Date(b.created_at)-+new Date(a.created_at)));
-  protected readonly actionOptions=computed(()=>[...new Set([...Object.keys(ACTIONS),...this.logs().map(row=>row.action)])].sort((a,b)=>this.actionText(a).localeCompare(this.actionText(b),this.language.formatLocale())));
-  protected readonly entityOptions=computed(()=>[...new Set(['POST','CATEGORY','USER','LANGUAGE','SETTINGS','AUTH','PAGE',...this.logs().map(row=>row.entity_type)])]);
-  protected readonly filtered=computed(()=>{
-    const query=this.search().trim().toLocaleLowerCase(); const from=this.dateFrom(); const to=this.dateTo();
-    return this.logs().filter(row=>{
-      const haystack=`${row.actor_name??''} ${row.entity_label??''} ${row.action} ${row.entity_type}`.toLocaleLowerCase();
-      const date=row.created_at.slice(0,10);
-      return (!query||haystack.includes(query))&&(!this.action()||row.action===this.action())&&(!this.entity()||row.entity_type===this.entity())&&(!from||date>=from)&&(!to||date<=to);
-    });
-  });
-  protected readonly totalPages=computed(()=>Math.max(1,Math.ceil(this.filtered().length/this.pageSize())));
+  protected readonly search=signal('');protected readonly action=signal('');protected readonly entity=signal('');protected readonly dateFrom=signal('');protected readonly dateTo=signal('');
+  protected readonly page=signal(1);protected readonly pageSize=signal(5);protected readonly pageInput=signal(1);protected readonly sizeInput=signal(5);
+  protected readonly detail=signal<AuditLogView|null>(null);protected readonly logs=signal<AuditLogView[]>([]);protected readonly total=signal(0);protected readonly totalPages=signal(1);
+  protected readonly actionOptions=signal<string[]>([]);protected readonly entityOptions=signal<string[]>([]);
+  protected readonly filtered=computed(()=>this.logs());protected readonly visible=computed(()=>this.logs());
   protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));
-  protected readonly visible=computed(()=>this.filtered().slice((this.page()-1)*this.pageSize(),this.page()*this.pageSize()));
-  protected readonly summary=computed(()=>{const total=this.filtered().length;const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
+  protected readonly summary=computed(()=>{const total=this.total(),from=total?(this.page()-1)*this.pageSize()+1:0,to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
 
-  protected update(kind:'search'|'action'|'entity'|'from'|'to',value:string):void {
-    if(kind==='search')this.search.set(value);if(kind==='action')this.action.set(value);if(kind==='entity')this.entity.set(value);if(kind==='from')this.dateFrom.set(value);if(kind==='to')this.dateTo.set(value);this.changePage(1);
-  }
-  protected reset():void {this.search.set('');this.action.set('');this.entity.set('');this.dateFrom.set('');this.dateTo.set('');this.changePage(1);}
-  protected actionText(action:string):string {const item=ACTIONS[action];return item?this.language.choose(item.vi,item.en):action.replaceAll('_',' ');}
-  protected actor(row:AuditLogRow):string{return row.actor_name??this.language.choose('Hệ thống / Khách','System / Guest');}
-  protected target(row:AuditLogRow):string{return row.entity_label??`#${row.entity_id??'—'}`;}
+  constructor(){this.loadOptions();effect(()=>this.load(this.page(),this.pageSize(),this.search(),this.action(),this.entity(),this.dateFrom(),this.dateTo()),{allowSignalWrites:true});}
+  protected update(kind:'search'|'action'|'entity'|'from'|'to',value:string):void{if(kind==='search')this.search.set(value);if(kind==='action')this.action.set(value);if(kind==='entity')this.entity.set(value);if(kind==='from')this.dateFrom.set(value);if(kind==='to')this.dateTo.set(value);this.changePage(1);}
+  protected reset():void{this.search.set('');this.action.set('');this.entity.set('');this.dateFrom.set('');this.dateTo.set('');this.changePage(1);}
+  protected actionText(action:string):string{const item=ACTIONS[action];return item?this.language.choose(item.vi,item.en):action.replaceAll('_',' ');}
+  protected actor(row:AuditLogView):string{return row.actor_name??this.language.choose('Hệ thống / Khách','System / Guest');}
+  protected target(row:AuditLogView):string{return row.entity_label??`#${row.entity_id??'—'}`;}
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{dateStyle:'short',timeStyle:'short'}).format(new Date(value));}
   protected json(value:unknown):string{return JSON.stringify(value,null,2);}
-  protected changePage(value:number):void {const next=Math.min(Math.max(1,value),this.totalPages());this.page.set(next);this.pageInput.set(next);document.querySelector('.audit-filter-row')?.scrollIntoView({behavior:'smooth',block:'start'});}
+  protected changePage(value:number):void{const next=Math.min(Math.max(1,value),this.totalPages());this.page.set(next);this.pageInput.set(next);document.querySelector('.audit-filter-row')?.scrollIntoView({behavior:'smooth',block:'start'});}
   protected applyPage():void{this.changePage(this.pageInput());}
   protected applyPageSize():void{const size=Math.min(100,Math.max(1,Math.trunc(this.sizeInput()||1)));this.pageSize.set(size);this.sizeInput.set(size);this.changePage(1);}
-
-  protected getDiff(before: unknown, after: unknown): { key: string, beforeVal: string, afterVal: string, changed: boolean }[] {
-    const isObject = (val: unknown): val is Record<string, unknown> => val !== null && typeof val === 'object' && !Array.isArray(val);
-    if (!isObject(before) && !isObject(after)) return [];
-
-    const beforeObj = isObject(before) ? before : {};
-    const afterObj = isObject(after) ? after : {};
-    const keys = new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]);
-    const diff: { key: string, beforeVal: string, afterVal: string, changed: boolean }[] = [];
-
-    for (const key of keys) {
-      const bVal = JSON.stringify(beforeObj[key] ?? null);
-      const aVal = JSON.stringify(afterObj[key] ?? null);
-      diff.push({
-        key,
-        beforeVal: beforeObj[key] !== undefined ? String(beforeObj[key]) : '—',
-        afterVal: afterObj[key] !== undefined ? String(afterObj[key]) : '—',
-        changed: bVal !== aVal
-      });
-    }
-    return diff;
-  }
+  protected openDetail(row:AuditLogView):void{this.api.detail(row.id).subscribe({next:({data})=>this.detail.set(this.mapDetail(data.log)),error:error=>this.notifications.fromApi(error)});}
+  protected getDiff(before:unknown,after:unknown):{key:string,beforeVal:string,afterVal:string,changed:boolean}[]{const object=(value:unknown):value is Record<string,unknown>=>value!==null&&typeof value==='object'&&!Array.isArray(value);if(!object(before)&&!object(after))return[];const left=object(before)?before:{},right=object(after)?after:{};return[...new Set([...Object.keys(left),...Object.keys(right)])].map(key=>({key,beforeVal:left[key]!==undefined?this.display(left[key]):'—',afterVal:right[key]!==undefined?this.display(right[key]):'—',changed:JSON.stringify(left[key]??null)!==JSON.stringify(right[key]??null)}));}
+  private load(page:number,limit:number,search:string,action:string,entityType:string,fromDate:string,toDate:string):void{this.api.list({page,limit,search:search.trim()||undefined,action:action||undefined,entityType:entityType||undefined,fromDate:fromDate||undefined,toDate:toDate||undefined,sort:'newest'}).subscribe({next:({data})=>{this.logs.set(data.items.map(item=>this.mapList(item)));this.total.set(data.pagination.total);this.totalPages.set(Math.max(1,data.pagination.totalPages));if(page>Math.max(1,data.pagination.totalPages))this.changePage(Math.max(1,data.pagination.totalPages));},error:error=>{this.logs.set([]);this.total.set(0);this.notifications.fromApi(error);}});}
+  private loadOptions():void{this.api.filterOptions().subscribe({next:({data})=>{this.actionOptions.set(data.actions.sort((a,b)=>this.actionText(a).localeCompare(this.actionText(b),this.language.formatLocale())));this.entityOptions.set(data.entityTypes);},error:error=>this.notifications.fromApi(error)});}
+  private mapList(item:AuditLogListItem):AuditLogView{return{id:item.id,actor_name:item.actorName,actor_role:item.actorRole,action:item.action,entity_type:item.entityType,entity_id:item.entityId,entity_label:item.entityLabel,ip_address:item.ipAddress,created_at:item.createdAt,before_data:null,after_data:null,metadata:null,user_agent:null};}
+  private mapDetail(item:AuditLogDetail):AuditLogView{return{...this.mapList(item),before_data:item.beforeData,after_data:item.afterData,metadata:item.metadata,user_agent:item.userAgent};}
+  private display(value:unknown):string{return typeof value==='object'&&value!==null?JSON.stringify(value):String(value);}
 }

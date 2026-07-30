@@ -3,6 +3,7 @@
   Component,
   computed,
   CUSTOM_ELEMENTS_SCHEMA,
+  effect,
   inject,
   OnInit,
   signal,
@@ -13,16 +14,18 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { USER_ROLES, User, UserRole } from '../../core/models/auth.model';
+import { ContentPost } from '../../core/models/content.model';
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ContentApiService } from '../../core/services/content-api.service';
 import { FeedUiService } from '../../core/services/feed-ui.service';
 import { LanguageService } from '../../core/services/language.service';
 import {
   ProfileApiService,
   ProfileImageType,
+  PublicProfileUser,
 } from '../../core/services/profile-api.service';
-import { MockDatabaseService } from '../../data/mock/mock-database.service';
-import { PostStatus } from '../../data/mock/mock-schema.model';
+import { OwnerPostsApiService } from '../../core/services/owner-posts-api.service';
 
 interface ProfileView {
   id: number;
@@ -47,7 +50,7 @@ interface ProfilePost {
   date: string;
   likes: number;
   comments: number;
-  status: PostStatus;
+  status: ContentPost['status'];
 }
 
 @Component({
@@ -62,14 +65,17 @@ interface ProfilePost {
 })
 export class ProfileComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly database = inject(MockDatabaseService);
   private readonly profileApi = inject(ProfileApiService);
+  private readonly contentApi = inject(ContentApiService);
+  private readonly ownerPostsApi = inject(OwnerPostsApiService);
   private readonly apiErrors = inject(ApiErrorService);
   protected readonly auth = inject(AuthService);
   protected readonly language = inject(LanguageService);
   protected readonly feedUi = inject(FeedUiService);
   private readonly revision = signal(0);
   private readonly apiProfile = signal<User | null>(null);
+  private readonly publicProfile = signal<PublicProfileUser | null>(null);
+  private readonly apiPosts = signal<ProfilePost[]>([]);
 
   protected readonly tab = signal<'home' | 'about'>('home');
   protected readonly page = signal(1);
@@ -89,82 +95,43 @@ export class ProfileComponent implements OnInit {
     || this.auth.currentUser()?.id
     || 0;
 
+  constructor() {
+    effect(() => {
+      this.language.locale();
+      this.loadPosts();
+    }, { allowSignalWrites: true });
+  }
+
   protected readonly ownProfile = computed(
     () => this.requestedId > 0
       && this.auth.currentUser()?.id === this.requestedId,
   );
 
   protected readonly user = computed<ProfileView | null>(() => {
-    this.revision();
     if (this.ownProfile()) {
       const profile = this.apiProfile() ?? this.auth.currentUser();
       return profile ? this.toProfileView(profile) : null;
     }
-    const row = this.database
-      .table('users')
-      .find((item) => item.id === this.requestedId);
+    const row = this.publicProfile();
     return row
       ? {
         id: row.id,
-        user_name: row.user_name,
-        email: row.email,
-        full_name: row.full_name,
-        phone: row.phone,
+        user_name: row.userName,
+        email: '',
+        full_name: row.fullName,
+        phone: null,
         avatar: row.avatar,
-        cover_image: row.cover_image,
-        date_of_birth: row.date_of_birth,
-        email_verified: row.email_verified,
-        role_id: row.role_id,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
+        cover_image: row.coverImage,
+        date_of_birth: null,
+        email_verified: true,
+        role_id: this.roleId(row.role),
+        created_at: row.createdAt,
+        updated_at: row.createdAt,
       }
       : null;
   });
 
-  protected readonly posts = computed<ProfilePost[]>(() => {
-    this.revision();
-    const user = this.user();
-    if (!user) return [];
-    const languageId = this.language.contentLanguageId();
-    const translations = this.database.table('post_translations');
-    const likes = this.database.table('post_likes');
-    const comments = this.database.table('comments');
-    return this.database
-      .table('posts')
-      .filter(
-        (post) =>
-          post.author_id === user.id
-          && !post.deleted_at
-          && (this.ownProfile() || post.status === 'PUBLISHED'),
-      )
-      .map((post) => ({
-        id: post.id,
-        title:
-          translations.find(
-            (item) =>
-              item.post_id === post.id && item.language_id === languageId,
-          )?.title
-          ?? translations.find((item) => item.post_id === post.id)?.title
-          ?? 'Untitled',
-        content:
-          translations.find(
-            (item) =>
-              item.post_id === post.id && item.language_id === languageId,
-          )?.content
-          ?? translations.find((item) => item.post_id === post.id)?.content
-          ?? '',
-        thumbnail: post.thumbnail,
-        date: post.created_at,
-        likes: likes.filter(
-          (item) => item.post_id === post.id && item.is_liked,
-        ).length,
-        comments: comments.filter(
-          (item) => item.post_id === post.id && !item.deleted_at,
-        ).length,
-        status: post.status,
-      }))
-      .sort((left, right) => +new Date(right.date) - +new Date(left.date));
-  });
+  protected readonly posts = computed<ProfilePost[]>(() => this.apiPosts());
 
   protected readonly totalLikes = computed(() =>
     this.posts().reduce((sum, post) => sum + post.likes, 0),
@@ -188,6 +155,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.ownProfile()) this.loadProfile();
+    else this.loadPublicProfile();
   }
 
   protected name(): string {
@@ -216,7 +184,7 @@ export class ProfileComponent implements OnInit {
     ).format(new Date(value));
   }
 
-  protected statusLabel(status: PostStatus): string {
+  protected statusLabel(status: ContentPost['status']): string {
     const vi = {
       DRAFT: 'Bản nháp',
       PENDING: 'Chờ duyệt',
@@ -342,6 +310,56 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  private loadPublicProfile(): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
+    this.profileApi
+      .getPublicProfile(this.requestedId)
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe({
+        next: ({ data }) => this.publicProfile.set(data.user),
+        error: (error: unknown) => this.showError(error),
+      });
+  }
+
+  private loadPosts(): void {
+    const request = this.ownProfile() && this.auth.role() === USER_ROLES.BLOG_OWNER
+      ? this.ownerPostsApi.list({ page: 1, limit: 50, sort: 'newest' })
+      : this.contentApi.posts({
+        page: 1,
+        limit: 50,
+        authorId: this.requestedId,
+        language: this.language.locale(),
+        sort: 'newest',
+      });
+    request.subscribe({
+      next: ({ data }) =>
+        this.apiPosts.set(data.items.map((post) => this.mapPost(post))),
+      error: (error: unknown) => {
+        this.apiPosts.set([]);
+        this.showError(error);
+      },
+    });
+  }
+
+  private mapPost(post: ContentPost): ProfilePost {
+    const translation =
+      post.translations.find(
+        (item) => item.languageId === this.language.languageId(),
+      )
+      ?? post.translations[0];
+    return {
+      id: Number(post.id),
+      title: translation?.title ?? 'Untitled',
+      content: translation?.content ?? '',
+      thumbnail: post.thumbnail,
+      date: post.publishedAt ?? post.createdAt,
+      likes: Number(post.likesCount ?? 0),
+      comments: Number(post.commentsCount ?? 0),
+      status: post.status,
+    };
+  }
+
   private applyCurrentUser(user: User): void {
     this.apiProfile.set(user);
     this.auth.syncCurrentUser(user);
@@ -394,5 +412,13 @@ export class ProfileComponent implements OnInit {
       created_at: user.createdAt ?? new Date().toISOString(),
       updated_at: user.updatedAt ?? new Date().toISOString(),
     };
+  }
+
+  private roleId(role: UserRole): number {
+    return role === USER_ROLES.SUPER_ADMIN
+      ? 1
+      : role === USER_ROLES.BLOG_OWNER
+        ? 2
+        : 3;
   }
 }

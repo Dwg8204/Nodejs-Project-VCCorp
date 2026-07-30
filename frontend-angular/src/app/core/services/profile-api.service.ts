@@ -21,6 +21,15 @@ export type ProfileImageType = 'avatar' | 'cover';
 interface ApiProfileUser extends Omit<User, 'role' | 'isActive'> {
   role: UserRole;
 }
+export interface PublicProfileUser {
+  id: number;
+  userName: string;
+  fullName: string | null;
+  avatar: string | null;
+  coverImage: string | null;
+  role: UserRole;
+  createdAt: string;
+}
 
 interface ProfileImageData {
   user: ApiProfileUser;
@@ -46,6 +55,10 @@ export class ProfileApiService {
     return this.api
       .get<{ user: ApiProfileUser }>('profile')
       .pipe(map((response) => this.mapUserResponse(response)));
+  }
+
+  getPublicProfile(id: number): Observable<ApiResponse<{ user: PublicProfileUser }>> {
+    return this.api.get<{ user: PublicProfileUser }>(`profiles/${id}`);
   }
 
   updateProfile(

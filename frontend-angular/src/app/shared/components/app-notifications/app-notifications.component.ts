@@ -1,0 +1,9 @@
+import { ChangeDetectionStrategy, Component, CUSTOM_ELEMENTS_SCHEMA, inject } from '@angular/core';
+import { NotificationService } from '../../../core/services/notification.service';
+
+@Component({
+  selector:'app-notifications',standalone:true,schemas:[CUSTOM_ELEMENTS_SCHEMA],changeDetection:ChangeDetectionStrategy.OnPush,
+  template:`<div class="app-toast-region" aria-live="polite">@for(item of notifications.notifications();track item.id){<div class="app-toast" [class]="item.tone"><iconify-icon [icon]="item.tone==='success'?'solar:check-circle-bold-duotone':item.tone==='error'?'solar:danger-circle-bold-duotone':'solar:info-circle-bold-duotone'"></iconify-icon><span>{{item.message}}</span><button type="button" (click)="notifications.dismiss(item.id)" aria-label="Close">×</button></div>}</div>`,
+  styles:[`.app-toast-region{position:fixed;z-index:10000;top:96px;right:22px;display:grid;gap:10px;width:min(390px,calc(100vw - 32px));pointer-events:none}.app-toast{pointer-events:auto;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;background:var(--card-bg,#fff);box-shadow:0 14px 40px rgba(0,0,0,.16);animation:toast-in .2s ease}.app-toast iconify-icon{font-size:22px}.app-toast.success iconify-icon{color:var(--accent,#188b2a)}.app-toast.error iconify-icon{color:var(--danger,#d93025)}.app-toast.info iconify-icon{color:#3b82f6}.app-toast button{border:0;background:transparent;font-size:20px;cursor:pointer;color:inherit}@keyframes toast-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}@media(max-width:600px){.app-toast-region{top:72px;right:16px;left:16px;width:auto}}`],
+})
+export class AppNotificationsComponent {protected readonly notifications=inject(NotificationService);}

@@ -5,6 +5,7 @@ import { Comment } from 'modules/interaction/models/comment';
 import { Post } from 'modules/post/models/post';
 import { PostStatus } from 'common/enums/database.enums';
 import { CreateCommentDto, QueryCommentDto } from '../validations/interactionValidation';
+import { InteractionRealtimeService } from './interaction-realtime.service';
 
 @Injectable()
 export class CommentService {
@@ -13,6 +14,7 @@ export class CommentService {
     private readonly commentRepository: Repository<Comment>,
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    private readonly realtime: InteractionRealtimeService,
   ) {}
 
   async findByPost(postId: string, query: QueryCommentDto) {
@@ -76,27 +78,38 @@ export class CommentService {
       });
     }
 
+    let parentId: string | null = null;
+    let content = dto.content.trim();
     if (dto.parentId) {
-      const parentComment = await this.commentRepository.findOne({
+      const repliedComment = await this.commentRepository.findOne({
         where: { id: dto.parentId, postId, deletedAt: null },
+        relations: ['user'],
       });
 
-      if (!parentComment) {
+      if (!repliedComment) {
         throw new NotFoundException({
           success: false,
           error: { code: 'PARENT_COMMENT_NOT_FOUND', message: 'Parent comment not found' }
         });
+      }
+      // The database stores only two levels: a root comment and its direct replies.
+      // Replying to another reply still points to the original root comment.
+      parentId = repliedComment.parentId ?? repliedComment.id;
+      const repliedUserName = repliedComment.user?.fullName?.trim();
+      if (repliedUserName && !content.startsWith(`@${repliedUserName}`)) {
+        content = `@${repliedUserName} ${content}`;
       }
     }
 
     const comment = this.commentRepository.create({
       userId,
       postId,
-      parentId: dto.parentId ?? null,
-      content: dto.content,
+      parentId,
+      content,
     });
 
     await this.commentRepository.save(comment);
+    this.realtime.publish('COMMENT_CREATED', postId);
 
     return {
       success: true,

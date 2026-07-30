@@ -41,16 +41,20 @@ export class DashboardService {
       this.users.count(),
       this.categories.count({ where: { deletedAt: IsNull() } }),
       this.languages.count({ where: { isActive: true, deletedAt: IsNull() } }),
-      this.likes.createQueryBuilder('like').select('DATE(like.updatedAt)', 'date').addSelect('COUNT(like.id)', 'total')
-        .where('like.isLiked = 1').andWhere('like.updatedAt >= :since', { since }).groupBy('DATE(like.updatedAt)').getRawMany(),
-      this.comments.createQueryBuilder('comment').select('DATE(comment.createdAt)', 'date').addSelect('COUNT(comment.id)', 'total')
-        .where('comment.deletedAt IS NULL').andWhere('comment.createdAt >= :since', { since }).groupBy('DATE(comment.createdAt)').getRawMany(),
+      this.likes.createQueryBuilder('like').select("DATE_FORMAT(like.updatedAt, '%Y-%m-%d')", 'date').addSelect('COUNT(like.id)', 'total')
+        .where('like.isLiked = 1').andWhere('like.updatedAt >= :since', { since }).groupBy("DATE_FORMAT(like.updatedAt, '%Y-%m-%d')").getRawMany(),
+      this.comments.createQueryBuilder('comment').select("DATE_FORMAT(comment.createdAt, '%Y-%m-%d')", 'date').addSelect('COUNT(comment.id)', 'total')
+        .where('comment.deletedAt IS NULL').andWhere('comment.createdAt >= :since', { since }).groupBy("DATE_FORMAT(comment.createdAt, '%Y-%m-%d')").getRawMany(),
       this.posts.createQueryBuilder('post').leftJoinAndSelect('post.translations', 'translation')
         .leftJoin('post.likes', 'like', 'like.isLiked = 1').leftJoin('post.comments', 'comment', 'comment.deletedAt IS NULL')
         .select(['post.id', 'post.thumbnail', 'translation.id', 'translation.languageId', 'translation.title'])
         .addSelect('COUNT(DISTINCT like.id)', 'likesCount').addSelect('COUNT(DISTINCT comment.id)', 'commentsCount')
+        .addSelect(
+          'COUNT(DISTINCT like.id) + COUNT(DISTINCT comment.id)',
+          'interactionCount',
+        )
         .where('post.status = :published', { published: PostStatus.Published }).andWhere('post.deletedAt IS NULL')
-        .groupBy('post.id').addGroupBy('translation.id').orderBy('likesCount + commentsCount', 'DESC').take(5).getRawAndEntities(),
+        .groupBy('post.id').addGroupBy('translation.id').orderBy('interactionCount', 'DESC').take(5).getRawAndEntities(),
       this.posts.createQueryBuilder('post').leftJoin('post.category', 'category')
         .leftJoin('category.translations', 'translation').select('category.id', 'categoryId')
         .addSelect('translation.languageId', 'languageId').addSelect('translation.name', 'name')
@@ -66,7 +70,7 @@ export class DashboardService {
     const commentMap = new Map(trendComments.map((row) => [String(row.date), Number(row.total)]));
     const engagementTrend = Array.from({ length: period }, (_, offset) => {
       const date = new Date(since); date.setDate(since.getDate() + offset);
-      const key = date.toISOString().slice(0, 10);
+      const key = this.localDateKey(date);
       return { date: key, likes: likeMap.get(key) ?? 0, comments: commentMap.get(key) ?? 0 };
     });
     const topItems = topPosts.entities.map((post) => {
@@ -84,5 +88,12 @@ export class DashboardService {
       translationCoverage: translatedRows.map((row) => ({ languageId: Number(row.languageId), total: Number(row.total), autoTranslated: Number(row.autoTranslated) })),
       recentActivity,
     } };
+  }
+
+  private localDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

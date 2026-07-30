@@ -24,6 +24,24 @@ export class ProfileService {
     return { success: true, data: { user: this.toProfile(user) } };
   }
 
+  async findPublicProfile(userId: number) {
+    const user = await this.findUser(userId);
+    return {
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          userName: user.userName,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          coverImage: user.coverImage,
+          role: user.role.nameRole,
+          createdAt: user.createdAt,
+        },
+      },
+    };
+  }
+
   async updateProfile(
     userId: number,
     dto: UpdateProfileDto,

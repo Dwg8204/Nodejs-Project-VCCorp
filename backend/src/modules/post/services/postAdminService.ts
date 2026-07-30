@@ -38,11 +38,31 @@ export class PostAdminService {
     else qb.orderBy('post.createdAt', 'DESC');
     qb.addOrderBy('post.id', 'DESC');
     const [posts, total] = await qb.skip((page - 1) * take).take(take).getManyAndCount();
+    const statusRows = await this.postRepository.createQueryBuilder('post')
+      .select('post.status', 'status')
+      .addSelect('COUNT(post.id)', 'total')
+      .where('post.deletedAt IS NULL')
+      .groupBy('post.status')
+      .getRawMany<{ status: PostStatus; total: string }>();
+    const byStatus = Object.fromEntries(
+      Object.values(PostStatus).map((value) => [value, 0]),
+    ) as Record<PostStatus, number>;
+    statusRows.forEach((row) => byStatus[row.status] = Number(row.total));
     const items = posts.map(({ author, ...post }) => ({
       ...post,
       author: author ? { id: author.id, fullName: author.fullName, userName: author.userName, avatar: author.avatar } : null,
     }));
-    return { success: true, data: { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) } } };
+    return {
+      success: true,
+      data: {
+        items,
+        stats: {
+          total: Object.values(byStatus).reduce((sum, value) => sum + value, 0),
+          ...byStatus,
+        },
+        pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) },
+      },
+    };
   }
 
   async findOne(postId: string) {

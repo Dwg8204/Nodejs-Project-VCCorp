@@ -22,8 +22,9 @@ import { UserModule } from 'modules/user/user.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { LanguageModule } from 'modules/language/language.module';
 import { CategoryModule } from 'modules/category/category.module';
-import { AppController } from './app.controller';
+import { DashboardModule } from 'modules/dashboard/dashboard.module';
 import { UploadModule } from 'modules/upload/upload.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { UploadModule } from 'modules/upload/upload.module';
     AdminUsersModule,
     AdminLanguagesModule,
     AdminAuditLogsModule,
+    DashboardModule,
     UploadModule,
   ],
   controllers: [AppController],

@@ -34,6 +34,16 @@ export class PostAdminController {
     return this.postAdminService.approve(user, id, ipAddress, userAgent);
   }
 
+  @Post(':id/unapprove')
+  unapprove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.postAdminService.unapprove(user, id, ipAddress, userAgent);
+  }
+
   @Post(':id/reject')
   reject(
     @CurrentUser() user: AuthenticatedUser,

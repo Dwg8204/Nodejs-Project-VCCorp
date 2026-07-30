@@ -2,7 +2,6 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -14,7 +13,7 @@ import { Category } from './category';
 
 @Entity({ name: 'category_translation' })
 @Unique('uq_category_translation_language', ['categoryId', 'languageId'])
-@Index('idx_category_translation_language_name', ['languageId', 'name'])
+@Unique('uq_category_translation_language_name', ['languageId', 'name'])
 export class CategoryTranslation {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id: string;

@@ -57,6 +57,7 @@ export class ApiErrorService {
     payload: ApiErrorPayload | null,
     status: number,
   ): string {
+    if (payload?.code) return payload.code;
     const message = payload?.message;
     if (typeof message === 'string' && /^[A-Z][A-Z0-9_]+$/.test(message)) {
       return message;

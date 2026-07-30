@@ -12,12 +12,14 @@ import { Category } from 'modules/category/models/category';
 import { Language } from 'modules/language/models/language';
 import { PostTranslation } from 'modules/post/models/postTranslation';
 import { AuditLog } from 'modules/audit/models/auditLog';
+import { InteractionModule } from 'modules/interaction/interaction.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Post, Comment, PostLike, User, Category, Language, PostTranslation, AuditLog]),
     AuthModule,
     UserModule,
+    InteractionModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],

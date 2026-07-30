@@ -22,6 +22,7 @@ import {
 } from 'modules/auth/interfaces/auth-user.interface';
 import { ProfileService } from '../services/profile.service';
 import {
+  ChangePasswordDto,
   ProfileImageType,
   UpdateProfileDto,
 } from '../validations/profile.validation';
@@ -43,6 +44,15 @@ export class ProfileController {
     @RequestMetadata() context: RequestContext,
   ) {
     return this.profileService.updateProfile(user.id, dto, context);
+  }
+
+  @Patch('password')
+  changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @RequestMetadata() context: RequestContext,
+  ) {
+    return this.profileService.changePassword(user.id, dto, context);
   }
 
   @Post('images/:type')

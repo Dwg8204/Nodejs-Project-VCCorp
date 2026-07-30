@@ -81,7 +81,12 @@ export class PostPublicService {
         .from('comments', 'comments')
         .where('comments.post_id = post.id')
         .andWhere('comments.deleted_at IS NULL'), 'commentsCountAlias');
-      queryBuilder.orderBy('likesCountAlias + commentsCountAlias', 'DESC');
+      queryBuilder.addSelect(
+        '(SELECT COUNT(*) FROM post_likes popularity_likes WHERE popularity_likes.post_id = post.id AND popularity_likes.is_liked = 1) + '
+        + '(SELECT COUNT(*) FROM comments popularity_comments WHERE popularity_comments.post_id = post.id AND popularity_comments.deleted_at IS NULL)',
+        'interactionCountAlias',
+      );
+      queryBuilder.orderBy('interactionCountAlias', 'DESC');
     } else {
       queryBuilder.orderBy('post.publishedAt', 'DESC');
     }

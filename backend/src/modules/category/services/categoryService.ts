@@ -1,12 +1,13 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, Repository } from 'typeorm';
 import { AuditService } from 'modules/audit/services/audit.service';
 import { AuthenticatedUser } from 'modules/auth/interfaces/auth-user.interface';
 import { Language } from 'modules/language/models/language';
 import { Category } from '../models/category';
 import { CategoryTranslation } from '../models/categoryTranslation';
 import { CreateCategoryDto, QueryCategoryDto, TranslationItemDto, UpdateCategoryDto } from '../validations/categoryValidation';
+import { AppCacheService } from 'modules/cache/cache.service';
 
 @Injectable()
 export class CategoryService {
@@ -14,6 +15,7 @@ export class CategoryService {
     @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
+    private readonly cache: AppCacheService,
   ) {}
 
   create(user: AuthenticatedUser, dto: CreateCategoryDto, ip: string, agent?: string) {
@@ -26,25 +28,69 @@ export class CategoryService {
         translationRepo.create({ categoryId: category.id, languageId: item.languageId, name: item.name.trim(), des: item.des ?? null, isAutoTranslated: item.isAutoTranslated ?? false })));
       await this.log(manager, user, 'CATEGORY_CREATED', category, null, category, ip, agent);
       return { success: true, message: 'CATEGORY_CREATED', data: { item: category } };
+    }).then(async (result) => {
+      await this.cache.invalidatePrefix('categories:');
+      return result;
     });
   }
 
   async findAll(query: QueryCategoryDto) {
+    const key = `categories:list:${JSON.stringify(query)}`;
+    return this.cache.getOrSet(key, 300, () => this.findAllUncached(query));
+  }
+
+  private async findAllUncached(query: QueryCategoryDto) {
     const { page = 1, limit = 10, search, language, sort = 'newest' } = query;
     const take = Math.min(limit, 100);
-    const qb = this.categoryRepository.createQueryBuilder('category')
+    const idQuery = this.categoryRepository.createQueryBuilder('category')
+      .select('category.id', 'id')
+      .where('category.deletedAt IS NULL');
+    if (search) {
+      const matchQuery = this.dataSource.getRepository(CategoryTranslation)
+        .createQueryBuilder('searchTranslation')
+        .select('DISTINCT searchTranslation.categoryId', 'categoryId')
+        .innerJoin('searchTranslation.language', 'searchLanguage')
+        .innerJoin('searchTranslation.category', 'searchCategory')
+        .where('searchCategory.deletedAt IS NULL')
+        .andWhere('searchTranslation.name LIKE :search', { search: `%${search.trim()}%` });
+      if (language) {
+        matchQuery.andWhere('searchLanguage.code = :language', { language });
+      }
+      const matchingIds = (await matchQuery.getRawMany<{ categoryId: string }>())
+        .map((row) => Number(row.categoryId));
+      if (!matchingIds.length) {
+        return { success: true, data: { items: [], pagination: { page, limit: take, total: 0, totalPages: 0 } } };
+      }
+      idQuery.andWhere('category.id IN (:...matchingIds)', { matchingIds });
+    }
+    const total = await idQuery.clone().getCount();
+    if (sort === 'oldest') idQuery.orderBy('category.createdAt', 'ASC');
+    else if (sort === 'name-asc' || sort === 'name-desc') {
+      idQuery.addSelect((subQuery) => {
+        const queryBuilder = subQuery
+          .select('sortTranslation.name')
+          .from(CategoryTranslation, 'sortTranslation')
+          .innerJoin(Language, 'sortLanguage', 'sortLanguage.id = sortTranslation.languageId')
+          .where('sortTranslation.categoryId = category.id');
+        if (language) queryBuilder.andWhere('sortLanguage.code = :language');
+        return queryBuilder.limit(1);
+      }, 'sortName').orderBy('sortName', sort === 'name-asc' ? 'ASC' : 'DESC');
+      if (language) idQuery.setParameter('language', language);
+    } else idQuery.orderBy('category.createdAt', 'DESC');
+    idQuery.addOrderBy('category.id', 'DESC');
+    const idRows = await idQuery.offset((page - 1) * take).limit(take).getRawMany<{ id: string }>();
+    const ids = idRows.map((row) => Number(row.id));
+    if (!ids.length) {
+      return { success: true, data: { items: [], pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) } } };
+    }
+    const items = await this.categoryRepository.createQueryBuilder('category')
       .leftJoinAndSelect('category.translations', 'translation')
       .leftJoinAndSelect('translation.language', 'languageEntity')
       .loadRelationCountAndMap('category.postsCount', 'category.posts', 'post', (sub) => sub.andWhere('post.deletedAt IS NULL'))
-      .where('category.deletedAt IS NULL');
-    if (language) qb.andWhere('languageEntity.code = :language', { language });
-    if (search) qb.andWhere('translation.name LIKE :search', { search: `%${search}%` });
-    if (sort === 'oldest') qb.orderBy('category.createdAt', 'ASC');
-    else if (sort === 'name-asc') qb.orderBy('translation.name', 'ASC');
-    else if (sort === 'name-desc') qb.orderBy('translation.name', 'DESC');
-    else qb.orderBy('category.createdAt', 'DESC');
-    qb.addOrderBy('category.id', 'DESC');
-    const [items, total] = await qb.skip((page - 1) * take).take(take).getManyAndCount();
+      .where({ id: In(ids) })
+      .getMany();
+    const position = new Map(ids.map((id, index) => [id, index]));
+    items.sort((left, right) => (position.get(left.id) ?? 0) - (position.get(right.id) ?? 0));
     return { success: true, data: { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) } } };
   }
 
@@ -64,7 +110,7 @@ export class CategoryService {
       const sourceLanguageId = dto.sourceLanguageId ?? category.sourceLanguageId;
       const translations = dto.translations ?? category.translations;
       if (!sourceLanguageId) throw new BadRequestException({ code: 'CATEGORY_SOURCE_LANGUAGE_REQUIRED' });
-      await this.validate(manager, sourceLanguageId, translations);
+      await this.validate(manager, sourceLanguageId, translations, id);
       category.sourceLanguageId = sourceLanguageId;
       await repo.save(category);
       if (dto.translations) {
@@ -74,6 +120,9 @@ export class CategoryService {
       }
       await this.log(manager, user, 'CATEGORY_UPDATED', category, before, category, ip, agent);
       return { success: true, message: 'CATEGORY_UPDATED', data: { item: category } };
+    }).then(async (result) => {
+      await this.cache.invalidatePrefix('categories:');
+      return result;
     });
   }
 
@@ -87,6 +136,9 @@ export class CategoryService {
       await repo.save(category);
       await this.log(manager, user, 'CATEGORY_DELETED', category, before, category, ip, agent);
       return { success: true, message: 'CATEGORY_DELETED' };
+    }).then(async (result) => {
+      await this.cache.invalidatePrefix('categories:');
+      return result;
     });
   }
 
@@ -96,10 +148,11 @@ export class CategoryService {
     if (!category.deletedAt) throw new ConflictException({ code: 'CATEGORY_NOT_DELETED' });
     category.deletedAt = null;
     const item = await this.categoryRepository.save(category);
+    await this.cache.invalidatePrefix('categories:');
     return { success: true, message: 'CATEGORY_RESTORED', data: { item } };
   }
 
-  private async validate(manager: EntityManager, sourceId: number, translations: TranslationItemDto[]) {
+  private async validate(manager: EntityManager, sourceId: number, translations: TranslationItemDto[], excludeCategoryId?: number) {
     const ids = translations.map((item) => item.languageId);
     if (new Set(ids).size !== ids.length) throw new ConflictException({ code: 'CATEGORY_LANGUAGE_DUPLICATED' });
     if (!ids.includes(sourceId)) throw new BadRequestException({ code: 'CATEGORY_SOURCE_TRANSLATION_REQUIRED' });
@@ -107,6 +160,31 @@ export class CategoryService {
       .where('language.id IN (:...ids)', { ids }).andWhere('language.isActive = 1')
       .andWhere('language.deletedAt IS NULL').getCount();
     if (count !== ids.length) throw new BadRequestException({ code: 'CATEGORY_LANGUAGE_INVALID' });
+    const duplicateQuery = manager.getRepository(CategoryTranslation)
+      .createQueryBuilder('translation')
+      .innerJoin('translation.category', 'category')
+      .where('category.deletedAt IS NULL');
+    if (excludeCategoryId) {
+      duplicateQuery.andWhere('translation.categoryId != :excludeCategoryId', { excludeCategoryId });
+    }
+    duplicateQuery.andWhere(
+      translations.map((_, index) =>
+        `(translation.languageId = :language${index} AND LOWER(TRIM(translation.name)) = :name${index})`,
+      ).join(' OR '),
+      Object.fromEntries(translations.flatMap((item, index) => [
+        [`language${index}`, item.languageId],
+        [`name${index}`, item.name.trim().toLocaleLowerCase()],
+      ])),
+    );
+    const duplicate = await duplicateQuery.getOne();
+    if (duplicate) {
+      throw new ConflictException({
+        code: 'CATEGORY_NAME_ALREADY_EXISTS',
+        message: 'A category with this name already exists in one of the selected languages',
+        languageId: duplicate.languageId,
+        name: duplicate.name,
+      });
+    }
   }
 
   private log(manager: EntityManager, user: AuthenticatedUser, action: string, category: Category, before: unknown, after: unknown, ip: string, agent?: string) {

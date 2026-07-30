@@ -1,4 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuditService } from 'modules/audit/services/audit.service';
 import { RequestContext } from 'modules/auth/interfaces/auth-user.interface';
@@ -6,6 +8,7 @@ import { User } from 'modules/user/models/user';
 import { CloudinaryService } from 'modules/upload/services/cloudinary.service';
 import { Repository } from 'typeorm';
 import {
+  ChangePasswordDto,
   ProfileImageType,
   UpdateProfileDto,
 } from '../validations/profile.validation';
@@ -17,11 +20,30 @@ export class ProfileService {
     private readonly userRepository: Repository<User>,
     private readonly auditService: AuditService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly config: ConfigService,
   ) {}
 
   async findProfile(userId: number) {
     const user = await this.findUser(userId);
     return { success: true, data: { user: this.toProfile(user) } };
+  }
+
+  async findPublicProfile(userId: number) {
+    const user = await this.findUser(userId);
+    return {
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          userName: user.userName,
+          fullName: user.fullName,
+          avatar: user.avatar,
+          coverImage: user.coverImage,
+          role: user.role.nameRole,
+          createdAt: user.createdAt,
+        },
+      },
+    };
   }
 
   async updateProfile(
@@ -55,6 +77,58 @@ export class ProfileService {
       success: true,
       message: 'PROFILE_UPDATE_SUCCEEDED',
       data: { user: after },
+    };
+  }
+
+  async changePassword(
+    userId: number,
+    dto: ChangePasswordDto,
+    context: RequestContext,
+  ) {
+    if (dto.newPassword !== dto.confirmPassword) {
+      throw new BadRequestException('PROFILE_PASSWORD_CONFIRMATION_MISMATCH');
+    }
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.passwordHash')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('user.id = :userId', { userId })
+      .getOne();
+    if (!user) throw new NotFoundException('PROFILE_NOT_FOUND');
+    if (!(await user.comparePassword(dto.currentPassword))) {
+      throw new BadRequestException('PROFILE_CURRENT_PASSWORD_INVALID');
+    }
+    if (await user.comparePassword(dto.newPassword)) {
+      throw new BadRequestException('PROFILE_PASSWORD_UNCHANGED');
+    }
+
+    user.passwordHash = await bcrypt.hash(
+      dto.newPassword,
+      this.config.getOrThrow<number>('BCRYPT_SALT_ROUNDS'),
+    );
+    user.passwordChangedAt = new Date();
+    user.otpCodeHash = null;
+    user.otpPurpose = null;
+    user.otpExpiresAt = null;
+    user.otpAttemptCount = 0;
+    user.otpLastSentAt = null;
+    await this.userRepository.save(user);
+    await this.auditService.record({
+      actorId: user.id,
+      actorName: user.fullName ?? user.userName,
+      actorRole: user.role.nameRole,
+      action: 'PROFILE_PASSWORD_UPDATED',
+      entityType: 'USER',
+      entityId: user.id,
+      entityLabel: user.email,
+      metadata: { passwordChangedAt: user.passwordChangedAt.toISOString() },
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    });
+    return {
+      success: true,
+      message: 'PROFILE_PASSWORD_UPDATE_SUCCEEDED',
+      data: null,
     };
   }
 

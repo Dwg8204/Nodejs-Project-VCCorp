@@ -3,24 +3,32 @@ import { HttpClient } from '@angular/common/http';
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 
 import { APP_CONFIG, AppLocale } from '../config/app.config';
-import { LanguageRow } from '../../data/mock/mock-schema.model';
-import { MockDatabaseService } from '../../data/mock/mock-database.service';
 import { ApiClientService } from './api-client.service';
 import { StorageService } from './storage.service';
 
 export type UiMessageKey = string;
 type TranslationPack = Record<string, string>;
+export interface SystemLanguage {
+  id:number;code:string;name:string;flag:string|null;is_active:boolean;
+  is_system_language:boolean;fallback_language_id:number|null;
+  translation_status:'DRAFT'|'TRANSLATING'|'READY'|'DISABLED';
+  created_at:string;updated_at:string;deleted_at:string|null;
+}
+const LOADING_LANGUAGE: SystemLanguage = {
+  id: 0, code: '', name: '', flag: null, is_active: false,
+  is_system_language: false, fallback_language_id: null,
+  translation_status: 'DRAFT', created_at: '', updated_at: '', deleted_at: null,
+};
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly storage = inject(StorageService);
-  private readonly database = inject(MockDatabaseService);
   private readonly api = inject(ApiClientService);
   private readonly http = inject(HttpClient);
   private readonly document = inject(DOCUMENT);
 
   private readonly revision = signal(0);
-  private readonly apiLanguages = signal<LanguageRow[] | null>(null);
+  private readonly apiLanguages = signal<SystemLanguage[]>([]);
   private readonly packs = signal<Record<string, TranslationPack>>({});
   private readonly pendingPacks = new Set<string>();
   private readonly localeState = signal<AppLocale>(this.readInitialLocale());
@@ -31,29 +39,18 @@ export class LanguageService {
   readonly locale = this.localeState.asReadonly();
   readonly availableLanguages = computed(() => {
     this.revision();
-    return (
-      this.apiLanguages()
-      ?? this.database
-        .table('languages')
-        .filter(
-          (language) =>
-            language.is_active
-            && language.translation_status === 'READY'
-            && !language.deleted_at,
-        )
-    );
+    return this.apiLanguages();
   });
   readonly currentLanguage = computed(
     () =>
       this.availableLanguages().find(
         (language) => language.code === this.localeState(),
-      ) ?? this.availableLanguages()[0],
+      ) ?? this.availableLanguages()[0] ?? LOADING_LANGUAGE,
   );
   readonly languageId = computed(() => this.currentLanguage()?.id ?? 2);
   readonly contentLanguageId = computed(() => {
     const code = this.localeState().toLowerCase();
-    return this.database
-      .table('languages')
+    return this.availableLanguages()
       .find((language) => language.code.toLowerCase() === code)?.id
       ?? this.languageId();
   });

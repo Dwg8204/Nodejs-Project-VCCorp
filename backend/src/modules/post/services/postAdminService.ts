@@ -38,11 +38,31 @@ export class PostAdminService {
     else qb.orderBy('post.createdAt', 'DESC');
     qb.addOrderBy('post.id', 'DESC');
     const [posts, total] = await qb.skip((page - 1) * take).take(take).getManyAndCount();
+    const statusRows = await this.postRepository.createQueryBuilder('post')
+      .select('post.status', 'status')
+      .addSelect('COUNT(post.id)', 'total')
+      .where('post.deletedAt IS NULL')
+      .groupBy('post.status')
+      .getRawMany<{ status: PostStatus; total: string }>();
+    const byStatus = Object.fromEntries(
+      Object.values(PostStatus).map((value) => [value, 0]),
+    ) as Record<PostStatus, number>;
+    statusRows.forEach((row) => byStatus[row.status] = Number(row.total));
     const items = posts.map(({ author, ...post }) => ({
       ...post,
       author: author ? { id: author.id, fullName: author.fullName, userName: author.userName, avatar: author.avatar } : null,
     }));
-    return { success: true, data: { items, pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) } } };
+    return {
+      success: true,
+      data: {
+        items,
+        stats: {
+          total: Object.values(byStatus).reduce((sum, value) => sum + value, 0),
+          ...byStatus,
+        },
+        pagination: { page, limit: take, total, totalPages: Math.ceil(total / take) },
+      },
+    };
   }
 
   async findOne(postId: string) {
@@ -65,6 +85,45 @@ export class PostAdminService {
 
   reject(user: AuthenticatedUser, postId: string, dto: RejectPostDto, ip: string, agent?: string) {
     return this.review(user, postId, PostStatus.Rejected, dto.reason, ip, agent);
+  }
+
+  async unapprove(user: AuthenticatedUser, id: string, ip: string, agent?: string) {
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Post);
+      const post = await repo.findOne({
+        where: { id, deletedAt: IsNull() },
+        relations: ['translations'],
+      });
+      if (!post) throw this.notFound();
+      if (post.status !== PostStatus.Published) {
+        throw new BadRequestException({
+          code: 'POST_NOT_PUBLISHED',
+          message: 'Only an approved post can have its approval revoked',
+        });
+      }
+      const before = structuredClone(post);
+      post.status = PostStatus.Pending;
+      post.rejectionReason = null;
+      post.reviewedBy = null;
+      post.reviewedAt = null;
+      post.publishedAt = null;
+      await repo.save(post);
+      await this.record(
+        manager,
+        user,
+        'POST_APPROVAL_REVOKED',
+        post,
+        before,
+        post,
+        ip,
+        agent,
+      );
+      return {
+        success: true,
+        message: 'POST_APPROVAL_REVOKED',
+        data: { item: post },
+      };
+    });
   }
 
   private async review(user: AuthenticatedUser, id: string, status: PostStatus, reason: string | undefined, ip: string, agent?: string) {

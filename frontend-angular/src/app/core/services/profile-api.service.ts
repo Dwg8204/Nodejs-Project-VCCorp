@@ -15,11 +15,25 @@ export interface UpdateProfilePayload {
   phone?: string | null;
   dateOfBirth?: string | null;
 }
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
 export type ProfileImageType = 'avatar' | 'cover';
 
 interface ApiProfileUser extends Omit<User, 'role' | 'isActive'> {
   role: UserRole;
+}
+export interface PublicProfileUser {
+  id: number;
+  userName: string;
+  fullName: string | null;
+  avatar: string | null;
+  coverImage: string | null;
+  role: UserRole;
+  createdAt: string;
 }
 
 interface ProfileImageData {
@@ -48,12 +62,20 @@ export class ProfileApiService {
       .pipe(map((response) => this.mapUserResponse(response)));
   }
 
+  getPublicProfile(id: number): Observable<ApiResponse<{ user: PublicProfileUser }>> {
+    return this.api.get<{ user: PublicProfileUser }>(`profiles/${id}`);
+  }
+
   updateProfile(
     payload: UpdateProfilePayload,
   ): Observable<ApiResponse<{ user: User }>> {
     return this.api
       .patch<{ user: ApiProfileUser }>('profile', payload)
       .pipe(map((response) => this.mapUserResponse(response)));
+  }
+
+  changePassword(payload: ChangePasswordPayload): Observable<ApiResponse<null>> {
+    return this.api.patch<null>('profile/password', payload);
   }
 
   uploadImage(

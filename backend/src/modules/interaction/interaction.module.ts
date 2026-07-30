@@ -9,6 +9,7 @@ import { LikeService } from './services/likeService';
 import { PostModule } from 'modules/post/post.module';
 import { AuthModule } from 'modules/auth/auth.module';
 import { UserModule } from 'modules/user/user.module';
+import { InteractionRealtimeService } from './services/interaction-realtime.service';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { UserModule } from 'modules/user/user.module';
     UserModule,
   ],
   controllers: [CommentController, LikeController],
-  providers: [CommentService, LikeService],
-  exports: [TypeOrmModule],
+  providers: [CommentService, LikeService, InteractionRealtimeService],
+  exports: [TypeOrmModule, InteractionRealtimeService],
 })
 export class InteractionModule {}

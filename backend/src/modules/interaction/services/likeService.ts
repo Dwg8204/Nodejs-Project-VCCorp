@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { PostLike } from 'modules/interaction/models/postLike';
 import { Post } from 'modules/post/models/post';
 import { PostStatus } from 'common/enums/database.enums';
+import { InteractionRealtimeService } from './interaction-realtime.service';
 
 @Injectable()
 export class LikeService {
@@ -12,6 +13,7 @@ export class LikeService {
     private readonly likeRepository: Repository<PostLike>,
     @InjectRepository(Post)
     private readonly postRepository: Repository<Post>,
+    private readonly realtime: InteractionRealtimeService,
   ) {}
 
   async getMyLike(userId: number, postId: string) {
@@ -59,6 +61,7 @@ export class LikeService {
     const totalLikes = await this.likeRepository.count({
       where: { postId, isLiked: true },
     });
+    this.realtime.publish('LIKE_CHANGED', postId);
 
     return {
       success: true,

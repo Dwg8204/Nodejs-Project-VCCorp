@@ -1,79 +1,37 @@
-import { AfterViewInit, afterNextRender, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, ElementRef, inject, signal, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, afterNextRender, ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, ElementRef, inject, signal, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/services/auth.service';
-import { LanguageService } from '../../core/services/language.service';
-import { MockDatabaseService } from '../../data/mock/mock-database.service';
-import { PostRow } from '../../data/mock/mock-schema.model';
 import { firstValueFrom } from 'rxjs';
+import { ContentCategory } from '../../core/models/content.model';
+import { AuthService } from '../../core/services/auth.service';
+import { ContentApiService } from '../../core/services/content-api.service';
 import { ImageUploadService } from '../../core/services/image-upload.service';
+import { LanguageService } from '../../core/services/language.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { OwnerPostPayload, OwnerPostsApiService } from '../../core/services/owner-posts-api.service';
 declare const Quill:any;
 
 @Component({selector:'app-post-form',standalone:true,imports:[RouterLink],templateUrl:'./post-form.component.html',styleUrl:'./post-form.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
-export class PostFormComponent implements AfterViewInit{
-  private readonly database=inject(MockDatabaseService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly imageUpload=inject(ImageUploadService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);
-  @ViewChild('editor') editorRef!:ElementRef<HTMLElement>; private editor:any;
-  protected readonly editId=signal<number|null>(null);protected readonly title=signal('');protected readonly content=signal('');protected readonly thumbnail=signal('');protected readonly sourceLanguageId=signal(2);protected readonly categoryId=signal(1);protected readonly previewOpen=signal(false);protected readonly previewLanguageId=signal(2);protected readonly translateTargets=signal<number[]>([]);protected readonly error=signal('');protected readonly translatedPreview=signal<{title:string;content:string}|null>(null);protected readonly translating=signal(false);protected readonly uploadingImage=signal(false);private readonly translators=new Map<string,any>();
-  protected readonly languages=computed(()=>this.database.table('languages').filter(row=>!row.deleted_at));
-  protected readonly categories=computed(()=>{const rows=this.database.table('categories').filter(row=>!row.deleted_at);const trans=this.database.table('category_translation');return rows.map(row=>({id:row.id,name:trans.find(t=>t.category_id===row.id&&t.language_id===this.sourceLanguageId())?.name??trans.find(t=>t.category_id===row.id)?.name??`#${row.id}`}));});
+export class PostFormComponent implements AfterViewInit {
+  private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly imageUpload=inject(ImageUploadService);private readonly contentApi=inject(ContentApiService);private readonly postsApi=inject(OwnerPostsApiService);private readonly notifications=inject(NotificationService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);private readonly routePostId=this.route.snapshot.paramMap.get('id');
+  @ViewChild('editor') editorRef!:ElementRef<HTMLElement>;private editor:any;private readonly translators=new Map<string,any>();private readonly categoryRows=signal<ContentCategory[]>([]);
+  protected readonly editId=signal<string|null>(null);protected readonly title=signal('');protected readonly content=signal('');protected readonly thumbnail=signal('');protected readonly sourceLanguageId=signal(0);protected readonly categoryId=signal(0);protected readonly previewOpen=signal(false);protected readonly previewLanguageId=signal(0);protected readonly translateTargets=signal<number[]>([]);protected readonly error=signal('');protected readonly translatedPreview=signal<{title:string;content:string}|null>(null);protected readonly translating=signal(false);protected readonly uploadingImage=signal(false);protected readonly saving=signal(false);
+  protected readonly languages=computed(()=>this.language.availableLanguages());
+  protected readonly categories=computed(()=>this.categoryRows().flatMap(row=>{const translation=row.translations.find(item=>item.languageId===this.sourceLanguageId());return translation?[{id:row.id,name:translation.name}]:[];}));
   protected readonly previewTitle=computed(()=>this.previewLanguageId()===this.sourceLanguageId()?this.title():(this.translatedPreview()?.title??this.title()));
   protected readonly previewLanguageName=computed(()=>this.languages().find(item=>item.id===this.previewLanguageId())?.name??'');
   protected readonly previewContent=computed(()=>this.previewLanguageId()===this.sourceLanguageId()?this.content():(this.translatedPreview()?.content??this.content()));
-  constructor(){afterNextRender(()=>this.editor?.getModule('toolbar')?.addHandler('image',()=>this.selectEditorImage()));}
-  ngAfterViewInit():void{this.editor=new Quill(this.editorRef.nativeElement,{theme:'snow',placeholder:'Viết nội dung ở đây...',modules:{toolbar:[[{header:[2,3,false]}],['bold','italic','underline','strike'],['blockquote','code-block'],[{list:'ordered'},{list:'bullet'}],['link','image'],['clean']]}});this.editor.on('text-change',()=>this.content.set(this.editor.root.innerHTML));const raw=this.route.snapshot.paramMap.get('id');if(raw)this.loadPost(Number(raw));}
-  private loadPost(id:number):void{const post=this.database.table('posts').find(row=>row.id===id&&row.author_id===this.auth.currentUser()?.id);if(!post)return;const trans=this.database.table('post_translations').find(row=>row.post_id===id&&row.language_id===(post.source_language_id??2));this.editId.set(id);this.sourceLanguageId.set(post.source_language_id??2);this.previewLanguageId.set(post.source_language_id??2);this.categoryId.set(post.category_id);this.thumbnail.set(post.thumbnail);this.title.set(trans?.title??'');this.content.set(trans?.content??'');this.editor.root.innerHTML=trans?.content??'';this.translateTargets.set(this.database.table('post_translations').filter(row=>row.post_id===id&&row.language_id!==post.source_language_id).map(row=>row.language_id));}
-  protected async uploadThumbnail(event:Event):Promise<void>{
-    const input=event.target as HTMLInputElement;
-    const file=input.files?.[0];
-    input.value='';
-    if(!file||!this.validateImage(file))return;
-    this.uploadingImage.set(true);
-    this.error.set('');
-    try{
-      const uploaded=await firstValueFrom(this.imageUpload.upload(file));
-      this.thumbnail.set(uploaded.url);
-    }catch{
-      this.error.set(this.language.choose('Không thể tải ảnh lên Cloudinary. Vui lòng thử lại.','Could not upload the image to Cloudinary. Please try again.'));
-    }finally{
-      this.uploadingImage.set(false);
-    }
-  }
-  private async uploadEditorImage(file:File):Promise<void>{
-    if(!this.validateImage(file))return;
-    this.uploadingImage.set(true);
-    this.error.set('');
-    try{
-      const uploaded=await firstValueFrom(this.imageUpload.upload(file));
-      const range=this.editor.getSelection(true);
-      this.editor.insertEmbed(range.index,'image',uploaded.url,'user');
-      this.editor.setSelection(range.index+1,0,'silent');
-    }catch{
-      this.error.set(this.language.choose('Không thể tải ảnh lên Cloudinary. Vui lòng thử lại.','Could not upload the image to Cloudinary. Please try again.'));
-    }finally{
-      this.uploadingImage.set(false);
-    }
-  }
-  private selectEditorImage():void{
-    const input=document.createElement('input');
-    input.type='file';
-    input.accept='image/jpeg,image/png,image/webp';
-    input.onchange=()=>{const file=input.files?.[0];if(file)void this.uploadEditorImage(file);};
-    input.click();
-  }
-  private validateImage(file:File):boolean{
-    if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
-      this.error.set(this.language.choose('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.','Only JPG, PNG or WebP images are accepted.'));
-      return false;
-    }
-    if(file.size>5*1024*1024){
-      this.error.set(this.language.choose('Ảnh không được vượt quá 5 MB.','The image must not exceed 5 MB.'));
-      return false;
-    }
-    return true;
-  }
+
+  constructor(){afterNextRender(()=>this.editor?.getModule('toolbar')?.addHandler('image',()=>this.selectEditorImage()));effect(()=>{const currentId=this.language.languageId();const available=this.languages();if(!this.routePostId&&!this.sourceLanguageId()&&available.some(item=>item.id===currentId)){this.sourceLanguageId.set(currentId);this.previewLanguageId.set(currentId);this.syncCategoryForLanguage(currentId);}},{allowSignalWrites:true});this.contentApi.categories({page:1,limit:100,sort:'name-asc'}).subscribe({next:r=>{this.categoryRows.set(r.data.items);this.syncCategoryForLanguage(this.sourceLanguageId());},error:e=>this.notifications.fromApi(e)});}
+  ngAfterViewInit():void{this.editor=new Quill(this.editorRef.nativeElement,{theme:'snow',placeholder:'Viết nội dung ở đây...',modules:{toolbar:[[{header:[2,3,false]}],['bold','italic','underline','strike'],['blockquote','code-block'],[{list:'ordered'},{list:'bullet'}],['link','image'],['clean']]}});this.editor.on('text-change',()=>this.content.set(this.editor.root.innerHTML));if(this.routePostId)this.loadPost(this.routePostId);}
+  private loadPost(id:string):void{this.postsApi.get(id).subscribe({next:r=>{const post=r.data.item;const sourceId=post.sourceLanguageId??post.translations[0]?.languageId??this.language.languageId();const translation=post.translations.find(item=>item.languageId===sourceId)??post.translations[0];this.editId.set(id);this.sourceLanguageId.set(sourceId);this.previewLanguageId.set(sourceId);this.categoryId.set(post.categoryId);this.thumbnail.set(post.thumbnail);this.title.set(translation?.title??'');this.content.set(translation?.content??'');this.editor.root.innerHTML=translation?.content??'';this.translateTargets.set(post.translations.filter(item=>item.languageId!==sourceId).map(item=>item.languageId));},error:e=>this.notifications.fromApi(e)});}
+  protected async uploadThumbnail(event:Event):Promise<void>{const input=event.target as HTMLInputElement;const file=input.files?.[0];input.value='';if(!file||!this.validateImage(file))return;this.uploadingImage.set(true);this.error.set('');try{this.thumbnail.set((await firstValueFrom(this.imageUpload.upload(file))).url);}catch(e){this.notifications.fromApi(e);}finally{this.uploadingImage.set(false);}}
+  private async uploadEditorImage(file:File):Promise<void>{if(!this.validateImage(file))return;this.uploadingImage.set(true);this.error.set('');try{const uploaded=await firstValueFrom(this.imageUpload.upload(file));const range=this.editor.getSelection(true);this.editor.insertEmbed(range.index,'image',uploaded.url,'user');this.editor.setSelection(range.index+1,0,'silent');}catch(e){this.notifications.fromApi(e);}finally{this.uploadingImage.set(false);}}
+  private selectEditorImage():void{const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=()=>{const file=input.files?.[0];if(file)void this.uploadEditorImage(file);};input.click();}
+  private validateImage(file:File):boolean{if(!['image/jpeg','image/png','image/webp'].includes(file.type)){this.error.set(this.language.choose('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.','Only JPG, PNG or WebP images are accepted.'));return false;}if(file.size>5*1024*1024){this.error.set(this.language.choose('Ảnh không được vượt quá 5 MB.','The image must not exceed 5 MB.'));return false;}return true;}
   protected toggleTranslation(id:number,checked:boolean):void{this.translateTargets.update(rows=>checked?[...new Set([...rows,id])]:rows.filter(row=>row!==id));}
-  protected changeSourceLanguage(id:number):void{this.sourceLanguageId.set(id);this.previewLanguageId.set(id);this.translateTargets.update(rows=>rows.filter(row=>row!==id));this.translatedPreview.set(null);this.error.set('');}
+  protected changeSourceLanguage(id:number):void{this.sourceLanguageId.set(id);this.previewLanguageId.set(id);this.translateTargets.update(rows=>rows.filter(row=>row!==id));this.translatedPreview.set(null);this.error.set('');this.syncCategoryForLanguage(id);}
+  private syncCategoryForLanguage(languageId:number):void{if(!languageId)return;const available=this.categoryRows().filter(row=>row.translations.some(item=>item.languageId===languageId));if(!available.some(row=>row.id===this.categoryId()))this.categoryId.set(available[0]?.id??0);}
   protected async setPreviewLanguage(id:number):Promise<void>{this.previewLanguageId.set(id);this.translatedPreview.set(null);if(id===this.sourceLanguageId())return;this.translating.set(true);try{this.translatedPreview.set(await this.translateDraft(this.title(),this.content(),id));}catch{this.error.set(this.language.choose('Trình duyệt này chưa hỗ trợ mô hình dịch trực tiếp trên thiết bị.','On-device translation is not available in this browser yet.'));}finally{this.translating.set(false);}}
-  private async translateDraft(title:string,html:string,targetId:number):Promise<{title:string;content:string}>{const source=this.languages().find(l=>l.id===this.sourceLanguageId())?.code;const target=this.languages().find(l=>l.id===targetId)?.code;const api=(window as any).Translator;if(!source||!target||!api?.create)throw new Error('TRANSLATOR_UNAVAILABLE');const key=`${source}:${target}`;let translator=this.translators.get(key);if(!translator){translator=await api.create({sourceLanguage:source,targetLanguage:target});this.translators.set(key,translator);}const container=document.createElement('div');container.innerHTML=html;const walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT);const nodes:Text[]=[];while(walker.nextNode())if(walker.currentNode.nodeValue?.trim())nodes.push(walker.currentNode as Text);await Promise.all(nodes.map(async node=>node.nodeValue=await translator.translate(node.nodeValue!.trim())));return{title:await translator.translate(title),content:container.innerHTML};}
-  protected async save(status:'DRAFT'|'PENDING'):Promise<void>{const title=this.title().trim();const content=this.content();if(!title||!content.replace(/<[^>]*>/g,'').trim()||!this.thumbnail()){this.error.set(this.language.choose('Vui lòng nhập tiêu đề, nội dung và chọn ảnh đại diện!','Please enter a title, content and post thumbnail.'));return;}const translated=[];try{for(const languageId of this.translateTargets())if(languageId!==this.sourceLanguageId())translated.push({languageId,...await this.translateDraft(title,content,languageId)});}catch{this.error.set(this.language.choose('Không thể hoàn tất bản dịch nên bài viết chưa được lưu.','Translation could not be completed, so the post was not saved.'));return;}const now=new Date().toISOString();const posts=this.database.table('posts');const id=this.editId()??this.database.nextId('posts');const existing=posts.find(row=>row.id===id);const before=existing?structuredClone(existing):null;if(existing){existing.category_id=this.categoryId();existing.source_language_id=this.sourceLanguageId();existing.thumbnail=this.thumbnail();existing.status=status;existing.submitted_at=status==='PENDING'?now:null;existing.updated_at=now;}else posts.push({id,author_id:this.auth.currentUser()!.id,category_id:this.categoryId(),source_language_id:this.sourceLanguageId(),thumbnail:this.thumbnail(),status,rejection_reason:null,submitted_at:status==='PENDING'?now:null,reviewed_by:null,reviewed_at:null,published_at:null,created_at:now,updated_at:now,deleted_at:null});this.database.write('posts',posts);const translations=this.database.table('post_translations').filter(row=>row.post_id!==id);translations.push({id:this.database.nextId('post_translations'),post_id:id,language_id:this.sourceLanguageId(),title,content,is_auto_translated:false,created_at:now,updated_at:now});let nextId=Math.max(0,...translations.map(row=>row.id))+1;for(const row of translated)translations.push({id:nextId++,post_id:id,language_id:row.languageId,title:row.title,content:row.content,is_auto_translated:true,created_at:now,updated_at:now});this.database.write('post_translations',translations);const saved=posts.find(row=>row.id===id)!;this.recordLog(existing?'POST_UPDATED':'POST_CREATED',saved,title,before,{status,translations:translated.length+1});if(status==='PENDING')this.recordLog('POST_SUBMITTED',saved,title,before,{submitted_at:now});void this.router.navigate(['/owner/posts']);}
-  private recordLog(action:string,post:PostRow,title:string,before:PostRow|null,metadata:Record<string,unknown>):void{const actor=this.auth.currentUser();this.database.appendAuditLog({id:this.database.nextId('audit_logs'),actor_id:actor?.id??null,actor_name:actor?.fullName??actor?.userName??null,actor_role:actor?.role.nameRole??null,action,entity_type:'POST',entity_id:post.id,entity_label:title,before_data:before,after_data:structuredClone(post),metadata,ip_address:null,user_agent:navigator.userAgent,created_at:new Date().toISOString()});}
+  private async translateDraft(title:string,html:string,targetId:number):Promise<{title:string;content:string}>{const source=this.languages().find(item=>item.id===this.sourceLanguageId())?.code;const target=this.languages().find(item=>item.id===targetId)?.code;const api=(window as any).Translator;if(!source||!target||!api?.create)throw new Error('TRANSLATOR_UNAVAILABLE');const key=`${source}:${target}`;let translator=this.translators.get(key);if(!translator){translator=await api.create({sourceLanguage:source,targetLanguage:target});this.translators.set(key,translator);}const container=document.createElement('div');container.innerHTML=html;const walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT);const nodes:Text[]=[];while(walker.nextNode())if(walker.currentNode.nodeValue?.trim())nodes.push(walker.currentNode as Text);await Promise.all(nodes.map(async node=>node.nodeValue=await translator.translate(node.nodeValue!.trim())));return{title:await translator.translate(title),content:container.innerHTML};}
+  protected async save(status:'DRAFT'|'PENDING'):Promise<void>{const title=this.title().trim(),content=this.content();if(!title||!content.replace(/<[^>]*>/g,'').trim()||!this.thumbnail()||!this.categoryId()){this.error.set(this.language.choose('Vui lòng nhập tiêu đề, nội dung, danh mục và chọn ảnh đại diện!','Please enter a title, content, category and post thumbnail.'));return;}this.saving.set(true);this.error.set('');try{const translations:OwnerPostPayload['translations']=[{languageId:this.sourceLanguageId(),title,content,isAutoTranslated:false}];for(const languageId of this.translateTargets())if(languageId!==this.sourceLanguageId()){const translated=await this.translateDraft(title,content,languageId);translations.push({languageId,...translated,isAutoTranslated:true});}const payload:OwnerPostPayload={thumbnail:this.thumbnail(),categoryId:this.categoryId(),sourceLanguageId:this.sourceLanguageId(),translations};const response=this.editId()?await firstValueFrom(this.postsApi.update(this.editId()!,payload)):await firstValueFrom(this.postsApi.create(payload));if(status==='PENDING')await firstValueFrom(this.postsApi.submit(response.data.item.id));this.notifications.success(status==='PENDING'?'Đã gửi bài viết để chờ duyệt.':'Đã lưu bản nháp.',status==='PENDING'?'Post submitted for review.':'Draft saved.');void this.router.navigate(['/owner/posts']);}catch(e){this.notifications.fromApi(e);}finally{this.saving.set(false);}}
 }

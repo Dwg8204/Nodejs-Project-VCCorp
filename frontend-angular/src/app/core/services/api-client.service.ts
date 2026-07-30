@@ -56,6 +56,18 @@ export class ApiClientService {
     });
   }
 
+  put<T>(
+    path: string,
+    body: unknown,
+    options: ApiRequestOptions = {},
+  ): Observable<ApiResponse<T>> {
+    return this.http.put<ApiResponse<T>>(this.url(path), body, {
+      context: options.context,
+      params: this.params(options.query),
+      withCredentials: true,
+    });
+  }
+
   delete<T>(
     path: string,
     options: ApiRequestOptions = {},

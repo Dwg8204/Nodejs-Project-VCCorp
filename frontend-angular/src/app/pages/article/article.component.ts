@@ -6,7 +6,7 @@ import { ContentApiService } from '../../core/services/content-api.service';
 import { LanguageService } from '../../core/services/language.service';
 
 interface ArticleView { id:number; authorId:number; categoryId:number; title:string; content:string; thumbnail:string; category:string; author:string; avatar:string|null; date:string; likes:number; comments:number; }
-interface CommentView { id:number; userId:number; rootId:number; name:string; initial:string; mention:string|null; content:string; date:string; depth:0|1; }
+interface CommentView { id:number; userId:number; rootId:number; name:string; initial:string; avatar:string|null; mention:string|null; content:string; date:string; depth:0|1; }
 interface CommentGroup { root:CommentView;replies:CommentView[]; }
 interface RelatedView { id:number;title:string;thumbnail:string;category:string;author:string;date:string; }
 
@@ -83,7 +83,11 @@ export class ArticleComponent {
       const content=storedMention
         ?row.content.slice(storedMention.name.length+1).trimStart()
         :row.content;
-      return{id:Number(row.id),userId:row.userId,rootId:rootIdValue,name,initial:name.charAt(0).toUpperCase(),mention,content,date:row.createdAt,depth};
+      const avatar=row.user?.avatar
+        ??(row.userId===this.auth.currentUser()?.id?this.auth.currentUser()?.avatar:null)
+        ??(row.userId===this.article()?.authorId?this.article()?.avatar:null)
+        ??null;
+      return{id:Number(row.id),userId:row.userId,rootId:rootIdValue,name,initial:name.charAt(0).toUpperCase(),avatar,mention,content,date:row.createdAt,depth};
     };
     const output:CommentView[]=[];
     for(const root of roots){
@@ -96,7 +100,7 @@ export class ArticleComponent {
 
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));}
   protected toggleLike():void{if(!this.auth.isAuthenticated()){void this.router.navigate(['/login']);return;}this.api.toggleLike(String(this.id())).subscribe({next:response=>{this.liked.set(response.data.liked);this.post.update(post=>post?{...post,likesCount:response.data.totalLikes}:post);}});}
-  protected submitComment(parentId:number|null):void{if(!this.auth.isAuthenticated())return;const value=(parentId===null?this.commentText():this.replyText()).trim();if(!value)return;this.api.createComment(String(this.id()),value,parentId===null?null:String(parentId)).subscribe({next:()=>{this.commentText.set('');this.replyText.set('');this.replyTo.set(null);this.loadComments();this.post.update(post=>post?{...post,commentsCount:Number(post.commentsCount??0)+1}:post);}});}
+  protected submitComment(parentId:number|null):void{if(!this.auth.isAuthenticated())return;const value=(parentId===null?this.commentText():this.replyText()).trim();if(!value)return;this.api.createComment(String(this.id()),value,parentId===null?null:String(parentId)).subscribe({next:()=>{this.commentText.set('');this.replyText.set('');this.replyTo.set(null);this.resetCommentTextareas();this.loadComments();this.post.update(post=>post?{...post,commentsCount:Number(post.commentsCount??0)+1}:post);}});}
   protected keySubmit(event:KeyboardEvent,parentId:number|null):void{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.submitComment(parentId);}}
   protected replyPlaceholder(commentId:number):string{const comment=this.comments().find(item=>item.id===commentId);const prompt=this.language.choose('Viết phản hồi...','Write a reply...');return comment&&comment.userId!==this.auth.currentUser()?.id?`@${comment.name} ${prompt}`:prompt;}
   protected visibleReplies(group:CommentGroup):CommentView[]{return this.expandedReplies().has(group.root.id)?group.replies:group.replies.slice(-2);}
@@ -119,9 +123,16 @@ export class ArticleComponent {
     });
   }
   protected focusComment():void{document.querySelector<HTMLElement>('.responses-section')?.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>document.querySelector<HTMLTextAreaElement>('.comment-input .comment-textarea')?.focus());}
+  @HostListener('input',['$event']) protected resizeCommentTextarea(event:Event):void{
+    const textarea=event.target;
+    if(!(textarea instanceof HTMLTextAreaElement)||!textarea.classList.contains('comment-textarea'))return;
+    textarea.style.height='auto';
+    textarea.style.height=`${textarea.scrollHeight}px`;
+  }
   @HostListener('click',['$event']) protected openAuthor(event:MouseEvent):void{const target=(event.target as HTMLElement).closest('.byline .author-name,.byline .author-avatar');if(!target)return;event.preventDefault();const id=this.article()?.authorId;if(id)void this.router.navigate(['/profile',id]);}
 
   private loadComments():void{this.api.comments(String(this.id()),{page:1,limit:100}).subscribe({next:response=>this.commentRows.set(response.data.items),error:()=>this.commentRows.set([])});}
+  private resetCommentTextareas():void{requestAnimationFrame(()=>document.querySelectorAll<HTMLTextAreaElement>('.responses-section textarea.comment-textarea').forEach(textarea=>{textarea.value='';textarea.style.removeProperty('height');}));}
   private loadRelated(categoryId:number,language:string):void{this.api.posts({page:1,limit:4,categoryId,language,sort:'newest'}).subscribe({next:response=>this.relatedRows.set(response.data.items),error:()=>this.relatedRows.set([])});}
   private translation(post:ContentPost){return post.translations.find(item=>item.languageId===this.language.languageId())??post.translations[0];}
 }

@@ -44,6 +44,12 @@ export class ContentApiService {
     });
   }
 
+  deleteComment(postId: string, commentId: string) {
+    return this.api.delete<{ deletedCount: number }>(
+      `posts/${postId}/comments/${commentId}`,
+    );
+  }
+
   myLike(postId: string): Observable<ApiResponse<{ liked: boolean }>> {
     return this.api.get(`posts/${postId}/likes/me`);
   }

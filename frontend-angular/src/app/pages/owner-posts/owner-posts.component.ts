@@ -19,6 +19,7 @@ export class OwnerPostsComponent {
   protected readonly auth=inject(AuthService);
   protected readonly language=inject(LanguageService);
   protected readonly previewId=signal<number|null>(null);
+  protected readonly openLanguagesId=signal<number|null>(null);
   protected readonly search=signal('');
   protected readonly status=signal('');
   protected readonly sort=signal('newest');
@@ -48,6 +49,8 @@ export class OwnerPostsComponent {
   protected statusLabel(status:PostStatus):string{const vi={DRAFT:'Bản nháp',PUBLISHED:'Đã xuất bản',PENDING:'Chờ duyệt',REJECTED:'Bị từ chối'};const en={DRAFT:'Draft',PUBLISHED:'Published',PENDING:'Pending',REJECTED:'Rejected'};return this.language.chooseObject(vi,en)[status];}
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale()).format(new Date(value));}
   protected deletePost(id:number):void{this.api.delete(String(id)).subscribe({next:()=>{this.notifications.success('Đã xóa bài viết.','Post deleted.');if(this.allPosts().length===1&&this.page()>1)this.page.update(value=>value-1);else this.loadPosts(this.page(),this.search(),this.status(),this.sort());},error:error=>this.notifications.fromApi(error)});}
+  protected toggleLanguages(event:MouseEvent,id:number):void{event.stopPropagation();this.openLanguagesId.update(value=>value===id?null:id);}
+  @HostListener('document:click') protected closeLanguages():void{this.openLanguagesId.set(null);}
   @HostListener('click',['$event']) protected openPreview(event:MouseEvent):void{const button=(event.target as HTMLElement).closest('.view-btn,.post-title-cell');if(!button)return;const row=button.closest('tr');const body=row?.parentElement;if(!row||!body)return;const index=Array.from(body.children).indexOf(row);const post=this.visible()[index];if(post)this.previewId.set(post.id);}
   protected closePreview():void{this.previewId.set(null);}
 

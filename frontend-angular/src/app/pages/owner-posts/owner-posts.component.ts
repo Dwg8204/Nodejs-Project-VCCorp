@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, HostListener, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentPost } from '../../core/models/content.model';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { OwnerPostsApiService, OwnerPostStats } from '../../core/services/owner-posts-api.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 type PostStatus='DRAFT'|'PENDING'|'PUBLISHED'|'REJECTED';
 interface PostLanguageBadge { code:string;name:string;flag:string|null; }
@@ -16,6 +17,7 @@ interface PostPreview extends OwnerPost { author:string; }
 export class OwnerPostsComponent {
   private readonly api=inject(OwnerPostsApiService);
   private readonly notifications=inject(NotificationService);
+  private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly injector=inject(Injector);private readonly destroyRef=inject(DestroyRef);
   protected readonly auth=inject(AuthService);
   protected readonly language=inject(LanguageService);
   protected readonly previewId=signal<number|null>(null);
@@ -38,6 +40,8 @@ export class OwnerPostsComponent {
   protected readonly previewPost=computed<PostPreview|null>(()=>{const post=this.allPosts().find(item=>item.id===this.previewId());if(!post)return null;const user=this.auth.currentUser();return{...post,author:user?.fullName||user?.userName||'Anonymous'};});
 
   constructor(){
+    bindQueryState(this.route,this.router,this.injector,this.destroyRef,{q:{signal:this.search,defaultValue:''},status:{signal:this.status,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest'},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)}});
+    this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());
     effect(()=>{this.language.locale();this.loadPosts(this.page(),this.search(),this.status(),this.sort());},{allowSignalWrites:true});
   }
 

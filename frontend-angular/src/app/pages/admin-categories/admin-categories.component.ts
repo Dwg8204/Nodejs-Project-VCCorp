@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ContentCategory, ContentTranslation } from '../../core/models/content.model';
 import { AdminContentApiService, CategoryTranslationPayload } from '../../core/services/admin-content-api.service';
 import { LanguageService, SystemLanguage } from '../../core/services/language.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 interface CategoryView {category:ContentCategory;translation?:ContentTranslation;posts:number;}
 interface CategoryFormCopy{nameLabel:string;namePlaceholder:string;descriptionLabel:string;descriptionPlaceholder:string;}
@@ -20,12 +22,12 @@ const CATEGORY_NAMES:Record<string,Record<string,string>>={
 
 @Component({selector:'app-admin-categories',standalone:true,templateUrl:'./admin-categories.component.html',styleUrl:'./admin-categories.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class AdminCategoriesComponent {
-  private readonly api=inject(AdminContentApiService);private readonly notifications=inject(NotificationService);protected readonly language=inject(LanguageService);
+  private readonly api=inject(AdminContentApiService);private readonly notifications=inject(NotificationService);protected readonly language=inject(LanguageService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly injector=inject(Injector);private readonly destroyRef=inject(DestroyRef);
   private readonly items=signal<ContentCategory[]>([]);private readonly total=signal(0);private readonly totalPageCount=signal(1);
   protected readonly search=signal('');protected readonly page=signal(1);protected readonly pageSize=signal(5);protected readonly pageInput=signal(1);protected readonly sizeInput=signal(5);protected readonly modal=signal<'add'|'edit'|null>(null);protected readonly deleteTarget=signal<CategoryView|null>(null);protected readonly editingId=signal<number|null>(null);protected readonly sourceLanguageId=signal(2);protected readonly name=signal('');protected readonly description=signal('');protected readonly retranslate=signal(false);protected readonly error=signal('');
   protected readonly languages:SystemLanguage[]=this.language.availableLanguages();
   private readonly translators=new Map<string,{translate(value:string):Promise<string>}>();
-  constructor(){effect(()=>{const page=this.page(),limit=this.pageSize(),search=this.search().trim(),language=this.language.locale();this.api.categories({page,limit,search,language,sort:'name-asc'}).subscribe({next:r=>{this.items.set(r.data.items);this.total.set(r.data.pagination.total);this.totalPageCount.set(Math.max(1,r.data.pagination.totalPages));},error:e=>{this.items.set([]);this.error.set(e instanceof Error?e.message:'LOAD_CATEGORIES_FAILED');}});},{allowSignalWrites:true});}
+  constructor(){bindQueryState(this.route,this.router,this.injector,this.destroyRef,{q:{signal:this.search,defaultValue:''},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)}});this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());effect(()=>{const page=this.page(),limit=this.pageSize(),search=this.search().trim(),language=this.language.locale();this.api.categories({page,limit,search,language,sort:'name-asc'}).subscribe({next:r=>{this.items.set(r.data.items);this.total.set(r.data.pagination.total);this.totalPageCount.set(Math.max(1,r.data.pagination.totalPages));},error:e=>{this.items.set([]);this.error.set(e instanceof Error?e.message:'LOAD_CATEGORIES_FAILED');}});},{allowSignalWrites:true});}
   protected readonly rows=computed<CategoryView[]>(()=>this.items().map(category=>({category,translation:category.translations.find(item=>item.languageId===this.language.languageId())??category.translations[0],posts:Number(category.postsCount??0)})));
   protected readonly totalPages=computed(()=>this.totalPageCount());protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));protected readonly visibleRows=computed(()=>this.rows());protected readonly summary=computed(()=>{const total=this.total();const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
   protected readonly sourceLanguage=computed(()=>this.languages.find(item=>item.id===this.sourceLanguageId())??this.languages[0]);protected readonly formCopy=computed(()=>CATEGORY_FORM_COPY[this.sourceLanguage()?.code.toLowerCase()]??CATEGORY_FORM_COPY['en']);

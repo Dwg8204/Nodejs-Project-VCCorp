@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, signal, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AdminAuditLogsApiService, AuditLogDetail, AuditLogListItem } from '../../core/services/admin-audit-logs-api.service';
 import { LanguageService } from '../../core/services/language.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 interface AuditLogView {
   id:string;actor_name:string|null;actor_role:string|null;action:string;entity_type:string;entity_id:string|null;
@@ -19,7 +21,7 @@ const ACTIONS:Record<string,{vi:string;en:string}>={
 
 @Component({selector:'app-admin-logs',standalone:true,templateUrl:'./admin-logs.component.html',styleUrl:'./admin-logs.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class AdminLogsComponent {
-  private readonly api=inject(AdminAuditLogsApiService);private readonly notifications=inject(NotificationService);
+  private readonly api=inject(AdminAuditLogsApiService);private readonly notifications=inject(NotificationService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly injector=inject(Injector);private readonly destroyRef=inject(DestroyRef);
   protected readonly language=inject(LanguageService);
   protected readonly search=signal('');protected readonly action=signal('');protected readonly entity=signal('');protected readonly dateFrom=signal('');protected readonly dateTo=signal('');
   protected readonly page=signal(1);protected readonly pageSize=signal(5);protected readonly pageInput=signal(1);protected readonly sizeInput=signal(5);
@@ -29,7 +31,7 @@ export class AdminLogsComponent {
   protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));
   protected readonly summary=computed(()=>{const total=this.total(),from=total?(this.page()-1)*this.pageSize()+1:0,to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
 
-  constructor(){this.loadOptions();effect(()=>this.load(this.page(),this.pageSize(),this.search(),this.action(),this.entity(),this.dateFrom(),this.dateTo()),{allowSignalWrites:true});}
+  constructor(){bindQueryState(this.route,this.router,this.injector,this.destroyRef,{q:{signal:this.search,defaultValue:''},action:{signal:this.action,defaultValue:''},entity:{signal:this.entity,defaultValue:''},from:{signal:this.dateFrom,defaultValue:''},to:{signal:this.dateTo,defaultValue:''},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)}});this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());this.loadOptions();effect(()=>this.load(this.page(),this.pageSize(),this.search(),this.action(),this.entity(),this.dateFrom(),this.dateTo()),{allowSignalWrites:true});}
   protected update(kind:'search'|'action'|'entity'|'from'|'to',value:string):void{if(kind==='search')this.search.set(value);if(kind==='action')this.action.set(value);if(kind==='entity')this.entity.set(value);if(kind==='from')this.dateFrom.set(value);if(kind==='to')this.dateTo.set(value);this.changePage(1);}
   protected reset():void{this.search.set('');this.action.set('');this.entity.set('');this.dateFrom.set('');this.dateTo.set('');this.changePage(1);}
   protected actionText(action:string):string{const item=ACTIONS[action];return item?this.language.choose(item.vi,item.en):action.replaceAll('_',' ');}

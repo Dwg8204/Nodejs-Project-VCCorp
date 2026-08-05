@@ -3,14 +3,16 @@
   Component,
   computed,
   CUSTOM_ELEMENTS_SCHEMA,
+  DestroyRef,
   effect,
   inject,
+  Injector,
   OnInit,
   signal,
   ViewEncapsulation,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { USER_ROLES, User, UserRole } from '../../core/models/auth.model';
@@ -21,6 +23,7 @@ import { ContentApiService } from '../../core/services/content-api.service';
 import { FeedUiService } from '../../core/services/feed-ui.service';
 import { LanguageService } from '../../core/services/language.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 import {
   ProfileApiService,
   ProfileImageType,
@@ -66,6 +69,9 @@ interface ProfilePost {
 })
 export class ProfileComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly profileApi = inject(ProfileApiService);
   private readonly contentApi = inject(ContentApiService);
   private readonly ownerPostsApi = inject(OwnerPostsApiService);
@@ -103,6 +109,10 @@ export class ProfileComponent implements OnInit {
     || 0;
 
   constructor() {
+    bindQueryState(this.route,this.router,this.injector,this.destroyRef,{
+      tab:{signal:this.tab,defaultValue:'home',parse:value=>value==='about'?'about':'home'},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
+    });
+    this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());
     effect(() => {
       this.language.locale();
       this.loadPosts();

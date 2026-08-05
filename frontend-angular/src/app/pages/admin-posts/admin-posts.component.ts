@@ -1,21 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, inject, OnInit, signal, ViewEncapsulation } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentPost } from '../../core/models/content.model';
 import { AdminContentApiService } from '../../core/services/admin-content-api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 type PostStatus=ContentPost['status'];
 interface AdminPost {id:number;title:string;content:string;thumbnail:string;author:string;category:string;status:PostStatus;date:string;rejectionReason:string|null;}
 
 @Component({selector:'app-admin-posts',standalone:true,imports:[RouterLink],templateUrl:'./admin-posts.component.html',styleUrl:'./admin-posts.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
-export class AdminPostsComponent implements OnInit {
-  private readonly api=inject(AdminContentApiService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);private readonly route=inject(ActivatedRoute);
+export class AdminPostsComponent {
+  private readonly api=inject(AdminContentApiService);protected readonly auth=inject(AuthService);protected readonly language=inject(LanguageService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly injector=inject(Injector);private readonly destroyRef=inject(DestroyRef);
   private readonly rows=signal<ContentPost[]>([]);private readonly statusStats=signal({total:0,DRAFT:0,PENDING:0,PUBLISHED:0,REJECTED:0});private readonly total=signal(0);private readonly totalPageCount=signal(1);
   protected readonly search=signal('');protected readonly status=signal('');protected readonly sort=signal('newest');protected readonly page=signal(1);protected readonly pageSize=signal(5);protected readonly pageInput=signal(1);protected readonly sizeInput=signal(5);protected readonly previewId=signal<number|null>(null);protected readonly approveId=signal<number|null>(null);protected readonly unapproveId=signal<number|null>(null);protected readonly rejectId=signal<number|null>(null);protected readonly rejectionReason=signal('');protected readonly error=signal('');
-  constructor(){effect(()=>{const page=this.page(),limit=this.pageSize(),search=this.search().trim(),status=this.status(),sort=this.sort();this.api.posts({page,limit,search,status,sort}).subscribe({next:r=>{this.rows.set(r.data.items);this.statusStats.set(r.data.stats);this.total.set(r.data.pagination.total);this.totalPageCount.set(Math.max(1,r.data.pagination.totalPages));},error:e=>{this.rows.set([]);this.error.set(e instanceof Error?e.message:'LOAD_POSTS_FAILED');}});},{allowSignalWrites:true});}
-  ngOnInit():void{this.route.queryParams.subscribe(params=>{if(params['status'])this.status.set(params['status']);});}
+  constructor(){bindQueryState(this.route,this.router,this.injector,this.destroyRef,{q:{signal:this.search,defaultValue:''},status:{signal:this.status,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest'},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)}});this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());effect(()=>{const page=this.page(),limit=this.pageSize(),search=this.search().trim(),status=this.status(),sort=this.sort();this.api.posts({page,limit,search,status,sort}).subscribe({next:r=>{this.rows.set(r.data.items);this.statusStats.set(r.data.stats);this.total.set(r.data.pagination.total);this.totalPageCount.set(Math.max(1,r.data.pagination.totalPages));},error:e=>{this.rows.set([]);this.error.set(e instanceof Error?e.message:'LOAD_POSTS_FAILED');}});},{allowSignalWrites:true});}
   protected readonly posts=computed<AdminPost[]>(()=>this.rows().map(row=>this.map(row)));
   protected readonly stats=computed(()=>{const rows=this.statusStats();return[{vi:'Tổng số bài',en:'Total Posts',value:rows.total,color:''},{vi:'Chờ duyệt',en:'Pending',value:rows.PENDING,color:'var(--icon-star)'},{vi:'Đã duyệt',en:'Approved',value:rows.PUBLISHED,color:'var(--accent)'},{vi:'Bị từ chối',en:'Rejected',value:rows.REJECTED,color:'var(--danger)'}];});
   protected readonly filtered=computed(()=>this.posts());protected readonly totalPages=computed(()=>this.totalPageCount());protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));protected readonly visible=computed(()=>this.posts());protected readonly preview=computed(()=>this.posts().find(p=>p.id===this.previewId())??null);protected readonly summary=computed(()=>{const total=this.total();const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});

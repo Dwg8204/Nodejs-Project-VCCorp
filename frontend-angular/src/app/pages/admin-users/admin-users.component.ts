@@ -3,11 +3,14 @@ import {
   Component,
   computed,
   CUSTOM_ELEMENTS_SCHEMA,
+  DestroyRef,
   inject,
+  Injector,
   OnInit,
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { USER_ROLES, UserRole } from '../../core/models/auth.model';
@@ -20,6 +23,7 @@ import {
 import { ApiErrorService } from '../../core/services/api-error.service';
 import { LanguageService } from '../../core/services/language.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, integer, positiveInteger } from '../../shared/utils/query-state';
 
 interface AdminUserView extends AdminUser {
   user_name: string;
@@ -41,6 +45,10 @@ interface AdminUserView extends AdminUser {
 export class AdminUsersComponent implements OnInit {
   private readonly api = inject(AdminUsersApiService);
   private readonly apiErrors = inject(ApiErrorService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly language = inject(LanguageService);
 
   protected readonly users = signal<AdminUserView[]>([]);
@@ -94,6 +102,10 @@ export class AdminUsersComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    bindQueryState(this.route,this.router,this.injector,this.destroyRef,{
+      q:{signal:this.search,defaultValue:''},role:{signal:this.role,defaultValue:0,parse:integer(0)},active:{signal:this.active,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest',parse:value=>value as AdminUserSort},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
+    });
+    this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());
     this.loadUsers();
   }
 

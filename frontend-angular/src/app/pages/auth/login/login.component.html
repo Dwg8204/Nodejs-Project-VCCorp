@@ -7,6 +7,5 @@
     <a routerLink="/forgot-password" class="forgot-link">{{ copy().forgot }}</a>
     <button type="submit" class="btn-primary-block" [disabled]="loading()">{{ loading()?copy().submitting:copy().submit }}</button>
   </form>
-  <div class="quick-login"><div class="quick-login-title">{{ copy().quick }} (123456)</div><button type="button" class="btn btn-outline" (click)="quickLogin('admin@blogproject.com')">{{language.choose('Quản trị viên (Super Admin)','Admin (Super Admin)')}}</button><button type="button" class="btn btn-outline" (click)="quickLogin('blogger1@gmail.com')">{{language.choose('Blogger (Chủ Blog)','Blogger (Blog Owner)')}}</button><button type="button" class="btn btn-outline" (click)="quickLogin('reader1@gmail.com')">{{language.choose('Người dùng (Đã đăng nhập)','User (Authenticated)')}}</button></div>
   <div class="auth-footer-text">{{ copy().noAccount }} <a routerLink="/register">{{ copy().register }}</a></div>
 </div>

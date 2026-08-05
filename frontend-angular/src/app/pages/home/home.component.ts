@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, effect, HostListener, inject, signal, ViewEncapsulation } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, CUSTOM_ELEMENTS_SCHEMA, DestroyRef, effect, HostListener, inject, Injector, signal, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ContentCategory, ContentPost } from '../../core/models/content.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ContentApiService } from '../../core/services/content-api.service';
 import { FeedUiService } from '../../core/services/feed-ui.service';
 import { LanguageService } from '../../core/services/language.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 interface FeedPost { id:number; authorId:number; categoryId:number; title:string; content:string; authorName:string; authorAvatar:string; categoryName:string; thumbnail:string; createdAt:string; likes:number; comments:number; isLiked:boolean; }
 interface FeedCategory { id:number|'all'; name:string; }
@@ -15,6 +16,9 @@ interface AuthorHover { name:string; avatar:string; posts:number; likes:number; 
 export class HomeComponent {
   private readonly api=inject(ContentApiService);
   private readonly router=inject(Router);
+  private readonly route=inject(ActivatedRoute);
+  private readonly injector=inject(Injector);
+  private readonly destroyRef=inject(DestroyRef);
   protected readonly language=inject(LanguageService);
   protected readonly auth=inject(AuthService);
   protected readonly feedUi=inject(FeedUiService);
@@ -35,6 +39,13 @@ export class HomeComponent {
   private readonly totalPageCount=signal(1);
 
   constructor(){
+    bindQueryState(this.route,this.router,this.injector,this.destroyRef,{
+      q:{signal:this.feedUi.searchQuery,defaultValue:''},
+      category:{signal:this.selectedCategory,defaultValue:'all',parse:value=>value==='all'?'all':positiveInteger(1)(value),serialize:value=>value==='all'?null:String(value)},
+      page:{signal:this.currentPage,defaultValue:1,parse:positiveInteger(1)},
+      limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
+    });
+    this.pageInput.set(this.currentPage());this.sizeInput.set(this.pageSize());
     effect(()=>{
       const language=this.language.locale();
       this.api.categories({page:1,limit:100,language,sort:'name-asc'}).subscribe({

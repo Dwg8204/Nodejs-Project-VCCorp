@@ -9,6 +9,7 @@ export class UiSelectService {
   private readonly zone = inject(NgZone);
   private active: HTMLElement | null = null;
   private observer?: MutationObserver;
+  private stableSyncStarted = false;
 
   start(): void {
     if (this.observer || !this.document.defaultView) return;
@@ -40,8 +41,23 @@ export class UiSelectService {
       });
       this.document.addEventListener('keydown', (event) => { if (event.key === 'Escape') this.close(true); });
       this.document.defaultView!.addEventListener('resize', () => this.close());
-      this.document.defaultView!.addEventListener('scroll', () => this.close(), true);
+      this.document.defaultView!.addEventListener('scroll', (event) => {
+        if (!this.active) return;
+        const menu = (this.active as any)._menu as HTMLElement | undefined;
+        const target = event.target;
+        // Scrolling the option list itself must not close the dropdown. Only a
+        // scroll coming from the page or another scroll container closes it.
+        if (menu && target instanceof Node && (target === menu || menu.contains(target))) return;
+        this.close();
+      }, true);
     });
+    // Angular may write a select's value property after its options have been
+    // inserted. Property writes do not produce DOM mutations, so refresh every
+    // enhanced trigger once the current Angular render has settled.
+    if (!this.stableSyncStarted) {
+      this.stableSyncStarted = true;
+      this.zone.onStable.subscribe(() => this.refreshTree());
+    }
   }
 
   private enhanceTree(root: ParentNode): void {
@@ -75,6 +91,13 @@ export class UiSelectService {
     });
     select.addEventListener('focus', () => trigger.focus());
     this.refresh(select);
+    this.document.defaultView?.requestAnimationFrame(() => this.refresh(select));
+  }
+
+  private refreshTree(): void {
+    this.document.querySelectorAll<EnhancedSelect>('select').forEach((select) => {
+      if (select._uiSelectWrapper) this.refresh(select);
+    });
   }
 
   private refresh(select: EnhancedSelect): void {

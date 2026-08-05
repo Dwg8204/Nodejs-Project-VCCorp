@@ -3,11 +3,14 @@ import {
   Component,
   computed,
   CUSTOM_ELEMENTS_SCHEMA,
+  DestroyRef,
   inject,
+  Injector,
   OnInit,
   signal,
   ViewEncapsulation,
 } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, Observable } from 'rxjs';
 
 import { ApiErrorService } from '../../core/services/api-error.service';
@@ -20,6 +23,7 @@ import {
 } from '../../core/services/language-api.service';
 import { LanguageService } from '../../core/services/language.service';
 import { buildPaginationItems } from '../../shared/utils/pagination';
+import { bindQueryState, positiveInteger } from '../../shared/utils/query-state';
 
 const LANGUAGE_COUNTRIES: Record<string, string> = {
   en: 'gb', vi: 'vn', ja: 'jp', ko: 'kr', zh: 'cn', de: 'de', fr: 'fr',
@@ -41,6 +45,10 @@ type ConfirmationKind = 'delete' | 'restore' | 'activate' | 'deactivate';
 export class AdminLanguagesComponent implements OnInit {
   private readonly api = inject(LanguageApiService);
   private readonly apiErrors = inject(ApiErrorService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly injector = inject(Injector);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly language = inject(LanguageService);
 
   protected readonly rows = signal<AdminLanguage[]>([]);
@@ -83,6 +91,10 @@ export class AdminLanguagesComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    bindQueryState(this.route,this.router,this.injector,this.destroyRef,{
+      q:{signal:this.search,defaultValue:''},records:{signal:this.records,defaultValue:'active',parse:value=>value as LanguageRecordFilter},active:{signal:this.activeFilter,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest',parse:value=>value as LanguageSort},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
+    });
+    this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());
     this.loadRows();
   }
 

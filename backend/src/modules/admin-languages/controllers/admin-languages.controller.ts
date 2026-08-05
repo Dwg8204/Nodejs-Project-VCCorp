@@ -6,7 +6,6 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -23,7 +22,6 @@ import {
 import { AdminLanguagesService } from '../services/admin-languages.service';
 import {
   ChangeLanguageStatusDto,
-  CreateAdminLanguageDto,
   QueryAdminLanguagesDto,
   UpdateAdminLanguageDto,
 } from '../validations/admin-languages.validation';
@@ -44,15 +42,6 @@ export class AdminLanguagesController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.adminLanguagesService.findOne(id);
-  }
-
-  @Post()
-  create(
-    @Body() dto: CreateAdminLanguageDto,
-    @CurrentUser() actor: AuthenticatedUser,
-    @RequestMetadata() context: RequestContext,
-  ) {
-    return this.adminLanguagesService.create(dto, actor, context);
   }
 
   @Patch(':id')

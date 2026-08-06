@@ -57,6 +57,10 @@ export class CreatePostDto {
 }
 
 export class UpdatePostDto {
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(2048)
@@ -179,7 +183,13 @@ export class QueryAdminPostDto {
   sort?: 'newest' | 'oldest' | 'title-asc' | 'title-desc' = 'newest';
 }
 
-export class RejectPostDto {
+export class ReviewPostDto {
+  @IsInt()
+  @Min(1)
+  expectedVersion: number;
+}
+
+export class RejectPostDto extends ReviewPostDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(5000)

@@ -55,6 +55,9 @@ export class Post {
   })
   status: PostStatus;
 
+  @Column({ type: 'int', unsigned: true, default: 1 })
+  version: number;
+
   @Column({ name: 'rejection_reason', type: 'text', nullable: true })
   rejectionReason: string | null;
 

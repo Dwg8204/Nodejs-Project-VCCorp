@@ -30,9 +30,9 @@ export class AdminContentApiService {
   private readonly api=inject(ApiClientService);
 
   posts(query:ApiQuery={}){return this.api.get<AdminPostsPage>('admin/posts',{query});}
-  approve(id:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/approve`,{});}
+  approve(id:string,expectedVersion:number){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/approve`,{expectedVersion});}
   unapprove(id:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/unapprove`,{});}
-  reject(id:string,reason:string){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/reject`,{reason});}
+  reject(id:string,reason:string,expectedVersion:number){return this.api.post<{item:ContentPost}>(`admin/posts/${id}/reject`,{reason,expectedVersion});}
 
   categories(query:ApiQuery={}){return this.api.get<ContentPage<ContentCategory>>('admin/categories',{query});}
   createCategory(payload:CategoryPayload){return this.api.post<{item:ContentCategory}>('admin/categories',payload);}

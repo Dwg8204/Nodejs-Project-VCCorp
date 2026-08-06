@@ -22,6 +22,7 @@ export class NotificationService {
       POST_CATEGORY_INVALID:['Danh mục đã chọn không tồn tại hoặc đã bị xóa.','The selected category does not exist or has been deleted.'],
       POST_LANGUAGE_INVALID:['Bài viết chứa ngôn ngữ không hợp lệ hoặc đã bị vô hiệu hóa.','The post contains an invalid or inactive language.'],
       POST_CANNOT_EDIT:['Bài viết ở trạng thái hiện tại không thể chỉnh sửa.','This post cannot be edited in its current status.'],
+      POST_VERSION_CONFLICT:['Bài viết đã được thay đổi bởi thao tác khác. Vui lòng tải lại và kiểm tra phiên bản mới.','The post was changed by another operation. Reload and review the latest version.'],
       POST_ALREADY_SUBMITTED:['Bài viết đã được gửi duyệt.','The post has already been submitted.'],
       AUTH_TOKEN_REQUIRED:['Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.','Your session has expired. Please sign in again.'],
     };

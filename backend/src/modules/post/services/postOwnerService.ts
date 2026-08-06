@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -9,6 +10,7 @@ import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
 import { PostStatus } from 'common/enums/database.enums';
 import { AuthenticatedUser } from 'modules/auth/interfaces/auth-user.interface';
 import { AuditService } from 'modules/audit/services/audit.service';
+import { AppCacheService } from 'modules/cache/cache.service';
 import { Category } from 'modules/category/models/category';
 import { Language } from 'modules/language/models/language';
 import { Post } from 'modules/post/models/post';
@@ -27,6 +29,7 @@ export class PostOwnerService {
     private readonly postRepository: Repository<Post>,
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
+    private readonly cache: AppCacheService,
   ) {}
 
   async findAll(userId: number, query: QueryOwnerPostDto) {
@@ -140,7 +143,11 @@ export class PostOwnerService {
         ipAddress,
         userAgent,
       );
-      return { success: true, message: 'POST_CREATED', data: { item } };
+      return {
+        success: true,
+        message: 'POST_CREATED',
+        data: { item: this.writeResponse(item) },
+      };
     });
   }
 
@@ -157,12 +164,20 @@ export class PostOwnerService {
       const post = await repository.findOne({
         where: { id: postId, authorId: user.id, deletedAt: IsNull() },
         relations: ['translations'],
+        lock: { mode: 'pessimistic_write' },
       });
       if (!post) throw this.notFound();
-      if (![PostStatus.Draft, PostStatus.Rejected].includes(post.status)) {
+      if (![PostStatus.Draft, PostStatus.Rejected, PostStatus.Pending].includes(post.status)) {
         throw new ForbiddenException({
           code: 'POST_CANNOT_EDIT',
-          message: 'Only DRAFT or REJECTED posts can be edited',
+          message: 'Only DRAFT, REJECTED or PENDING posts can be edited',
+        });
+      }
+      if (post.version !== dto.expectedVersion) {
+        throw new ConflictException({
+          code: 'POST_VERSION_CONFLICT',
+          message: 'The post was changed by another operation. Reload and try again.',
+          currentVersion: post.version,
         });
       }
       const before = structuredClone(post);
@@ -182,6 +197,7 @@ export class PostOwnerService {
       post.categoryId = categoryId;
       post.sourceLanguageId = sourceLanguageId ?? null;
       post.rejectionReason = null;
+      post.version += 1;
       await repository.save(post);
 
       if (dto.translations) {
@@ -209,7 +225,11 @@ export class PostOwnerService {
         ipAddress,
         userAgent,
       );
-      return { success: true, message: 'POST_UPDATED', data: { item: post } };
+      return {
+        success: true,
+        message: 'POST_UPDATED',
+        data: { item: this.writeResponse(post) },
+      };
     });
   }
 
@@ -219,7 +239,7 @@ export class PostOwnerService {
     ipAddress: string,
     userAgent?: string,
   ) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(Post);
       const post = await repository.findOne({
         where: { id: postId, authorId: user.id, deletedAt: IsNull() },
@@ -228,6 +248,7 @@ export class PostOwnerService {
       if (!post) throw this.notFound();
       const before = structuredClone(post);
       post.deletedAt = new Date();
+      post.version += 1;
       await repository.save(post);
       await this.record(
         manager,
@@ -242,6 +263,8 @@ export class PostOwnerService {
       );
       return { success: true, message: 'POST_DELETED' };
     });
+    await this.cache.invalidatePrefix('posts:public:list:');
+    return result;
   }
 
   async submit(
@@ -274,6 +297,7 @@ export class PostOwnerService {
       }
       const before = structuredClone(post);
       post.status = PostStatus.Pending;
+      post.version += 1;
       post.submittedAt = new Date();
       post.rejectionReason = null;
       await repository.save(post);
@@ -365,11 +389,62 @@ export class PostOwnerService {
       entityType: 'POST',
       entityId: post.id,
       entityLabel: entityLabel ?? `#${post.id}`,
-      beforeData: beforeData as never,
-      afterData: afterData as never,
+      beforeData: this.auditSnapshot(beforeData) as never,
+      afterData: this.auditSnapshot(afterData) as never,
       ipAddress,
       userAgent,
     }, manager);
+  }
+
+  private auditSnapshot(value: unknown): unknown {
+    if (!value || typeof value !== 'object') return value;
+    const source = value as Record<string, unknown>;
+    const translations = Array.isArray(source['translations'])
+      ? source['translations'].map(item => {
+          const translation = item as Record<string, unknown>;
+          return {
+            id: translation['id'] ?? null,
+            languageId: translation['languageId'] ?? null,
+            title: translation['title'] ?? null,
+            isAutoTranslated: translation['isAutoTranslated'] ?? false,
+            contentLength: typeof translation['content'] === 'string'
+              ? translation['content'].length
+              : 0,
+          };
+        })
+      : undefined;
+    return {
+      id: source['id'] ?? null,
+      authorId: source['authorId'] ?? null,
+      categoryId: source['categoryId'] ?? null,
+      sourceLanguageId: source['sourceLanguageId'] ?? null,
+      thumbnail: source['thumbnail'] ?? null,
+      status: source['status'] ?? null,
+      version: source['version'] ?? null,
+      rejectionReason: source['rejectionReason'] ?? null,
+      ...(translations ? { translations } : {}),
+    };
+  }
+
+  private writeResponse(post: Post): unknown {
+    return {
+      id: post.id,
+      authorId: post.authorId,
+      categoryId: post.categoryId,
+      sourceLanguageId: post.sourceLanguageId,
+      thumbnail: post.thumbnail,
+      status: post.status,
+      version: post.version,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      translations: (post.translations ?? []).map(translation => ({
+        id: translation.id,
+        postId: translation.postId,
+        languageId: translation.languageId,
+        title: translation.title,
+        isAutoTranslated: translation.isAutoTranslated,
+      })),
+    };
   }
 
   private notFound(): NotFoundException {

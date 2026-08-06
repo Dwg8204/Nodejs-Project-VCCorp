@@ -11,6 +11,7 @@ const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 
 export class RegisterDto {
   @IsString()
+  @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
   userName: string;

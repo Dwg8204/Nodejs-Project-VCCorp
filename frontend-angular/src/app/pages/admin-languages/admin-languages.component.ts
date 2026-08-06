@@ -17,7 +17,6 @@ import { ApiErrorService } from '../../core/services/api-error.service';
 import {
   AdminLanguage,
   LanguageApiService,
-  LanguageRecordFilter,
   LanguageSort,
   LanguageTranslationStatus,
 } from '../../core/services/language-api.service';
@@ -59,8 +58,7 @@ export class AdminLanguagesComponent implements OnInit {
   protected readonly error = signal('');
 
   protected readonly search = signal('');
-  protected readonly records = signal<LanguageRecordFilter>('active');
-  protected readonly activeFilter = signal('');
+  protected readonly statusFilter = signal<LanguageTranslationStatus | 'DELETED' | ''>('');
   protected readonly sort = signal<LanguageSort>('newest');
   protected readonly page = signal(1);
   protected readonly pageSize = signal(5);
@@ -92,7 +90,7 @@ export class AdminLanguagesComponent implements OnInit {
 
   ngOnInit(): void {
     bindQueryState(this.route,this.router,this.injector,this.destroyRef,{
-      q:{signal:this.search,defaultValue:''},records:{signal:this.records,defaultValue:'active',parse:value=>value as LanguageRecordFilter},active:{signal:this.activeFilter,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest',parse:value=>value as LanguageSort},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
+      q:{signal:this.search,defaultValue:''},status:{signal:this.statusFilter,defaultValue:'',parse:value=>value as LanguageTranslationStatus|'DELETED'|''},sort:{signal:this.sort,defaultValue:'newest',parse:value=>value as LanguageSort},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)},
     });
     this.pageInput.set(this.page());this.sizeInput.set(this.pageSize());
     this.loadRows();
@@ -255,7 +253,8 @@ export class AdminLanguagesComponent implements OnInit {
     this.loadRows();
   }
 
-  protected statusLabel(status: LanguageTranslationStatus): string {
+  protected statusLabel(item: AdminLanguage): string {
+    if (item.deletedAt) return this.language.choose('Đã xóa', 'Deleted');
     const labels: Record<LanguageTranslationStatus, [string, string]> = {
       DRAFT: ['Bản nháp', 'Draft'],
       TRANSLATING: ['Đang dịch', 'Translating'],
@@ -263,7 +262,7 @@ export class AdminLanguagesComponent implements OnInit {
       FAILED: ['Lỗi dịch', 'Failed'],
       DISABLED: ['Đã tắt', 'Disabled'],
     };
-    return this.language.choose(...labels[status]);
+    return this.language.choose(...labels[item.translationStatus]);
   }
 
   private loadRows(): void {
@@ -273,8 +272,10 @@ export class AdminLanguagesComponent implements OnInit {
       page: this.page(),
       limit: this.pageSize(),
       search: this.search().trim() || undefined,
-      records: this.records(),
-      isActive: this.activeFilter() === '' ? undefined : this.activeFilter() === 'true',
+      records: this.statusFilter() === 'DELETED' ? 'deleted' : 'active',
+      translationStatus: this.statusFilter() && this.statusFilter() !== 'DELETED'
+        ? this.statusFilter() as LanguageTranslationStatus
+        : undefined,
       sort: this.sort(),
     }).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: (response) => {

@@ -30,6 +30,7 @@ export class CategoryService {
       return { success: true, message: 'CATEGORY_CREATED', data: { item: category } };
     }).then(async (result) => {
       await this.cache.invalidatePrefix('categories:');
+      await this.cache.invalidatePrefix('posts:public:list:');
       return result;
     });
   }
@@ -122,6 +123,7 @@ export class CategoryService {
       return { success: true, message: 'CATEGORY_UPDATED', data: { item: category } };
     }).then(async (result) => {
       await this.cache.invalidatePrefix('categories:');
+      await this.cache.invalidatePrefix('posts:public:list:');
       return result;
     });
   }
@@ -138,6 +140,7 @@ export class CategoryService {
       return { success: true, message: 'CATEGORY_DELETED' };
     }).then(async (result) => {
       await this.cache.invalidatePrefix('categories:');
+      await this.cache.invalidatePrefix('posts:public:list:');
       return result;
     });
   }
@@ -149,6 +152,7 @@ export class CategoryService {
     category.deletedAt = null;
     const item = await this.categoryRepository.save(category);
     await this.cache.invalidatePrefix('categories:');
+    await this.cache.invalidatePrefix('posts:public:list:');
     return { success: true, message: 'CATEGORY_RESTORED', data: { item } };
   }
 

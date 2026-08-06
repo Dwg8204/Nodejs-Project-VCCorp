@@ -11,17 +11,14 @@
   <input class="form-control" type="search"
     [placeholder]="language.choose('Tìm theo tên hoặc mã...','Search by name or code...')"
     [value]="search()" (input)="search.set($any($event.target).value);filter(true)">
-  <select class="form-control" [value]="records()" (change)="records.set($any($event.target).value);filter()">
-    <option value="active">{{language.choose('Chưa xóa','Not deleted')}}</option>
-    <option value="deleted">{{language.choose('Đã xóa','Deleted')}}</option>
-    <option value="all">{{language.choose('Tất cả bản ghi','All records')}}</option>
+  <select class="form-control" [value]="statusFilter()" [attr.data-ui-value]="statusFilter()" (change)="statusFilter.set($any($event.target).value);filter()">
+    <option value="">{{language.choose('Tất cả trạng thái','All statuses')}}</option>
+    <option value="DRAFT">{{language.choose('Bản nháp','Draft')}}</option>
+    <option value="READY">{{language.choose('Sẵn sàng','Ready')}}</option>
+    <option value="DISABLED">{{language.choose('Đã tắt','Disabled')}}</option>
+    <option value="DELETED">{{language.choose('Đã xóa','Deleted')}}</option>
   </select>
-  <select class="form-control" [value]="activeFilter()" (change)="activeFilter.set($any($event.target).value);filter()">
-    <option value="">{{language.choose('Tất cả trạng thái','All activity states')}}</option>
-    <option value="true">{{language.choose('Hoạt động','Active')}}</option>
-    <option value="false">{{language.choose('Không hoạt động','Inactive')}}</option>
-  </select>
-  <select class="form-control" [value]="sort()" (change)="sort.set($any($event.target).value);filter()">
+  <select class="form-control" [value]="sort()" [attr.data-ui-value]="sort()" (change)="sort.set($any($event.target).value);filter()">
     <option value="newest">{{language.choose('Mới nhất','Newest')}}</option>
     <option value="oldest">{{language.choose('Cũ nhất','Oldest')}}</option>
     <option value="a-z">A–Z</option>
@@ -48,7 +45,7 @@
           <td [attr.data-label]="language.choose('CỜ','FLAG')"><span class="flag-cell"><img [src]="item.flag || flagUrl(item.code)" [alt]="item.code"></span></td>
           <td [attr.data-label]="language.choose('NGÔN NGỮ','LANGUAGE')"><span class="language-name"><span>{{ item.name }}</span>@if(item.isSystemLanguage){<iconify-icon class="default-star" icon="solar:shield-star-bold-duotone"></iconify-icon>}</span></td>
           <td [attr.data-label]="language.choose('MÃ','CODE')"><code class="language-code">{{ item.code }}</code></td>
-          <td [attr.data-label]="language.choose('TRẠNG THÁI','STATUS')"><span class="badge" [class.badge-green]="item.isActive&&item.translationStatus==='READY'" [class.badge-red]="!item.isActive||item.translationStatus==='FAILED'">{{statusLabel(item.translationStatus)}}</span></td>
+          <td [attr.data-label]="language.choose('TRẠNG THÁI','STATUS')"><span class="badge" [class.badge-green]="item.isActive&&item.translationStatus==='READY'" [class.badge-red]="!item.isActive||item.translationStatus==='FAILED'">{{statusLabel(item)}}</span></td>
           <td><div class="language-actions">
             @if(!item.deletedAt){
               <button class="edit-btn" type="button" (click)="openEdit(item)" [title]="language.choose('Chỉnh sửa','Edit')"><iconify-icon icon="tabler:edit"></iconify-icon></button>

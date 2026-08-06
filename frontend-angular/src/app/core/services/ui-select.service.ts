@@ -30,7 +30,13 @@ export class UiSelectService {
           if (select?._uiSelectWrapper) this.refresh(select);
         }
       });
-      this.observer.observe(this.document.body, { childList: true, subtree: true, characterData: true });
+      this.observer.observe(this.document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['data-ui-value'],
+      });
       this.document.addEventListener('click', (event) => {
         const target = event.target as Element;
         if (this.active && !target.closest('.ui-select-menu') && !target.closest('.ui-select')) this.close();
@@ -106,6 +112,14 @@ export class UiSelectService {
     const trigger = wrapper.querySelector<HTMLButtonElement>('.ui-select-trigger')!;
     const label = trigger.querySelector<HTMLElement>('.ui-select-label')!;
     const menu = (wrapper as any)._menu as HTMLElement;
+    const boundValue = select.dataset['uiValue'];
+    if (
+      boundValue !== undefined
+      && select.value !== boundValue
+      && Array.from(select.options).some((option) => option.value === boundValue)
+    ) {
+      select.value = boundValue;
+    }
     label.textContent = select.selectedOptions[0]?.textContent?.trim() || '';
     trigger.disabled = select.disabled;
     menu.replaceChildren(...Array.from(select.options).map((option) => {

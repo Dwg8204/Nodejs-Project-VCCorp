@@ -31,6 +31,7 @@ export interface ContentPost {
   sourceLanguageId: number | null;
   thumbnail: string;
   status: 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'REJECTED';
+  version: number;
   rejectionReason: string | null;
   publishedAt: string | null;
   createdAt: string;
@@ -48,7 +49,7 @@ export interface ContentComment {
   parentId: string | null;
   content: string;
   createdAt: string;
-  user: Pick<ContentAuthor, 'id' | 'fullName' | 'avatar'> | null;
+  user: Pick<ContentAuthor, 'id' | 'userName' | 'fullName' | 'avatar'> | null;
 }
 
 export type ContentPage<T> = PaginatedData<T>;

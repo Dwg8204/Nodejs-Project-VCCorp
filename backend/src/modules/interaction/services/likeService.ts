@@ -26,6 +26,24 @@ export class LikeService {
     };
   }
 
+  async getMyLikes(userId: number, postIds: string[]) {
+    const uniqueIds = [...new Set(postIds)].slice(0, 50);
+    if (!uniqueIds.length) {
+      return { success: true, data: { likedPostIds: [] } };
+    }
+    const rows = await this.likeRepository
+      .createQueryBuilder('like')
+      .select('like.postId', 'postId')
+      .where('like.userId = :userId', { userId })
+      .andWhere('like.isLiked = :liked', { liked: true })
+      .andWhere('like.postId IN (:...postIds)', { postIds: uniqueIds })
+      .getRawMany<{ postId: string }>();
+    return {
+      success: true,
+      data: { likedPostIds: rows.map(row => String(row.postId)) },
+    };
+  }
+
   async toggleLike(userId: number, postId: string) {
     const post = await this.postRepository.findOne({
       where: { id: postId, deletedAt: null, status: PostStatus.Published },

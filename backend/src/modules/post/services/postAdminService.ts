@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
 import { PostStatus } from 'common/enums/database.enums';
 import { AuditService } from 'modules/audit/services/audit.service';
+import { AppCacheService } from 'modules/cache/cache.service';
 import { AuthenticatedUser } from 'modules/auth/interfaces/auth-user.interface';
 import { Post } from 'modules/post/models/post';
 import { QueryAdminPostDto, RejectPostDto } from '../validations/postValidation';
@@ -13,6 +14,7 @@ export class PostAdminService {
     @InjectRepository(Post) private readonly postRepository: Repository<Post>,
     private readonly dataSource: DataSource,
     private readonly auditService: AuditService,
+    private readonly cache: AppCacheService,
   ) {}
 
   async findAll(query: QueryAdminPostDto) {
@@ -79,16 +81,16 @@ export class PostAdminService {
     } } };
   }
 
-  approve(user: AuthenticatedUser, postId: string, ip: string, agent?: string) {
-    return this.review(user, postId, PostStatus.Published, undefined, ip, agent);
+  approve(user: AuthenticatedUser, postId: string, expectedVersion: number, ip: string, agent?: string) {
+    return this.review(user, postId, expectedVersion, PostStatus.Published, undefined, ip, agent);
   }
 
   reject(user: AuthenticatedUser, postId: string, dto: RejectPostDto, ip: string, agent?: string) {
-    return this.review(user, postId, PostStatus.Rejected, dto.reason, ip, agent);
+    return this.review(user, postId, dto.expectedVersion, PostStatus.Rejected, dto.reason, ip, agent);
   }
 
   async unapprove(user: AuthenticatedUser, id: string, ip: string, agent?: string) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(Post);
       const post = await repo.findOne({
         where: { id, deletedAt: IsNull() },
@@ -103,6 +105,7 @@ export class PostAdminService {
       }
       const before = structuredClone(post);
       post.status = PostStatus.Pending;
+      post.version += 1;
       post.rejectionReason = null;
       post.reviewedBy = null;
       post.reviewedAt = null;
@@ -124,18 +127,32 @@ export class PostAdminService {
         data: { item: post },
       };
     });
+    await this.cache.invalidatePrefix('posts:public:list:');
+    return result;
   }
 
-  private async review(user: AuthenticatedUser, id: string, status: PostStatus, reason: string | undefined, ip: string, agent?: string) {
-    return this.dataSource.transaction(async (manager) => {
+  private async review(user: AuthenticatedUser, id: string, expectedVersion: number, status: PostStatus, reason: string | undefined, ip: string, agent?: string) {
+    const result = await this.dataSource.transaction(async (manager) => {
       const repo = manager.getRepository(Post);
-      const post = await repo.findOne({ where: { id, deletedAt: IsNull() }, relations: ['translations'] });
+      const post = await repo.findOne({
+        where: { id, deletedAt: IsNull() },
+        relations: ['translations'],
+        lock: { mode: 'pessimistic_write' },
+      });
       if (!post) throw this.notFound();
       if (post.status !== PostStatus.Pending) {
         throw new BadRequestException({ code: 'POST_NOT_PENDING', message: 'Post is not pending approval' });
       }
+      if (post.version !== expectedVersion) {
+        throw new ConflictException({
+          code: 'POST_VERSION_CONFLICT',
+          message: 'The post changed after it was loaded. Reload before reviewing it.',
+          currentVersion: post.version,
+        });
+      }
       const before = structuredClone(post);
       post.status = status;
+      post.version += 1;
       post.rejectionReason = reason ?? null;
       post.reviewedBy = user.id;
       post.reviewedAt = new Date();
@@ -145,6 +162,10 @@ export class PostAdminService {
       await this.record(manager, user, action, post, before, post, ip, agent, reason);
       return { success: true, message: action, data: { item: post } };
     });
+    if (status === PostStatus.Published) {
+      await this.cache.invalidatePrefix('posts:public:list:');
+    }
+    return result;
   }
 
   private record(manager: EntityManager, user: AuthenticatedUser, action: string, post: Post, before: unknown, after: unknown, ip: string, agent?: string, reason?: string) {

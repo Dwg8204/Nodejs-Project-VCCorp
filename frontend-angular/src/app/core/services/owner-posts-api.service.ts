@@ -15,6 +15,9 @@ export interface OwnerPostPayload {
   sourceLanguageId:number;
   translations:PostTranslationPayload[];
 }
+export interface UpdateOwnerPostPayload extends OwnerPostPayload {
+  expectedVersion:number;
+}
 export interface OwnerPostStats {
   total:number;
   DRAFT:number;
@@ -41,7 +44,7 @@ export class OwnerPostsApiService {
   list(query:OwnerPostQuery){return this.api.get<OwnerPostListData>('owner/posts',{query});}
   get(id:string){return this.api.get<{item:ContentPost}>(`owner/posts/${id}`);}
   create(payload:OwnerPostPayload){return this.api.post<{item:ContentPost}>('owner/posts',payload);}
-  update(id:string,payload:OwnerPostPayload){return this.api.patch<{item:ContentPost}>(`owner/posts/${id}`,payload);}
+  update(id:string,payload:UpdateOwnerPostPayload){return this.api.patch<{item:ContentPost}>(`owner/posts/${id}`,payload);}
   submit(id:string){return this.api.post<{item:ContentPost}>(`owner/posts/${id}/submit`,{});}
   delete(id:string){return this.api.delete<never>(`owner/posts/${id}`);}
 }

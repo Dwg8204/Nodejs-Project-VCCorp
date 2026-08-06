@@ -163,6 +163,7 @@ export class AdminAuditLogsService {
 
   private parseDateRange(fromDate?: string, toDate?: string) {
     const dateOnlyPattern = /^\d{4}-\d{2}-\d{2}$/;
+    const now = new Date();
     const from = fromDate
       ? new Date(
           dateOnlyPattern.test(fromDate)
@@ -171,18 +172,27 @@ export class AdminAuditLogsService {
         )
       : null;
     let toExclusive: Date | null = null;
+    let toValue: Date | null = null;
     if (toDate) {
       const to = new Date(
         dateOnlyPattern.test(toDate)
           ? `${toDate}T00:00:00.000+07:00`
           : toDate,
       );
+      toValue = new Date(to);
       if (dateOnlyPattern.test(toDate)) {
         to.setDate(to.getDate() + 1);
       } else {
         to.setMilliseconds(to.getMilliseconds() + 1);
       }
       toExclusive = to;
+    }
+
+    if (
+      (from && from.getTime() > now.getTime())
+      || (toValue && toValue.getTime() > now.getTime())
+    ) {
+      throw new BadRequestException('ADMIN_AUDIT_DATE_IN_FUTURE');
     }
 
     if (from && toExclusive && from.getTime() >= toExclusive.getTime()) {

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Param, Body, Query, UseGuards, Ip, Headers } from '@nestjs/common';
 import { PostAdminService } from '../services/postAdminService';
-import { QueryAdminPostDto, RejectPostDto } from '../validations/postValidation';
+import { QueryAdminPostDto, RejectPostDto, ReviewPostDto } from '../validations/postValidation';
 import { JwtAuthGuard } from 'modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'modules/auth/guards/roles.guard';
 import { Roles } from 'modules/auth/decorators/roles.decorator';
@@ -28,10 +28,11 @@ export class PostAdminController {
   approve(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
+    @Body() dto: ReviewPostDto,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent?: string,
   ) {
-    return this.postAdminService.approve(user, id, ipAddress, userAgent);
+    return this.postAdminService.approve(user, id, dto.expectedVersion, ipAddress, userAgent);
   }
 
   @Post(':id/unapprove')

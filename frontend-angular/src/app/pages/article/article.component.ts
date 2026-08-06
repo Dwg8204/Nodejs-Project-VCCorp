@@ -70,16 +70,16 @@ export class ArticleComponent {
       return current.id;
     };
     const view=(row:ContentComment,depth:0|1,rootIdValue:number):CommentView=>{
-      const name=row.user?.fullName||'Anonymous';
+      const name=row.user?.userName||'Anonymous';
       const repliedUser=depth===1?rows.find(item=>item.id===row.parentId):null;
       const knownUsers=rows
-        .map(item=>({userId:item.userId,name:item.user?.fullName?.trim()||''}))
+        .map(item=>({userId:item.userId,name:item.user?.userName?.trim()||''}))
         .filter(item=>item.name)
         .sort((left,right)=>right.name.length-left.name.length);
       const storedMention=knownUsers.find(item=>row.content.startsWith(`@${item.name}`));
       const mention=storedMention
         ?(storedMention.userId!==row.userId?storedMention.name:null)
-        :(repliedUser&&repliedUser.userId!==row.userId?repliedUser.user?.fullName?.trim()||null:null);
+        :(repliedUser&&repliedUser.userId!==row.userId?repliedUser.user?.userName?.trim()||null:null);
       const content=storedMention
         ?row.content.slice(storedMention.name.length+1).trimStart()
         :row.content;

@@ -28,16 +28,16 @@ describe('CommentService', () => {
 
   it('reply người khác được quy về root và tự thêm mention', async () => {
     posts.findOne.mockResolvedValue({ id: '1', status: PostStatus.Published });
-    comments.findOne.mockResolvedValue({ id: '8', parentId: '3', userId: 2, user: { fullName: 'Nguyễn B' } });
+    comments.findOne.mockResolvedValue({ id: '8', parentId: '3', userId: 2, user: { userName: 'nguyenb' } });
     const result = await service.create(1, '1', { content: 'xin chào', parentId: '8' });
-    expect(comments.create).toHaveBeenCalledWith(expect.objectContaining({ parentId: '3', content: '@Nguyễn B xin chào' }));
+    expect(comments.create).toHaveBeenCalledWith(expect.objectContaining({ parentId: '3', content: '@nguyenb xin chào' }));
     expect(result.message).toBe('COMMENT_CREATED');
   });
 
   it('reply chính mình không tự tag tên', async () => {
     posts.findOne.mockResolvedValue({ id: '1', status: PostStatus.Published });
-    comments.findOne.mockResolvedValue({ id: '8', parentId: null, userId: 1, user: { fullName: 'Nguyễn A' } });
-    await service.create(1, '1', { content: '@Nguyễn A bổ sung', parentId: '8' });
+    comments.findOne.mockResolvedValue({ id: '8', parentId: null, userId: 1, user: { userName: 'nguyena' } });
+    await service.create(1, '1', { content: '@nguyena bổ sung', parentId: '8' });
     expect(comments.create).toHaveBeenCalledWith(expect.objectContaining({ parentId: '8', content: 'bổ sung' }));
   });
 

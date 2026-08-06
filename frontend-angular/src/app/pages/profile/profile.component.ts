@@ -183,6 +183,11 @@ export class ProfileComponent implements OnInit {
 
   protected name(): string {
     const user = this.user();
+    return user?.user_name || 'Anonymous';
+  }
+
+  protected authorName(): string {
+    const user = this.user();
     return user?.full_name || user?.user_name || 'Anonymous';
   }
 

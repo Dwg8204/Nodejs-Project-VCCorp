@@ -39,6 +39,7 @@ export class CommentService {
         ...rest,
         user: user ? {
           id: user.id,
+          userName: user.userName,
           fullName: user.fullName,
           avatar: user.avatar,
         } : null
@@ -95,7 +96,7 @@ export class CommentService {
       // The database stores only two levels: a root comment and its direct replies.
       // Replying to another reply still points to the original root comment.
       parentId = repliedComment.parentId ?? repliedComment.id;
-      const repliedUserName = repliedComment.user?.fullName?.trim();
+      const repliedUserName = repliedComment.user?.userName?.trim();
       if (repliedUserName) {
         const mentionPrefix = `@${repliedUserName}`;
         if (repliedComment.userId === userId) {

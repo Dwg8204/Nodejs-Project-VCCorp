@@ -4,12 +4,12 @@
 </div>
 <div class="filter-row audit-filter-row">
   <input id="logSearch" class="form-control" type="search" [placeholder]="language.choose('Tìm người thực hiện hoặc đối tượng...','Search actor or target...')" [value]="search()" (input)="update('search',$any($event.target).value)">
-  <select id="logAction" class="form-control" [value]="action()" (change)="update('action',$any($event.target).value)"><option value="">{{language.choose('Tất cả hành động','All actions')}}</option>@for(value of actionOptions();track value){<option [value]="value">{{actionText(value)}}</option>}</select>
-  <select id="logEntity" class="form-control" [value]="entity()" (change)="update('entity',$any($event.target).value)"><option value="">{{language.choose('Tất cả đối tượng','All entities')}}</option>@for(value of entityOptions();track value){<option [value]="value">{{value}}</option>}</select>
-  <label class="audit-date-field"><span>{{language.choose('Từ ngày','From')}}</span><input class="form-control" type="date" [value]="dateFrom()" (change)="update('from',$any($event.target).value)"></label>
-  <label class="audit-date-field"><span>{{language.choose('Đến ngày','To')}}</span><input class="form-control" type="date" [value]="dateTo()" (change)="update('to',$any($event.target).value)"></label>
+  <select id="logAction" class="form-control" [value]="action()" [attr.data-ui-value]="action()" (change)="update('action',$any($event.target).value)"><option value="">{{language.choose('Tất cả hành động','All actions')}}</option>@for(value of actionOptions();track value){<option [value]="value">{{actionText(value)}}</option>}</select>
+  <label class="audit-date-field"><span>{{language.choose('Từ ngày','From')}}</span><input class="form-control" type="date" [max]="maxDate" [value]="dateFrom()" (change)="updateDate('from',$any($event.target))"></label>
+  <label class="audit-date-field"><span>{{language.choose('Đến ngày','To')}}</span><input class="form-control" type="date" [max]="maxDate" [value]="dateTo()" (change)="updateDate('to',$any($event.target))"></label>
   <button type="button" class="btn btn-outline audit-reset" (click)="reset()"><iconify-icon icon="solar:restart-linear"></iconify-icon><span>{{language.choose('Đặt lại','Reset')}}</span></button>
 </div>
+@if(dateError()){<p class="audit-date-error"><iconify-icon icon="solar:danger-circle-bold-duotone"></iconify-icon>{{dateError()}}</p>}
 <div class="card audit-table-card"><table class="data-table audit-table"><thead><tr><th>{{language.choose('Thời gian','Time')}}</th><th>{{language.choose('Người thực hiện','Actor')}}</th><th>{{language.choose('Hành động','Action')}}</th><th>{{language.choose('Đối tượng','Target')}}</th><th></th></tr></thead><tbody>
   @for(log of visible();track log.id){<tr>
     <td [attr.data-label]="language.choose('THỜI GIAN','TIME')"><time>{{formatDate(log.created_at)}}</time></td>

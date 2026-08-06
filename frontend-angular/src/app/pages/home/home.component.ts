@@ -101,8 +101,9 @@ export class HomeComponent {
 
   private loadLikedState(posts:ContentPost[]):void{
     if(!this.auth.isAuthenticated()){this.likedIds.set(new Set());return;}
-    const ids=new Set<number>();
-    for(const post of posts)this.api.myLike(post.id).subscribe({next:response=>{if(response.data.liked){ids.add(Number(post.id));this.likedIds.set(new Set(ids));}}});
+    const postIds=posts.map(post=>String(post.id));
+    if(!postIds.length){this.likedIds.set(new Set());return;}
+    this.api.myLikes(postIds).subscribe({next:response=>this.likedIds.set(new Set(response.data.likedPostIds.map(Number))),error:()=>this.likedIds.set(new Set())});
   }
   private mapPost(post:ContentPost):FeedPost{
     const translation=post.translations[0];

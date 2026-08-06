@@ -54,6 +54,10 @@ export class ContentApiService {
     return this.api.get(`posts/${postId}/likes/me`);
   }
 
+  myLikes(postIds: string[]): Observable<ApiResponse<{ likedPostIds: string[] }>> {
+    return this.api.get('posts/likes/me', { query: { postIds: postIds.join(',') } });
+  }
+
   toggleLike(postId: string): Observable<ApiResponse<{ liked: boolean; totalLikes: number }>> {
     return this.api.post(`posts/${postId}/likes`, {});
   }

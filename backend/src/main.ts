@@ -70,14 +70,12 @@ async function bootstrap() {
   const publicDirectory = join(process.cwd(), 'public');
 
   if (nodeEnvironment === 'production' && existsSync(publicDirectory)) {
-    app.useStaticAssets(publicDirectory, { index: false });
+    app.useStaticAssets(publicDirectory);
   }
 
   // Khởi tạo controller trước khi gắn SPA fallback để /api luôn được NestJS
   // xử lý, còn các URL phía giao diện như /profile hoặc /admin/posts trả về
   // Angular index.html khi người dùng tải lại trang.
-  await app.init();
-
   if (nodeEnvironment === 'production' && existsSync(publicDirectory)) {
     const express = app.getHttpAdapter().getInstance();
     express.use((request, response, next) => {
@@ -94,6 +92,8 @@ async function bootstrap() {
       response.sendFile(join(publicDirectory, 'index.html'));
     });
   }
+
+  await app.init();
 
   await app.listen(port, '0.0.0.0');
 

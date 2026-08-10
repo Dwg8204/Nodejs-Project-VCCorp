@@ -1,0 +1,16 @@
+.git
+.github
+.agents
+.codex
+**/node_modules
+**/dist
+**/.angular
+**/coverage
+**/*.log
+**/.env
+.env.docker
+docs/admin
+docs/*.html
+PROJECT_DOCS
+*.md
+replace.py

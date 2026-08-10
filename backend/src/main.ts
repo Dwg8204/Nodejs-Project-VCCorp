@@ -7,10 +7,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
   // Prefix toàn cục: tất cả routes sẽ bắt đầu với /api
@@ -64,7 +67,35 @@ async function bootstrap() {
 
   const port = config.getOrThrow<number>('PORT');
   const nodeEnvironment = config.getOrThrow<string>('NODE_ENV');
-  await app.listen(port);
+  const publicDirectory = join(process.cwd(), 'public');
+
+  if (nodeEnvironment === 'production' && existsSync(publicDirectory)) {
+    app.useStaticAssets(publicDirectory);
+  }
+
+  // Khởi tạo controller trước khi gắn SPA fallback để /api luôn được NestJS
+  // xử lý, còn các URL phía giao diện như /profile hoặc /admin/posts trả về
+  // Angular index.html khi người dùng tải lại trang.
+  if (nodeEnvironment === 'production' && existsSync(publicDirectory)) {
+    const express = app.getHttpAdapter().getInstance();
+    express.use((request, response, next) => {
+      const acceptsHtml = request.accepts?.('html');
+      if (
+        request.method !== 'GET'
+        || request.path.startsWith('/api')
+        || !acceptsHtml
+      ) {
+        next();
+        return;
+      }
+
+      response.sendFile(join(publicDirectory, 'index.html'));
+    });
+  }
+
+  await app.init();
+
+  await app.listen(port, '0.0.0.0');
 
   console.log('='.repeat(50));
   console.log(`🚀 Server is running on port ${port}`);

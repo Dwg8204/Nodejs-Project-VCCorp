@@ -54,6 +54,10 @@ export class ProfileService {
     const user = await this.findUser(userId);
     const before = this.toProfile(user);
 
+    if (dto.dateOfBirth && dto.dateOfBirth > this.currentDate()) {
+      throw new BadRequestException('PROFILE_DATE_OF_BIRTH_IN_FUTURE');
+    }
+
     if (dto.fullName !== undefined) user.fullName = dto.fullName?.trim() || null;
     if (dto.phone !== undefined) user.phone = dto.phone?.trim() || null;
     if (dto.dateOfBirth !== undefined) user.dateOfBirth = dto.dateOfBirth;
@@ -78,6 +82,19 @@ export class ProfileService {
       message: 'PROFILE_UPDATE_SUCCEEDED',
       data: { user: after },
     };
+  }
+
+  private currentDate(): string {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const value = Object.fromEntries(
+      parts.map((part) => [part.type, part.value]),
+    );
+    return `${value.year}-${value.month}-${value.day}`;
   }
 
   async changePassword(

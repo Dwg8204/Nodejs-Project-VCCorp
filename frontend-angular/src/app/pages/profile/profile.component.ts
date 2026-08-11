@@ -98,7 +98,9 @@ export class ProfileComponent implements OnInit {
   protected readonly editFullName = signal('');
   protected readonly editPhone = signal('');
   protected readonly editDateOfBirth = signal('');
-  protected readonly maxDateOfBirth = this.toDateInputValue(new Date());
+  protected readonly maxDateOfBirth = this.toDateInputValue(
+    new Date(Date.now() - 24 * 60 * 60 * 1_000),
+  );
   protected readonly currentPassword = signal('');
   protected readonly newPassword = signal('');
   protected readonly confirmPassword = signal('');
@@ -189,7 +191,12 @@ export class ProfileComponent implements OnInit {
 
   protected authorName(): string {
     const user = this.user();
-    return user?.full_name || user?.user_name || 'Anonymous';
+    return user?.user_name || 'Anonymous';
+  }
+
+  protected fullName(): string {
+    const user = this.user();
+    return user?.full_name || '—';
   }
 
   protected avatar(): string {
@@ -286,8 +293,8 @@ export class ProfileComponent implements OnInit {
     if (dateOfBirth && dateOfBirth > this.maxDateOfBirth) {
       this.errorMessage.set(
         this.language.choose(
-          'Ngày sinh không được ở tương lai.',
-          'Date of birth cannot be in the future.',
+          'Ngày sinh phải trước ngày hôm nay.',
+          'Date of birth must be before today.',
         ),
       );
       return;
@@ -528,8 +535,8 @@ export class ProfileComponent implements OnInit {
         'The new password must differ from the current password.',
       ),
       PROFILE_DATE_OF_BIRTH_IN_FUTURE: this.language.choose(
-        'Ngày sinh không được ở tương lai.',
-        'Date of birth cannot be in the future.',
+        'Ngày sinh phải trước ngày hôm nay.',
+        'Date of birth must be before today.',
       ),
       AUTH_PASSWORD_COMPLEXITY_REQUIRED: this.language.choose(
         'Mật khẩu mới phải có chữ hoa, chữ thường và số.',

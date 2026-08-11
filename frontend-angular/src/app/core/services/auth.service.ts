@@ -1,6 +1,11 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   catchError,
+  EMPTY,
+  exhaustMap,
+  filter,
+  interval,
   map,
   Observable,
   of,
@@ -33,7 +38,9 @@ export class AuthService {
   private readonly apiErrors = inject(ApiErrorService);
   private readonly session = inject(AuthSessionStore);
   private readonly language = inject(LanguageService);
+  private readonly router = inject(Router);
   private readonly sessionReadyState = signal(false);
+  private sessionMonitorStarted = false;
 
   readonly currentUser = this.session.user;
   readonly sessionReady = this.sessionReadyState.asReadonly();
@@ -89,6 +96,28 @@ export class AuthService {
     const user = this.currentUser();
     this.repository.logout(user).subscribe({ error: () => undefined });
     this.clearSession();
+  }
+
+  startSessionMonitor(): void {
+    if (this.sessionMonitorStarted) return;
+    this.sessionMonitorStarted = true;
+    interval(5_000).pipe(
+      filter(() => this.isAuthenticated()),
+      exhaustMap(() => this.repository.getCurrentUser().pipe(
+        tap((response) => this.setUser(response.data.user)),
+        catchError((error: unknown) => {
+          const normalized = this.apiErrors.normalize(error);
+          if (
+            normalized.status === 401
+            || normalized.code === 'AUTH_ACCOUNT_LOCKED'
+          ) {
+            this.clearSession();
+            void this.router.navigate(['/login']);
+          }
+          return EMPTY;
+        }),
+      )),
+    ).subscribe();
   }
 
   forgotPassword(

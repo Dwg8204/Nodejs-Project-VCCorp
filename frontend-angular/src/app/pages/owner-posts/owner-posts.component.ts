@@ -37,7 +37,7 @@ export class OwnerPostsComponent {
   protected readonly pages=computed(()=>buildPaginationItems(this.page(),this.totalPages()));
   protected readonly summary=computed(()=>{const total=this.total();const from=total?(this.page()-1)*this.pageSize()+1:0;const to=Math.min(this.page()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
   protected readonly stats=computed(()=>{const value=this.serverStats();return [{vi:'Tổng bài viết',en:'Total Posts',value:value.total,danger:false},{vi:'Bản nháp',en:'Drafts',value:value.DRAFT,danger:false},{vi:'Đã xuất bản',en:'Published',value:value.PUBLISHED,danger:false},{vi:'Chờ duyệt',en:'Pending',value:value.PENDING,danger:false},{vi:'Bị từ chối',en:'Rejected',value:value.REJECTED,danger:true}];});
-  protected readonly previewPost=computed<PostPreview|null>(()=>{const post=this.allPosts().find(item=>item.id===this.previewId());if(!post)return null;const user=this.auth.currentUser();return{...post,author:user?.fullName||user?.userName||'Anonymous'};});
+  protected readonly previewPost=computed<PostPreview|null>(()=>{const post=this.allPosts().find(item=>item.id===this.previewId());if(!post)return null;const user=this.auth.currentUser();return{...post,author:user?.userName||'Anonymous'};});
 
   constructor(){
     bindQueryState(this.route,this.router,this.injector,this.destroyRef,{q:{signal:this.search,defaultValue:''},status:{signal:this.status,defaultValue:''},sort:{signal:this.sort,defaultValue:'newest'},page:{signal:this.page,defaultValue:1,parse:positiveInteger(1)},limit:{signal:this.pageSize,defaultValue:5,parse:positiveInteger(5,100)}});

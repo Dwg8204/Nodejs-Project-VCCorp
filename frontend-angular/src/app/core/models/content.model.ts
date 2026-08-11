@@ -19,6 +19,7 @@ export interface ContentAuthor {
 
 export interface ContentCategory {
   id: number;
+  createdAt?: string;
   sourceLanguageId: number | null;
   translations: ContentTranslation[];
   postsCount?: number;

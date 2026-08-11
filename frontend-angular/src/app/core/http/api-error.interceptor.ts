@@ -14,11 +14,11 @@ export const apiErrorInterceptor: HttpInterceptorFn = (request, next) => {
 
   return next(request).pipe(
     catchError((error: unknown) => {
-      errors.publish(error);
+      const normalized = errors.publish(error);
 
       if (
         error instanceof HttpErrorResponse &&
-        error.status === 401 &&
+        (error.status === 401 || normalized.code === 'AUTH_ACCOUNT_LOCKED') &&
         !request.context.get(SKIP_AUTH_REDIRECT)
       ) {
         session.clear();

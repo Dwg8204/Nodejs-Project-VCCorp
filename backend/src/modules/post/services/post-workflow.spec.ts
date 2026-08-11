@@ -45,8 +45,9 @@ describe('Post workflow', () => {
 
   describe('Blog Owner submit', () => {
     let service: PostOwnerService;
+    const cache = { invalidatePrefix: jest.fn() };
     beforeEach(() => {
-      service = new PostOwnerService({} as never, dataSource as never, audit as never, { invalidatePrefix: jest.fn() } as never);
+      service = new PostOwnerService({} as never, dataSource as never, audit as never, cache as never);
     });
     const owner = { ...actor, role: RoleName.BlogOwner };
 
@@ -65,6 +66,30 @@ describe('Post workflow', () => {
     it('không thao tác bài không thuộc owner', async () => {
       repo.findOne.mockResolvedValue(null);
       await expect(service.submit(owner, '9', '127.0.0.1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('moves an edited published post back to draft and increments its version', async () => {
+      repo.findOne.mockResolvedValue({
+        id: '9', version: 4, authorId: 1, categoryId: 2,
+        sourceLanguageId: 1, thumbnail: 'old.jpg',
+        status: PostStatus.Published, rejectionReason: null,
+        submittedAt: new Date(), reviewedBy: 1, reviewedAt: new Date(),
+        publishedAt: new Date(),
+        translations: [{ languageId: 1, title: 'Published', content: 'Body' }],
+      });
+      jest.spyOn(service as any, 'validateReferences').mockResolvedValue(undefined);
+
+      const result = await service.update(
+        owner, '9', { expectedVersion: 4, thumbnail: 'new.jpg' }, '127.0.0.1',
+      );
+
+      expect(result.data.item).toEqual(expect.objectContaining({
+        status: PostStatus.Draft, version: 5, thumbnail: 'new.jpg',
+      }));
+      expect(repo.save).toHaveBeenCalledWith(expect.objectContaining({
+        reviewedBy: null, reviewedAt: null, publishedAt: null,
+      }));
+      expect(cache.invalidatePrefix).toHaveBeenCalledWith('posts:public:list:');
     });
   });
 });

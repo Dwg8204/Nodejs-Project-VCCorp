@@ -98,6 +98,7 @@ export class ProfileComponent implements OnInit {
   protected readonly editFullName = signal('');
   protected readonly editPhone = signal('');
   protected readonly editDateOfBirth = signal('');
+  protected readonly maxDateOfBirth = this.toDateInputValue(new Date());
   protected readonly currentPassword = signal('');
   protected readonly newPassword = signal('');
   protected readonly confirmPassword = signal('');
@@ -281,6 +282,16 @@ export class ProfileComponent implements OnInit {
       );
       return;
     }
+    const dateOfBirth = this.editDateOfBirth();
+    if (dateOfBirth && dateOfBirth > this.maxDateOfBirth) {
+      this.errorMessage.set(
+        this.language.choose(
+          'Ngày sinh không được ở tương lai.',
+          'Date of birth cannot be in the future.',
+        ),
+      );
+      return;
+    }
 
     this.saving.set(true);
     this.errorMessage.set('');
@@ -288,7 +299,7 @@ export class ProfileComponent implements OnInit {
       .updateProfile({
         fullName,
         phone: this.editPhone().trim() || null,
-        dateOfBirth: this.editDateOfBirth() || null,
+        dateOfBirth: dateOfBirth || null,
       })
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
@@ -304,6 +315,17 @@ export class ProfileComponent implements OnInit {
         },
         error: (error: unknown) => this.showError(error),
       });
+  }
+
+  protected updateDateOfBirth(event: Event): void {
+    this.editDateOfBirth.set((event.target as HTMLInputElement).value);
+  }
+
+  private toDateInputValue(date: Date): string {
+    const localDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60_000,
+    );
+    return localDate.toISOString().slice(0, 10);
   }
 
   protected savePassword(): void {
@@ -504,6 +526,10 @@ export class ProfileComponent implements OnInit {
       PROFILE_PASSWORD_UNCHANGED: this.language.choose(
         'Mật khẩu mới phải khác mật khẩu hiện tại.',
         'The new password must differ from the current password.',
+      ),
+      PROFILE_DATE_OF_BIRTH_IN_FUTURE: this.language.choose(
+        'Ngày sinh không được ở tương lai.',
+        'Date of birth cannot be in the future.',
       ),
       AUTH_PASSWORD_COMPLEXITY_REQUIRED: this.language.choose(
         'Mật khẩu mới phải có chữ hoa, chữ thường và số.',

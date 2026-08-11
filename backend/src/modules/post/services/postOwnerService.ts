@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -158,7 +157,7 @@ export class PostOwnerService {
     ipAddress: string,
     userAgent?: string,
   ) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const repository = manager.getRepository(Post);
       const translationRepository = manager.getRepository(PostTranslation);
       const post = await repository.findOne({
@@ -167,12 +166,6 @@ export class PostOwnerService {
         lock: { mode: 'pessimistic_write' },
       });
       if (!post) throw this.notFound();
-      if (![PostStatus.Draft, PostStatus.Rejected, PostStatus.Pending].includes(post.status)) {
-        throw new ForbiddenException({
-          code: 'POST_CANNOT_EDIT',
-          message: 'Only DRAFT, REJECTED or PENDING posts can be edited',
-        });
-      }
       if (post.version !== dto.expectedVersion) {
         throw new ConflictException({
           code: 'POST_VERSION_CONFLICT',
@@ -181,6 +174,7 @@ export class PostOwnerService {
         });
       }
       const before = structuredClone(post);
+      const wasPublished = post.status === PostStatus.Published;
       const categoryId = dto.categoryId ?? post.categoryId;
       const sourceLanguageId =
         dto.sourceLanguageId === undefined
@@ -197,6 +191,13 @@ export class PostOwnerService {
       post.categoryId = categoryId;
       post.sourceLanguageId = sourceLanguageId ?? null;
       post.rejectionReason = null;
+      if (wasPublished) {
+        post.status = PostStatus.Draft;
+        post.reviewedBy = null;
+        post.reviewedAt = null;
+        post.publishedAt = null;
+        post.submittedAt = null;
+      }
       post.version += 1;
       await repository.save(post);
 
@@ -226,11 +227,18 @@ export class PostOwnerService {
         userAgent,
       );
       return {
-        success: true,
-        message: 'POST_UPDATED',
-        data: { item: this.writeResponse(post) },
+        response: {
+          success: true,
+          message: 'POST_UPDATED',
+          data: { item: this.writeResponse(post) },
+        },
+        invalidatePublicCache: wasPublished,
       };
     });
+    if (result.invalidatePublicCache) {
+      await this.cache.invalidatePrefix('posts:public:list:');
+    }
+    return result.response;
   }
 
   async softDelete(

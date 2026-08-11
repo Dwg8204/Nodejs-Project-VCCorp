@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { UiSelectService } from './core/services/ui-select.service';
+import { AuthService } from './core/services/auth.service';
 import { AppNotificationsComponent } from './shared/components/app-notifications/app-notifications.component';
 
 @Component({
@@ -13,5 +14,9 @@ import { AppNotificationsComponent } from './shared/components/app-notifications
 })
 export class AppComponent {
   private readonly uiSelect = inject(UiSelectService);
-  constructor() { this.uiSelect.start(); }
+  private readonly auth = inject(AuthService);
+  constructor() {
+    this.uiSelect.start();
+    this.auth.startSessionMonitor();
+  }
 }

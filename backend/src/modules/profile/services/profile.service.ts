@@ -54,7 +54,7 @@ export class ProfileService {
     const user = await this.findUser(userId);
     const before = this.toProfile(user);
 
-    if (dto.dateOfBirth && dto.dateOfBirth > this.currentDate()) {
+    if (dto.dateOfBirth && dto.dateOfBirth >= this.currentDate()) {
       throw new BadRequestException('PROFILE_DATE_OF_BIRTH_IN_FUTURE');
     }
 

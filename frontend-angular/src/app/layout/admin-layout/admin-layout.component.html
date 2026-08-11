@@ -13,7 +13,7 @@
       @if (languageOpen()) { <div class="lang-menu" style="display:block">@for(item of language.availableLanguages();track item.id){<button type="button" [class.active]="language.locale()===item.code" (click)="selectLanguage(item.code)"><img [src]="item.flag" width="20" alt=""> {{item.name}}</button>}</div> }
     </div>
     <button class="theme-toggle" type="button" aria-label="Toggle theme" (click)="toggleTheme()"><span class="knob"><iconify-icon [icon]="darkTheme() ? 'solar:moon-bold' : 'solar:sun-bold'"></iconify-icon></span></button>
-    <a class="avatar" [routerLink]="['/profile',auth.currentUser()?.id]" [style.background-image]="auth.currentUser()?.avatar ? 'url('+auth.currentUser()?.avatar+')' : null" [title]="language.choose('Hồ sơ','Profile')">{{ auth.currentUser()?.avatar ? '' : (auth.currentUser()?.fullName || 'A').slice(0, 1).toUpperCase() }}</a>
+    <a class="avatar" [routerLink]="['/profile',auth.currentUser()?.id]" [style.background-image]="auth.currentUser()?.avatar ? 'url('+auth.currentUser()?.avatar+')' : null" [title]="language.choose('Hồ sơ','Profile')">{{ auth.currentUser()?.avatar ? '' : (auth.currentUser()?.userName || 'A').slice(0, 1).toUpperCase() }}</a>
     <button class="logout-link" type="button" (click)="requestLogout()" [title]="language.choose('Đăng xuất','Logout')"><iconify-icon icon="solar:logout-2-linear"></iconify-icon><span>{{ language.choose('Đăng xuất','Logout') }}</span></button>
   </div>
 </div>

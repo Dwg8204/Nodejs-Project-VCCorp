@@ -34,6 +34,7 @@ export class HomeComponent {
   protected readonly sizeInput=signal(5);
   private readonly categoryRows=signal<ContentCategory[]>([]);
   private readonly postRows=signal<ContentPost[]>([]);
+  private readonly featuredRows=signal<ContentPost[]>([]);
   private readonly likedIds=signal<Set<number>>(new Set());
   private readonly total=signal(0);
   private readonly totalPageCount=signal(1);
@@ -51,6 +52,10 @@ export class HomeComponent {
       this.api.categories({page:1,limit:100,language,sort:'name-asc'}).subscribe({
         next:response=>this.categoryRows.set(response.data.items),
         error:()=>this.categoryRows.set([]),
+      });
+      this.api.posts({page:1,limit:3,language,sort:'popular'}).subscribe({
+        next:response=>this.featuredRows.set(response.data.items),
+        error:()=>this.featuredRows.set([]),
       });
     },{allowSignalWrites:true});
     effect(()=>{
@@ -81,7 +86,22 @@ export class HomeComponent {
   protected readonly pageNumbers=computed(()=>buildPaginationItems(this.currentPage(),this.totalPages()));
   protected readonly visiblePosts=computed(()=>this.posts());
   protected readonly summary=computed(()=>{const total=this.total();const from=total?(this.currentPage()-1)*this.pageSize()+1:0;const to=Math.min(this.currentPage()*this.pageSize(),total);return this.language.translate('pagination.summary',{from,to,total});});
-  protected readonly staffPicks=computed(()=>[...this.posts()].sort((a,b)=>(b.likes+b.comments)-(a.likes+a.comments)).slice(0,3));
+  protected readonly staffPicks=computed(()=>this.featuredRows().map(post=>this.mapPost(post)).slice(0,3));
+  protected readonly recommendedTopics=computed(()=>{
+    const rows=[...this.categoryRows()];
+    const withPosts=rows
+      .filter(row=>Number(row.postsCount??0)>0)
+      .sort((a,b)=>Number(b.postsCount??0)-Number(a.postsCount??0)||b.id-a.id);
+    const selected=withPosts.slice(0,7);
+    if(selected.length<7){
+      const selectedIds=new Set(selected.map(row=>row.id));
+      const newest=rows
+        .filter(row=>!selectedIds.has(row.id))
+        .sort((a,b)=>new Date(b.createdAt??0).getTime()-new Date(a.createdAt??0).getTime()||b.id-a.id);
+      selected.push(...newest.slice(0,7-selected.length));
+    }
+    return selected.map(row=>({id:row.id,name:this.categoryName(row)})).filter(row=>row.name);
+  });
   protected readonly hoveredAuthor=computed<AuthorHover|null>(()=>{const authorId=this.hoveredAuthorId();if(authorId===null)return null;const items=this.posts().filter(post=>post.authorId===authorId);const first=items[0];return first?{name:first.authorName,avatar:first.authorAvatar,posts:items.length,likes:items.reduce((sum,item)=>sum+item.likes,0)}:null;});
   protected readonly filteredCategories=computed(()=>{const search=this.categorySearch().trim().toLocaleLowerCase();return this.categories().filter(category=>category.name.toLocaleLowerCase().includes(search));});
 
@@ -108,7 +128,7 @@ export class HomeComponent {
   private mapPost(post:ContentPost):FeedPost{
     const translation=post.translations[0];
     const categoryName=this.categoryName(post.category);
-    const name=post.author?.fullName||post.author?.userName||'Unknown';
+    const name=post.author?.userName||'Unknown';
     return {id:Number(post.id),authorId:post.authorId,categoryId:post.categoryId,title:translation?.title??'',content:translation?.content??'',authorName:name,authorAvatar:post.author?.avatar||`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,categoryName,thumbnail:post.thumbnail,createdAt:post.publishedAt||post.createdAt,likes:Number(post.likesCount??0),comments:Number(post.commentsCount??0),isLiked:this.likedIds().has(Number(post.id))};
   }
   private categoryName(category:ContentCategory):string{

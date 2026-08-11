@@ -33,6 +33,15 @@ describe('ProfileService', () => {
     expect(users.save).not.toHaveBeenCalled();
   });
 
+  it('rejects today as a date of birth', async () => {
+    users.findOne.mockResolvedValue({ id: 3, userName: 'owner', fullName: 'Old', email: 'o@test.com', phone: null, avatar: null, coverImage: null, dateOfBirth: null, emailVerified: false, createdAt: new Date(), updatedAt: new Date(), role: { nameRole: 'BLOG_OWNER' } });
+    const today = (service as any).currentDate();
+    await expect(
+      service.updateProfile(3, { dateOfBirth: today }, { ipAddress: '127.0.0.1' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(users.save).not.toHaveBeenCalled();
+  });
+
   it('từ chối mật khẩu xác nhận không khớp trước khi query database', async () => {
     await expect(service.changePassword(3, { currentPassword: 'OldPassword1', newPassword: 'NewPassword1', confirmPassword: 'OtherPassword1' }, { ipAddress: '127.0.0.1' })).rejects.toBeInstanceOf(BadRequestException);
     expect(users.createQueryBuilder).not.toHaveBeenCalled();

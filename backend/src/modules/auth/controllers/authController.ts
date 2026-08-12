@@ -18,7 +18,7 @@ import {
 } from '../interfaces/auth-user.interface';
 import { AuthService } from '../services/authService';
 import { AuthCookieService } from '../services/auth-cookie.service';
-import { AuthSessionService } from '../services/auth-session.service';
+import { AuthTokenService } from '../services/auth-token.service';
 import {
   ForgotPasswordDto,
   LoginDto,
@@ -32,7 +32,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly authCookie: AuthCookieService,
-    private readonly sessions: AuthSessionService,
+    private readonly tokens: AuthTokenService,
   ) {}
 
   @Post('register')
@@ -90,7 +90,7 @@ export class AuthController {
       user,
       this.requestContext(ipAddress, userAgent),
     );
-    await this.sessions.revoke(this.authCookie.readRefresh(cookieHeader));
+    await this.tokens.revoke(this.authCookie.readRefresh(cookieHeader));
     this.authCookie.clear(response);
     return result;
   }
@@ -108,14 +108,11 @@ export class AuthController {
       throw new UnauthorizedException('AUTH_REFRESH_TOKEN_REQUIRED');
     }
     try {
-      const result = await this.sessions.rotate(
-        refreshToken,
-        this.requestContext(ipAddress, userAgent),
-      );
+      const tokens = await this.tokens.rotate(refreshToken);
       this.authCookie.set(
         response,
-        result.tokens.accessToken,
-        result.tokens.refreshToken,
+        tokens.accessToken,
+        tokens.refreshToken,
       );
       return { success: true, message: 'AUTH_TOKEN_REFRESHED', data: null };
     } catch (error) {

@@ -80,7 +80,8 @@ Không dùng OTP sáu số trực tiếp làm `resetToken`.
 
 Access token sống 15 phút; refresh token sống 7 ngày. Cả hai nằm trong
 HttpOnly cookie. Backend chỉ lưu SHA-256 hash của refresh token trong
-`user_sessions` và xoay token sau mỗi lần refresh.
+hai cột ẩn trong `users` và xoay token sau mỗi lần refresh. Mỗi tài khoản chỉ
+có một refresh token hiện hành; đăng nhập mới sẽ vô hiệu token cũ.
 
 ## 3. Public content
 

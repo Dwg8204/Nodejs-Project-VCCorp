@@ -15,7 +15,7 @@ import { createHmac, randomInt, timingSafeEqual } from 'crypto';
 import { OtpPurpose, RoleName } from 'common/enums/database.enums';
 import { AuditService } from 'modules/audit/services/audit.service';
 import { MailService } from 'modules/mail/services/mail.service';
-import { AuthSessionService } from './auth-session.service';
+import { AuthTokenService } from './auth-token.service';
 import { Role } from 'modules/user/models/role';
 import { User } from 'modules/user/models/user';
 import { Repository } from 'typeorm';
@@ -50,7 +50,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly auditService: AuditService,
     private readonly mailService: MailService,
-    private readonly sessions: AuthSessionService,
+    private readonly tokens: AuthTokenService,
   ) {}
 
   async register(dto: RegisterDto, context: RequestContext) {
@@ -110,7 +110,7 @@ export class AuthService {
       message: 'AUTH_REGISTER_SUCCEEDED',
       data: {
         user: this.toSafeUser(user),
-        ...(await this.sessions.create(user, context)),
+        ...(await this.tokens.issue(user)),
       },
     };
   }
@@ -173,7 +173,7 @@ export class AuthService {
       message: 'AUTH_LOGIN_SUCCEEDED',
       data: {
         user: this.toSafeUser(user),
-        ...(await this.sessions.create(user, context)),
+        ...(await this.tokens.issue(user)),
       },
     };
   }
@@ -378,7 +378,7 @@ export class AuthService {
       otpAttemptCount: 0,
       otpLastSentAt: null,
     });
-    await this.sessions.revokeAll(user.id);
+    await this.tokens.revokeUser(user.id);
     await this.auditService.record({
       actorId: user.id,
       actorName: user.fullName ?? user.userName,

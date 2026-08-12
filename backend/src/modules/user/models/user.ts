@@ -17,7 +17,6 @@ import { Comment } from 'modules/interaction/models/comment';
 import { PostLike } from 'modules/interaction/models/postLike';
 import { Post } from 'modules/post/models/post';
 import { Role } from './role';
-import { UserSession } from 'modules/auth/models/user-session';
 
 @Entity({ name: 'users' })
 @Index('idx_users_role_active', ['roleId', 'isActive'])
@@ -110,6 +109,24 @@ export class User {
   @Column({ name: 'password_changed_at', type: 'timestamp', nullable: true })
   passwordChangedAt: Date | null;
 
+  @Column({
+    name: 'refresh_token_hash',
+    type: 'char',
+    length: 64,
+    nullable: true,
+    select: false,
+  })
+  refreshTokenHash: string | null;
+
+  @Column({
+    name: 'refresh_token_expires_at',
+    type: 'datetime',
+    precision: 6,
+    nullable: true,
+    select: false,
+  })
+  refreshTokenExpiresAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
@@ -138,9 +155,6 @@ export class User {
 
   @OneToMany(() => AuditLog, (auditLog) => auditLog.actor)
   auditLogs: AuditLog[];
-
-  @OneToMany(() => UserSession, (session) => session.user)
-  sessions: UserSession[];
 
   @BeforeInsert()
   async hashPassword(): Promise<void> {

@@ -12,7 +12,6 @@ USE `vccorp_db`;
 SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `audit_logs`;
-DROP TABLE IF EXISTS `user_sessions`;
 DROP TABLE IF EXISTS `post_bookmarks`;
 DROP TABLE IF EXISTS `post_likes`;
 DROP TABLE IF EXISTS `comments`;
@@ -65,6 +64,8 @@ CREATE TABLE `users` (
   `otp_attempt_count` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   `otp_last_sent_at` TIMESTAMP NULL DEFAULT NULL,
   `password_changed_at` TIMESTAMP NULL DEFAULT NULL,
+  `refresh_token_hash` CHAR(64) DEFAULT NULL,
+  `refresh_token_expires_at` DATETIME(6) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -77,27 +78,6 @@ CREATE TABLE `users` (
   CONSTRAINT `fk_users_role`
     FOREIGN KEY (`role_id`) REFERENCES `role` (`id`)
     ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `user_sessions` (
-  `id` CHAR(36) NOT NULL,
-  `user_id` INT UNSIGNED NOT NULL,
-  `refresh_token_hash` CHAR(64) NOT NULL,
-  `expires_at` DATETIME(6) NOT NULL,
-  `revoked_at` DATETIME(6) DEFAULT NULL,
-  `last_used_at` DATETIME(6) DEFAULT NULL,
-  `ip_address` VARCHAR(45) DEFAULT NULL,
-  `user_agent` VARCHAR(500) DEFAULT NULL,
-  `created_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
-  `updated_at` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)
-    ON UPDATE CURRENT_TIMESTAMP(6),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_user_sessions_refresh_hash` (`refresh_token_hash`),
-  KEY `idx_user_sessions_user_active` (`user_id`, `revoked_at`, `expires_at`),
-  KEY `idx_user_sessions_expires_at` (`expires_at`),
-  CONSTRAINT `fk_user_sessions_user`
-    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================

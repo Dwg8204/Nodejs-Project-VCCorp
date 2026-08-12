@@ -46,13 +46,9 @@ Danh tính, hồ sơ và auth:
 - Bảo mật: `password_hash`, `is_active`, `email_verified`, `password_changed_at`.
 - OTP reset được giữ trực tiếp trong user: `otp_code_hash`, `otp_purpose`, `otp_expires_at`, `otp_attempt_count`, `otp_last_sent_at`.
 - `password_hash` và các trường nhạy cảm OTP mặc định không được select bởi entity.
-- Phiên đăng nhập và hash refresh token được lưu riêng trong `user_sessions`.
-
-### `user_sessions`
-
-Mỗi lần đăng nhập tạo một phiên. Bảng chỉ lưu SHA-256 hash của refresh token,
-thời hạn, thời điểm thu hồi/sử dụng gần nhất, IP và user-agent. Refresh token
-nguyên bản chỉ nằm trong HttpOnly cookie và được xoay sau mỗi lần refresh.
+- Mỗi user chỉ có một refresh token hiện hành. `users` chỉ lưu
+  `refresh_token_hash` và `refresh_token_expires_at`; token nguyên bản chỉ nằm
+  trong HttpOnly cookie. Đăng nhập mới hoặc refresh sẽ thay thế token cũ.
 
 ### `languages`
 

@@ -12,7 +12,7 @@ describe('AuthService - password reset protection', () => {
   const config = { getOrThrow: jest.fn((key: string) => configValues[key]) };
   const audit = { record: jest.fn() };
   const mail = { sendPasswordResetOtp: jest.fn() };
-  const sessions = { create: jest.fn(), revokeAll: jest.fn() };
+  const tokens = { issue: jest.fn(), revokeUser: jest.fn() };
   let service: AuthService;
 
   const queryReturning = (value: unknown) => {
@@ -24,7 +24,7 @@ describe('AuthService - password reset protection', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(users as never, roles as never, jwt as never, config as never, audit as never, mail as never, sessions as never);
+    service = new AuthService(users as never, roles as never, jwt as never, config as never, audit as never, mail as never, tokens as never);
   });
 
   it('không tiết lộ email không tồn tại và không gửi mail', async () => {

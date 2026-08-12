@@ -9,7 +9,7 @@ Register/Login form
  -> tìm/tạo user, bcrypt verify/hash
  -> kiểm tra isActive và role
  -> ký access JWT 15 phút và refresh JWT 7 ngày
- -> lưu hash refresh token trong user_sessions
+ -> lưu hash và hạn refresh token trong users (một token/user)
  -> Set hai HttpOnly cookie
  -> audit log
  -> Angular giữ user trong memory signal

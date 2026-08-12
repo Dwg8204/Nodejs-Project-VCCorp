@@ -6,10 +6,10 @@ describe('ProfileService', () => {
   const audit = { record: jest.fn() };
   const cloudinary = {};
   const config = { getOrThrow: jest.fn(() => 4) };
-  const sessions = { revokeAll: jest.fn() };
+  const tokens = { revokeUser: jest.fn() };
   let service: ProfileService;
 
-  beforeEach(() => { jest.clearAllMocks(); service = new ProfileService(users as never, audit as never, cloudinary as never, config as never, sessions as never); });
+  beforeEach(() => { jest.clearAllMocks(); service = new ProfileService(users as never, audit as never, cloudinary as never, config as never, tokens as never); });
 
   it('chỉ trả trường công khai cho public profile', async () => {
     users.findOne.mockResolvedValue({ id: 3, userName: 'owner', fullName: 'Owner', email: 'secret@test.com', phone: '0900', avatar: null, coverImage: null, createdAt: new Date(), role: { nameRole: 'BLOG_OWNER' } });

@@ -9,6 +9,15 @@ export interface JwtPayload {
   exp?: number;
 }
 
+export interface RefreshTokenPayload {
+  sub: number;
+  sid: string;
+  jti: string;
+  type: 'refresh';
+  iat?: number;
+  exp?: number;
+}
+
 export interface AuthenticatedUser {
   id: number;
   email: string;

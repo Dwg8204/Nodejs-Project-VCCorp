@@ -10,8 +10,12 @@ export interface EnvironmentVariables {
   DB_LOGGING: boolean;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: string;
   AUTH_COOKIE_NAME: string;
   AUTH_COOKIE_MAX_AGE_SECONDS: number;
+  AUTH_REFRESH_COOKIE_NAME: string;
+  AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: number;
   AUTH_COOKIE_SECURE: boolean;
   AUTH_COOKIE_SAME_SITE: 'lax' | 'strict' | 'none';
   AUTH_COOKIE_DOMAIN: string;
@@ -54,10 +58,17 @@ export function validateEnvironment(
 ): EnvironmentVariables {
   const value = raw as Record<string, string | undefined>;
   const jwtSecret = value.JWT_SECRET?.trim();
+  const refreshSecret = value.JWT_REFRESH_SECRET?.trim();
   const cookieSameSite = value.AUTH_COOKIE_SAME_SITE ?? 'lax';
 
   if (!jwtSecret || jwtSecret.length < 32) {
     throw new Error('JWT_SECRET phải có ít nhất 32 ký tự');
+  }
+  if (!refreshSecret || refreshSecret.length < 32) {
+    throw new Error('JWT_REFRESH_SECRET phải có ít nhất 32 ký tự');
+  }
+  if (refreshSecret === jwtSecret) {
+    throw new Error('JWT_REFRESH_SECRET phải khác JWT_SECRET');
   }
   if (!['lax', 'strict', 'none'].includes(cookieSameSite)) {
     throw new Error('AUTH_COOKIE_SAME_SITE phải là lax, strict hoặc none');
@@ -74,12 +85,21 @@ export function validateEnvironment(
     DB_NAME: value.DB_NAME ?? 'vccorp_db',
     DB_LOGGING: value.DB_LOGGING === 'true',
     JWT_SECRET: jwtSecret,
-    JWT_EXPIRES_IN: value.JWT_EXPIRES_IN ?? '1h',
+    JWT_EXPIRES_IN: value.JWT_EXPIRES_IN ?? '15m',
+    JWT_REFRESH_SECRET: refreshSecret,
+    JWT_REFRESH_EXPIRES_IN: value.JWT_REFRESH_EXPIRES_IN ?? '7d',
     AUTH_COOKIE_NAME: value.AUTH_COOKIE_NAME ?? 'vccorp_access_token',
     AUTH_COOKIE_MAX_AGE_SECONDS: parseInteger(
       value.AUTH_COOKIE_MAX_AGE_SECONDS,
-      3600,
+      900,
       'AUTH_COOKIE_MAX_AGE_SECONDS',
+    ),
+    AUTH_REFRESH_COOKIE_NAME:
+      value.AUTH_REFRESH_COOKIE_NAME ?? 'vccorp_refresh_token',
+    AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS: parseInteger(
+      value.AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS,
+      604800,
+      'AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS',
     ),
     AUTH_COOKIE_SECURE: value.AUTH_COOKIE_SECURE === 'true',
     AUTH_COOKIE_SAME_SITE: cookieSameSite as 'lax' | 'strict' | 'none',

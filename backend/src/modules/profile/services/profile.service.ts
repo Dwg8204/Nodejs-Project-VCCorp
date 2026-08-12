@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuditService } from 'modules/audit/services/audit.service';
 import { RequestContext } from 'modules/auth/interfaces/auth-user.interface';
+import { AuthSessionService } from 'modules/auth/services/auth-session.service';
 import { User } from 'modules/user/models/user';
 import { CloudinaryService } from 'modules/upload/services/cloudinary.service';
 import { Repository } from 'typeorm';
@@ -21,6 +22,7 @@ export class ProfileService {
     private readonly auditService: AuditService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly config: ConfigService,
+    private readonly sessions: AuthSessionService,
   ) {}
 
   async findProfile(userId: number) {
@@ -130,6 +132,7 @@ export class ProfileService {
     user.otpAttemptCount = 0;
     user.otpLastSentAt = null;
     await this.userRepository.save(user);
+    await this.sessions.revokeAll(user.id);
     await this.auditService.record({
       actorId: user.id,
       actorName: user.fullName ?? user.userName,

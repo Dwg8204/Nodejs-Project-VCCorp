@@ -21,8 +21,11 @@ khuyến nghị là chạy migration.
 4. `CreateContentSchema`: danh mục, bài viết và các bản dịch nội dung.
 5. `CreateInteractionsAndAudit`: bình luận, lượt thích và nhật ký hoạt động.
 6. `SeedInitialData`: dữ liệu nền phục vụ frontend Angular và phát triển backend.
+7. `PreventDuplicateCategoryNames`: ngăn tên danh mục trùng trong cùng ngôn ngữ.
+8. `AddPostVersion`: thêm optimistic version cho quy trình kiểm duyệt bài viết.
+9. `CreateUserSessions`: quản lý phiên đăng nhập và hash refresh token.
 
-Schema nghiệp vụ sau khi chạy có đúng 10 bảng:
+Schema nghiệp vụ sau khi chạy có 11 bảng:
 
 1. `role`
 2. `users`
@@ -34,6 +37,7 @@ Schema nghiệp vụ sau khi chạy có đúng 10 bảng:
 8. `comments`
 9. `post_likes`
 10. `audit_logs`
+11. `user_sessions`
 
 TypeORM tạo thêm `typeorm_migrations`. Đây là bảng kỹ thuật lưu lịch sử migration,
 không phải bảng nghiệp vụ của ứng dụng.

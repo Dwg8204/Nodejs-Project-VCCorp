@@ -10,6 +10,7 @@ import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
 import { apiErrorInterceptor } from './core/http/api-error.interceptor';
 import { loadingInterceptor } from './core/http/loading.interceptor';
+import { authRefreshInterceptor } from './core/http/auth-refresh.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { AuthApiRepository } from './data/api/auth-api.repository';
 import { AuthRepository } from './data/contracts/auth.repository';
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         loadingInterceptor,
         apiErrorInterceptor,
+        authRefreshInterceptor,
       ]),
     ),
     { provide: AuthRepository, useClass: AuthApiRepository },

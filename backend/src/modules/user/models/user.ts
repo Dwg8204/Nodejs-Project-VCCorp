@@ -17,6 +17,7 @@ import { Comment } from 'modules/interaction/models/comment';
 import { PostLike } from 'modules/interaction/models/postLike';
 import { Post } from 'modules/post/models/post';
 import { Role } from './role';
+import { UserSession } from 'modules/auth/models/user-session';
 
 @Entity({ name: 'users' })
 @Index('idx_users_role_active', ['roleId', 'isActive'])
@@ -137,6 +138,9 @@ export class User {
 
   @OneToMany(() => AuditLog, (auditLog) => auditLog.actor)
   auditLogs: AuditLog[];
+
+  @OneToMany(() => UserSession, (session) => session.user)
+  sessions: UserSession[];
 
   @BeforeInsert()
   async hashPassword(): Promise<void> {

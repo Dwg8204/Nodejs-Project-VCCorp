@@ -14,6 +14,7 @@ import {
 } from 'modules/auth/interfaces/auth-user.interface';
 import { Role } from 'modules/user/models/role';
 import { User } from 'modules/user/models/user';
+import { AuthSessionService } from 'modules/auth/services/auth-session.service';
 import { Brackets, Repository } from 'typeorm';
 import {
   ChangeUserRoleDto,
@@ -32,6 +33,7 @@ export class AdminUsersService {
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
     private readonly auditService: AuditService,
+    private readonly sessions: AuthSessionService,
   ) {}
 
   async findAll(dto: QueryAdminUsersDto) {
@@ -251,6 +253,7 @@ export class AdminUsersService {
     const before = this.toAuditUser(user);
     user.isActive = isActive;
     await this.userRepository.save(user);
+    if (!isActive) await this.sessions.revokeAll(user.id);
     await this.recordChange(
       isActive ? 'USER_UNLOCKED' : 'USER_LOCKED',
       actor,

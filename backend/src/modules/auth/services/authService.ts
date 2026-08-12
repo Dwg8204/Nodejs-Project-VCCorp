@@ -15,12 +15,12 @@ import { createHmac, randomInt, timingSafeEqual } from 'crypto';
 import { OtpPurpose, RoleName } from 'common/enums/database.enums';
 import { AuditService } from 'modules/audit/services/audit.service';
 import { MailService } from 'modules/mail/services/mail.service';
+import { AuthSessionService } from './auth-session.service';
 import { Role } from 'modules/user/models/role';
 import { User } from 'modules/user/models/user';
 import { Repository } from 'typeorm';
 import {
   AuthenticatedUser,
-  JwtPayload,
   RequestContext,
 } from '../interfaces/auth-user.interface';
 import {
@@ -50,6 +50,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly auditService: AuditService,
     private readonly mailService: MailService,
+    private readonly sessions: AuthSessionService,
   ) {}
 
   async register(dto: RegisterDto, context: RequestContext) {
@@ -109,7 +110,7 @@ export class AuthService {
       message: 'AUTH_REGISTER_SUCCEEDED',
       data: {
         user: this.toSafeUser(user),
-        accessToken: await this.signAccessToken(user),
+        ...(await this.sessions.create(user, context)),
       },
     };
   }
@@ -172,7 +173,7 @@ export class AuthService {
       message: 'AUTH_LOGIN_SUCCEEDED',
       data: {
         user: this.toSafeUser(user),
-        accessToken: await this.signAccessToken(user),
+        ...(await this.sessions.create(user, context)),
       },
     };
   }
@@ -377,6 +378,7 @@ export class AuthService {
       otpAttemptCount: 0,
       otpLastSentAt: null,
     });
+    await this.sessions.revokeAll(user.id);
     await this.auditService.record({
       actorId: user.id,
       actorName: user.fullName ?? user.userName,
@@ -394,16 +396,6 @@ export class AuthService {
       message: 'AUTH_PASSWORD_RESET_SUCCEEDED',
       data: null,
     };
-  }
-
-  private async signAccessToken(user: User): Promise<string> {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      username: user.userName,
-      role: user.role.nameRole,
-    };
-    return this.jwtService.signAsync(payload);
   }
 
   private async findUserWithOtp(email: string): Promise<User | null> {

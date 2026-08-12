@@ -109,6 +109,24 @@ export class User {
   @Column({ name: 'password_changed_at', type: 'timestamp', nullable: true })
   passwordChangedAt: Date | null;
 
+  @Column({
+    name: 'refresh_token_hash',
+    type: 'char',
+    length: 64,
+    nullable: true,
+    select: false,
+  })
+  refreshTokenHash: string | null;
+
+  @Column({
+    name: 'refresh_token_expires_at',
+    type: 'datetime',
+    precision: 6,
+    nullable: true,
+    select: false,
+  })
+  refreshTokenExpiresAt: Date | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 

@@ -11,6 +11,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { MailModule } from 'modules/mail/mail.module';
 import { AuthCookieService } from './services/auth-cookie.service';
+import { AuthTokenService } from './services/auth-token.service';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { AuthCookieService } from './services/auth-cookie.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthCookieService, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtModule, JwtAuthGuard, RolesGuard, TypeOrmModule],
+  providers: [AuthService, AuthCookieService, AuthTokenService, JwtAuthGuard, RolesGuard],
+  exports: [AuthService, AuthTokenService, JwtModule, JwtAuthGuard, RolesGuard, TypeOrmModule],
 })
 export class AuthModule {}

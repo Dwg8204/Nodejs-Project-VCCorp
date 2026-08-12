@@ -49,6 +49,7 @@ Danh sách phân trang thường trả:
 | POST | `/auth/login` | Public | đăng nhập, set HttpOnly cookie |
 | GET | `/auth/me` | JWT | lấy user phiên hiện tại |
 | POST | `/auth/logout` | JWT | ghi log và clear cookie |
+| POST | `/auth/refresh` | Refresh cookie | xoay refresh token và cấp access token mới |
 | POST | `/auth/forgot-password` | Public | gửi OTP Gmail nếu email hợp lệ |
 | POST | `/auth/verify-otp` | Public | kiểm tra OTP, trả reset token 5 phút |
 | POST | `/auth/reset-password` | Public | đổi mật khẩu bằng reset token |
@@ -76,6 +77,11 @@ POST reset-password {resetToken, newPassword, confirmPassword}
 ```
 
 Không dùng OTP sáu số trực tiếp làm `resetToken`.
+
+Access token sống 15 phút; refresh token sống 7 ngày. Cả hai nằm trong
+HttpOnly cookie. Backend chỉ lưu SHA-256 hash của refresh token trong
+hai cột ẩn trong `users` và xoay token sau mỗi lần refresh. Mỗi tài khoản chỉ
+có một refresh token hiện hành; đăng nhập mới sẽ vô hiệu token cũ.
 
 ## 3. Public content
 

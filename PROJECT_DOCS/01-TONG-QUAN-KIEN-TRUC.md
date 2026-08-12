@@ -19,7 +19,7 @@ VCCorp Blog là nền tảng xuất bản nội dung đa ngôn ngữ:
 | Backend | NestJS 11 | REST API, guard, validation và nghiệp vụ |
 | ORM | TypeORM 0.3 | Entity, query và migration |
 | Database | MySQL/XAMPP | Dữ liệu bền vững |
-| Auth | JWT trong HttpOnly cookie, bcrypt | Xác thực và bảo vệ mật khẩu |
+| Auth | Access/refresh JWT trong HttpOnly cookie, bcrypt | Xác thực, xoay token và bảo vệ mật khẩu |
 | Cache | Redis qua ioredis, có memory fallback | Cache danh mục/ngôn ngữ |
 | Media | Cloudinary | Lưu ảnh; database chỉ lưu URL |
 | Email | Nodemailer + Gmail SMTP | Gửi OTP reset password |

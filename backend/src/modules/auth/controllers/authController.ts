@@ -6,6 +6,7 @@ import {
   Ip,
   Post,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -17,6 +18,7 @@ import {
 } from '../interfaces/auth-user.interface';
 import { AuthService } from '../services/authService';
 import { AuthCookieService } from '../services/auth-cookie.service';
+import { AuthTokenService } from '../services/auth-token.service';
 import {
   ForgotPasswordDto,
   LoginDto,
@@ -30,6 +32,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly authCookie: AuthCookieService,
+    private readonly tokens: AuthTokenService,
   ) {}
 
   @Post('register')
@@ -43,7 +46,7 @@ export class AuthController {
       dto,
       this.requestContext(ipAddress, userAgent),
     );
-    this.authCookie.set(response, result.data.accessToken);
+    this.authCookie.set(response, result.data.accessToken, result.data.refreshToken);
     return {
       ...result,
       data: { user: result.data.user },
@@ -61,7 +64,7 @@ export class AuthController {
       dto,
       this.requestContext(ipAddress, userAgent),
     );
-    this.authCookie.set(response, result.data.accessToken);
+    this.authCookie.set(response, result.data.accessToken, result.data.refreshToken);
     return {
       ...result,
       data: { user: result.data.user },
@@ -80,14 +83,42 @@ export class AuthController {
     @CurrentUser() user: AuthenticatedUser,
     @Ip() ipAddress: string,
     @Headers('user-agent') userAgent?: string,
+    @Headers('cookie') cookieHeader?: string,
     @Res({ passthrough: true }) response?: Response,
   ) {
     const result = await this.authService.logout(
       user,
       this.requestContext(ipAddress, userAgent),
     );
+    await this.tokens.revoke(this.authCookie.readRefresh(cookieHeader));
     this.authCookie.clear(response);
     return result;
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Headers('cookie') cookieHeader: string | undefined,
+    @Ip() ipAddress: string,
+    @Headers('user-agent') userAgent: string | undefined,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const refreshToken = this.authCookie.readRefresh(cookieHeader);
+    if (!refreshToken) {
+      this.authCookie.clear(response);
+      throw new UnauthorizedException('AUTH_REFRESH_TOKEN_REQUIRED');
+    }
+    try {
+      const tokens = await this.tokens.rotate(refreshToken);
+      this.authCookie.set(
+        response,
+        tokens.accessToken,
+        tokens.refreshToken,
+      );
+      return { success: true, message: 'AUTH_TOKEN_REFRESHED', data: null };
+    } catch (error) {
+      this.authCookie.clear(response);
+      throw error;
+    }
   }
 
   @Post('forgot-password')

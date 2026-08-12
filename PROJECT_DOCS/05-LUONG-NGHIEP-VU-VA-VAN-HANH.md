@@ -8,8 +8,9 @@ Register/Login form
  -> validate DTO
  -> tìm/tạo user, bcrypt verify/hash
  -> kiểm tra isActive và role
- -> ký JWT
- -> Set-Cookie HttpOnly
+ -> ký access JWT 15 phút và refresh JWT 7 ngày
+ -> lưu hash và hạn refresh token trong users (một token/user)
+ -> Set hai HttpOnly cookie
  -> audit log
  -> Angular giữ user trong memory signal
 ```
@@ -149,9 +150,13 @@ DB_NAME=vccorp_db
 DB_LOGGING=false
 
 JWT_SECRET=<chuỗi ngẫu nhiên tối thiểu 32 ký tự>
-JWT_EXPIRES_IN=1h
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=<chuỗi ngẫu nhiên khác JWT_SECRET, tối thiểu 32 ký tự>
+JWT_REFRESH_EXPIRES_IN=7d
 AUTH_COOKIE_NAME=vccorp_access_token
-AUTH_COOKIE_MAX_AGE_SECONDS=3600
+AUTH_COOKIE_MAX_AGE_SECONDS=900
+AUTH_REFRESH_COOKIE_NAME=vccorp_refresh_token
+AUTH_REFRESH_COOKIE_MAX_AGE_SECONDS=604800
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAME_SITE=lax
 AUTH_COOKIE_DOMAIN=

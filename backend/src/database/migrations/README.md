@@ -21,8 +21,12 @@ khuyến nghị là chạy migration.
 4. `CreateContentSchema`: danh mục, bài viết và các bản dịch nội dung.
 5. `CreateInteractionsAndAudit`: bình luận, lượt thích và nhật ký hoạt động.
 6. `SeedInitialData`: dữ liệu nền phục vụ frontend Angular và phát triển backend.
+7. `PreventDuplicateCategoryNames`: ngăn tên danh mục trùng trong cùng ngôn ngữ.
+8. `AddPostVersion`: thêm optimistic version cho quy trình kiểm duyệt bài viết.
+9. `StoreRefreshTokenOnUsers`: thêm hash và thời hạn refresh token trực tiếp vào `users`,
+   đồng thời xóa `user_sessions` nếu migration phiên bản trước từng được chạy.
 
-Schema nghiệp vụ sau khi chạy có đúng 10 bảng:
+Schema nghiệp vụ sau khi chạy có 10 bảng:
 
 1. `role`
 2. `users`

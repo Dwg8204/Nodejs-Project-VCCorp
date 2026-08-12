@@ -18,6 +18,7 @@ import {
 import { ApiResponse } from '../../core/models/api.model';
 import {
   SKIP_AUTH_REDIRECT,
+  SKIP_AUTH_REFRESH,
   SKIP_AUTH_TOKEN,
 } from '../../core/http/http-context.tokens';
 import { ApiClientService } from '../../core/services/api-client.service';
@@ -44,7 +45,8 @@ interface ApiAuthData {
 
 const PUBLIC_AUTH_CONTEXT = new HttpContext()
   .set(SKIP_AUTH_TOKEN, true)
-  .set(SKIP_AUTH_REDIRECT, true);
+  .set(SKIP_AUTH_REDIRECT, true)
+  .set(SKIP_AUTH_REFRESH, true);
 
 const ROLE_IDS: Record<UserRole, number> = {
   [USER_ROLES.SUPER_ADMIN]: 1,

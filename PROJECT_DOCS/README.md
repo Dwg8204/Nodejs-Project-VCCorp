@@ -10,6 +10,9 @@ Tài liệu này là điểm bắt đầu cho lập trình viên mới tiếp nh
 4. [04-FRONTEND-ANGULAR.md](04-FRONTEND-ANGULAR.md): route, layout, service, state, i18n, form, upload và cách nối UI với API.
 5. [05-LUONG-NGHIEP-VU-VA-VAN-HANH.md](05-LUONG-NGHIEP-VU-VA-VAN-HANH.md): các flow end-to-end, chạy local, Redis, Cloudinary, SMTP, test và deploy.
 
+6. [06-MODULE-NGUOI-1.md](06-MODULE-NGUOI-1.md): auth, profile, quản lý user/ngôn ngữ, audit, cache và mail.
+7. [07-MODULE-NGUOI-2.md](07-MODULE-NGUOI-2.md): category, post workflow, interaction, dashboard và upload.
+
 ## Bản đồ nhanh
 
 ```text

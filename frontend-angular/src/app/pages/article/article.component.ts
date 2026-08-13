@@ -10,6 +10,8 @@ interface CommentView { id:number; userId:number; rootId:number; name:string; in
 interface CommentGroup { root:CommentView;replies:CommentView[]; }
 interface RelatedView { id:number;title:string;thumbnail:string;category:string;author:string;date:string; }
 
+const COMMENT_PAGE_SIZE = 5;
+
 @Component({selector:'app-article',standalone:true,imports:[RouterLink],templateUrl:'./article.component.html',styleUrl:'./article.component.scss',changeDetection:ChangeDetectionStrategy.OnPush,encapsulation:ViewEncapsulation.None,schemas:[CUSTOM_ELEMENTS_SCHEMA]})
 export class ArticleComponent {
   private readonly route=inject(ActivatedRoute);
@@ -21,6 +23,7 @@ export class ArticleComponent {
   protected readonly replyTo=signal<number|null>(null);
   protected readonly replyText=signal('');
   protected readonly expandedReplies=signal<Set<number>>(new Set());
+  protected readonly visibleRootCommentCount=signal(COMMENT_PAGE_SIZE);
   protected readonly commentPendingDelete=signal<CommentView|null>(null);
   protected readonly deletingComment=signal(false);
   protected readonly id=signal(Number(this.route.snapshot.paramMap.get('id')));
@@ -35,6 +38,7 @@ export class ArticleComponent {
     effect(()=>{
       const id=this.id();
       const language=this.language.locale();
+      this.visibleRootCommentCount.set(COMMENT_PAGE_SIZE);
       const request=this.preview
         ?(this.auth.role()==='SUPER_ADMIN'?this.api.adminPost(String(id)):this.api.ownerPost(String(id)))
         :this.api.post(String(id));
@@ -97,6 +101,9 @@ export class ArticleComponent {
     return output;
   });
   protected readonly commentGroups=computed<CommentGroup[]>(()=>this.comments().filter(comment=>comment.depth===0).map(root=>({root,replies:this.comments().filter(comment=>comment.depth===1&&comment.rootId===root.id)})));
+  protected readonly visibleCommentGroups=computed<CommentGroup[]>(()=>this.commentGroups().slice(0,this.visibleRootCommentCount()));
+  protected readonly hiddenRootCommentCount=computed(()=>Math.max(0,this.commentGroups().length-this.visibleRootCommentCount()));
+  protected readonly nextRootCommentBatchSize=computed(()=>Math.min(COMMENT_PAGE_SIZE,this.hiddenRootCommentCount()));
 
   protected formatDate(value:string):string{return new Intl.DateTimeFormat(this.language.formatLocale(),{month:'short',day:'numeric',year:'numeric'}).format(new Date(value));}
   protected toggleLike():void{if(!this.auth.isAuthenticated()){void this.router.navigate(['/login']);return;}this.api.toggleLike(String(this.id())).subscribe({next:response=>{this.liked.set(response.data.liked);this.post.update(post=>post?{...post,likesCount:response.data.totalLikes}:post);}});}
@@ -106,6 +113,7 @@ export class ArticleComponent {
   protected visibleReplies(group:CommentGroup):CommentView[]{return this.expandedReplies().has(group.root.id)?group.replies:group.replies.slice(-2);}
   protected hiddenReplyCount(group:CommentGroup):number{return Math.max(0,group.replies.length-2);}
   protected toggleReplies(rootId:number):void{this.expandedReplies.update(current=>{const next=new Set(current);next.has(rootId)?next.delete(rootId):next.add(rootId);return next;});}
+  protected showMoreComments():void{this.visibleRootCommentCount.update(current=>Math.min(current+COMMENT_PAGE_SIZE,this.commentGroups().length));}
   protected requestDeleteComment(comment:CommentView):void{if(comment.userId===this.auth.currentUser()?.id)this.commentPendingDelete.set(comment);}
   protected cancelDeleteComment():void{if(!this.deletingComment())this.commentPendingDelete.set(null);}
   protected confirmDeleteComment():void{
